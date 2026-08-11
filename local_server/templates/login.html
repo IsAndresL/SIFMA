@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Inicio de sesión seguro para el Panel de Control SIFMA.">
+    <title>SIFMA - Iniciar Sesión</title>
+    
+    <!-- Google Fonts: Outfit (títulos) e Inter (cuerpo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Estilos Core del Logo e Inputs -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    
+    <style>
+        body.login-body {
+            background-color: var(--bg-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Glassmorphism Card for Login */
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 45px 40px;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: card-appear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+        }
+
+        @keyframes card-appear {
+            0% {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .login-logo {
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .login-logo h1 {
+            font-family: var(--font-heading);
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            background: linear-gradient(to right, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 4px;
+        }
+
+        .login-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 35px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .login-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon-wrapper span.input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-inactive);
+            font-size: 20px;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px 14px 14px 44px;
+            color: var(--text-main);
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            outline: none;
+        }
+
+        .login-input:focus {
+            border-color: var(--accent-success);
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.15);
+        }
+
+        .login-input:focus + span.input-icon {
+            color: var(--accent-success);
+        }
+
+        /* Error Alert Card */
+        .error-alert {
+            width: 100%;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--accent-danger);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-family: var(--font-heading);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition-smooth);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-1.5px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+            filter: brightness(1.05);
+        }
+
+        .btn-login:active {
+            transform: translateY(1px);
+        }
+
+        /* Dynamic floating ambient glows in login background */
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.55;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .glow-1 {
+            width: 450px;
+            height: 450px;
+            background: rgba(16, 185, 129, 0.12);
+            top: -10%;
+            left: -10%;
+            animation: float-slow-1 12s infinite ease-in-out alternate;
+        }
+
+        .glow-2 {
+            width: 450px;
+            height: 450px;
+            background: rgba(59, 130, 246, 0.1);
+            bottom: -10%;
+            right: -10%;
+            animation: float-slow-2 12s infinite ease-in-out alternate;
+        }
+
+        @keyframes float-slow-1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 40px) scale(1.1); }
+        }
+
+        @keyframes float-slow-2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-40px, -50px) scale(1.15); }
+        }
+    </style>
+</head>
+<body class="login-body">
+    <!-- Ambient glowing backgrounds -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <div class="login-card">
+        <!-- Brand CV Logo -->
+        <div class="login-logo">
+            <div class="brand-logo-container" style="width: 60px; height: 60px;">
+                <span class="material-icons-round brand-icon-focus" style="font-size: 56px !important;">center_focus_strong</span>
+                <span class="material-icons-round brand-icon-leaf" style="font-size: 28px !important;">spa</span>
+            </div>
+            <h1>SIFMA</h1>
+        </div>
+
+        <p class="login-subtitle">PANEL DE CONTROL HIDROPÓNICO</p>
+
+        <!-- Error Feedback -->
+        {% if error %}
+        <div class="error-alert">
+            <span class="material-icons-round">error_outline</span>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Formulario -->
+        <form class="login-form" method="POST" action="/login">
+            <div class="form-group" style="margin-bottom: 0;">
+                <div class="input-icon-wrapper">
+                    <input class="login-input" type="text" name="username" placeholder="Usuario" required autocomplete="username">
+                    <span class="material-icons-round input-icon">person</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <div class="input-icon-wrapper">
+                    <input class="login-input" type="password" name="password" placeholder="Contraseña" required autocomplete="current-password">
+                    <span class="material-icons-round input-icon">lock</span>
+                </div>
+            </div>
+
+            <button class="btn-login" type="submit">
+                <span class="material-icons-round">login</span>
+                <span>Entrar al Sistema</span>
+            </button>
+        </form>
+    </div>
+</body>
+</html>

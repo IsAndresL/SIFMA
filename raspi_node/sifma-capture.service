@@ -1,0 +1,16 @@
+[Unit]
+Description=Servicio de Captura Automatizada SIFMA
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=computo1
+WorkingDirectory=/home/computo1/raspi_node
+ExecStart=/usr/bin/python3 /home/computo1/raspi_node/capture_agent.py
+Restart=no
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

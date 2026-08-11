@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Sensores{% endblock %}
+{% block heading %}Análisis y Telemetría Detallada de Sensores{% endblock %}
+
+{% block content %}
+
+<!-- SECCIÓN 1: TARJETAS KPI DE TELEMETRÍA CON ALERTAS EN TIEMPO REAL -->
+<div class="metric-grid" style="margin-bottom: 25px;">
+    <!-- Tarjeta 1: Temperatura Ambiente -->
+    {% set temp_val = latest_sensor.temperature if latest_sensor else 0.0 %}
+    <div class="glass-card metric-card {% if temp_val > 35.0 %}alert-critical{% elif temp_val > 30.0 %}alert-warning{% endif %}">
+        <div class="metric-header">
+            <span class="metric-label">Temperatura Ambiente</span>
+            <div class="icon-container danger">
+                <span class="material-icons-round">device_thermostat</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value">{{ "%.1f" | format(temp_val) }}</span>
+            <span class="metric-unit">°C</span>
+        </div>
+        <div class="metric-footer">
+            {% if temp_val > 35.0 %}
+                <span class="material-icons-round">error</span>
+                <span><strong>¡CRÍTICO! Exceso de calor</strong></span>
+            {% elif temp_val > 30.0 %}
+                <span class="material-icons-round">warning</span>
+                <span><strong>¡ADVERTENCIA! Temp. elevada</strong></span>
+            {% else %}
+                <span class="material-icons-round">check_circle</span>
+                <span>Temperatura Estable</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tarjeta 2: Humedad Relativa -->
+    {% set hum_val = latest_sensor.humidity if latest_sensor else 0.0 %}
+    <div class="glass-card metric-card {% if hum_val < 30.0 %}alert-warning{% endif %}">
+        <div class="metric-header">
+            <span class="metric-label">Humedad Relativa</span>
+            <div class="icon-container primary">
+                <span class="material-icons-round">water_drop</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value">{{ "%.0f" | format(hum_val) }}</span>
+            <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-footer">
+            {% if hum_val < 30.0 %}
+                <span class="material-icons-round">warning</span>
+                <span style="color: var(--accent-warning);"><strong>¡Cuidado! Humedad muy baja</strong></span>
+            {% else %}
+                <span class="material-icons-round">check_circle</span>
+                <span>Humedad Relativa Óptima</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tarjeta 3: Radiación Solar UV -->
+    {% set uv_val = latest_sensor.uv_solar if latest_sensor else 0.0 %}
+    <div class="glass-card metric-card {% if uv_val > 12000.0 %}alert-warning{% endif %}">
+        <div class="metric-header">
+            <span class="metric-label">Radiación Solar</span>
+            <div class="icon-container warning">
+                <span class="material-icons-round">wb_sunny</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value">{{ "%.0f" | format(uv_val) }}</span>
+            <span class="metric-unit">lux</span>
+        </div>
+        <div class="metric-footer">
+            {% if uv_val > 12000.0 %}
+                <span class="material-icons-round">warning</span>
+                <span style="color: var(--accent-warning);"><strong>¡Cuidado! Radiación Extrema</strong></span>
+            {% else %}
+                <span class="material-icons-round">check_circle</span>
+                <span>Radiación Solar Estable</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tarjeta 4: Consumo Eléctrico de Bomba -->
+    {% set curr_val = latest_sensor.motor_current if latest_sensor else 0.00 %}
+    <div class="glass-card metric-card {% if curr_val > 1.8 %}alert-overload{% endif %}">
+        <div class="metric-header">
+            <span class="metric-label">Consumo de Bomba</span>
+            <div class="icon-container success">
+                <span class="material-icons-round">electrical_services</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value">{{ "%.2f" | format(curr_val) }}</span>
+            <span class="metric-unit">A</span>
+        </div>
+        <div class="metric-footer">
+            {% if curr_val > 1.8 %}
+                <span class="material-icons-round" style="color: var(--accent-danger); animation: text-pulse 1s infinite alternate;">error</span>
+                <span style="color: var(--accent-danger); font-weight: 700;">¡CRÍTICO! Sobrecarga de motor</span>
+            {% else %}
+                <span class="material-icons-round">check_circle</span>
+                <span>Bomba Operando Normal</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- GRID DE GRÁFICAS DETALLADAS (INDIVIDUALES) -->
+<div class="chart-grid-2">
+    <!-- Gráfica 1: Temperatura -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #ef4444;">device_thermostat</span>
+            <h3>Temperatura Ambiente (°C)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="tempChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 2: Humedad -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #60a5fa;">water_drop</span>
+            <h3>Humedad Relativa (%)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="humidityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 3: Radiación UV -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #fbbf24;">wb_sunny</span>
+            <h3>Radiación Solar UV (lux)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="uvChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 4: Corriente de Bomba -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #34d399;">electrical_services</span>
+            <h3>Consumo Eléctrico de Bomba (A)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="currentChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Inyectar datos históricos de sensores ambientales
+    const sensorRaw = [
+        {% for s in sensors %}
+        {
+            time: "{{ s.timestamp.strftime('%H:%M') }}",
+            temp: {{ s.temperature }},
+            hum: {{ s.humidity }},
+            uv: {{ s.uv_solar }},
+            curr: {{ s.motor_current }}
+        },
+        {% endfor %}
+    ];
+</script>
+<script src="{{ url_for('static', filename='js/sensors.js') }}"></script>
+{% endblock %}

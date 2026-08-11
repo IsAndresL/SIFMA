@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Monitoreo de Cultivo{% endblock %}
+{% block heading %}Dashboard de Monitoreo{% endblock %}
+
+{% block content %}
+<!-- SECCIÓN 1: TARJETAS DE MÉTRICAS PRINCIPALES -->
+<div class="metric-grid">
+    <!-- Tarjeta 1: Área Foliar -->
+    <div class="glass-card metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Área Foliar Est.</span>
+            <div class="icon-container success">
+                <span class="material-icons-round">spa</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value" id="val-area">
+                {% if latest_metric %}{{ latest_metric.foliar_area_cm2 }}{% else %}0.00{% endif %}
+            </span>
+            <span class="metric-unit">cm²</span>
+        </div>
+        <div class="metric-footer">
+            <span class="material-icons-round">trending_up</span>
+            <span>Expansión de Canopia (Cenital)</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 2: Altura Planta -->
+    <div class="glass-card metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Altura Estimada</span>
+            <div class="icon-container primary">
+                <span class="material-icons-round">straighten</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value" id="val-height">
+                {% if latest_metric %}{{ latest_metric.plant_height_cm }}{% else %}0.00{% endif %}
+            </span>
+            <span class="metric-unit">cm</span>
+        </div>
+        <div class="metric-footer">
+            <span class="material-icons-round">straight</span>
+            <span>Crecimiento Vertical (Lateral)</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 3: Diámetro del Tallo -->
+    <div class="glass-card metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Diámetro del Tallo</span>
+            <div class="icon-container warning">
+                <span class="material-icons-round">adjust</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value" id="val-diameter">
+                {% if latest_metric %}{{ latest_metric.stem_diameter_mm }}{% else %}0.00{% endif %}
+            </span>
+            <span class="metric-unit">mm</span>
+        </div>
+        <div class="metric-footer">
+            <span class="material-icons-round">width</span>
+            <span>Espesor en Base (Lateral)</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 4: Salud Foliar -->
+    <div class="glass-card metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Índice de Salud</span>
+            <div class="icon-container {% if latest_metric and latest_metric.health_index < 80 %}danger{% else %}success{% endif %}">
+                <span class="material-icons-round">health_and_safety</span>
+            </div>
+        </div>
+        <div class="metric-value-container">
+            <span class="metric-value" id="val-health">
+                {% if latest_metric %}{{ latest_metric.health_index }}{% else %}100.00{% endif %}
+            </span>
+            <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-footer">
+            <span class="material-icons-round">circle</span>
+            <span>Coloración Verde Foliar</span>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 2: GRÁFICAS DE EVOLUCIÓN -->
+<div class="chart-grid">
+    <!-- Gráfica de Crecimiento -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round">show_chart</span>
+            <h3>Histórico de Crecimiento Biométrico</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica Resumida de Sensores (Temperatura y Humedad Combinadas) -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round">analytics</span>
+            <h3>Resumen Climatológico (Telemetría)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="sensorSummaryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Inyectar datos históricos de crecimiento desde Flask
+    const growthData = {{ growth_data | tojson | safe }};
+    
+    // Inyectar datos históricos de sensores ambientales
+    const sensorRaw = [
+        {% for s in sensors %}
+        {
+            time: "{{ s.timestamp.strftime('%H:%M') }}",
+            temp: {{ s.temperature }},
+            hum: {{ s.humidity }},
+            uv: {{ s.uv_solar }},
+            curr: {{ s.motor_current }}
+        },
+        {% endfor %}
+    ];
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

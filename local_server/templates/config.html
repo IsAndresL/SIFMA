@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Configuración{% endblock %}
+{% block heading %}Panel de Control SIFMA{% endblock %}
+
+{% block content %}
+<div class="content-viewport">
+
+    <div class="config-grid">
+        
+        <!-- COLUMNA 1: CONFIGURACIÓN GENERAL DEL HARDWARE (RPi) -->
+        <div class="glass-card">
+            <div class="glass-card-title">
+                <span class="material-icons-round">settings_remote</span>
+                <h3>Configuración de Captura y Nodo</h3>
+            </div>
+            
+            <form action="{{ url_for('update_config') }}" method="POST">
+                <!-- ID de la Planta/Torre -->
+                <div class="form-group">
+                    <label for="plant_id">ID de la Torre / Nodo Hidropónico</label>
+                    <input type="number" name="plant_id" id="plant_id" class="form-control" value="{{ config.plant_id }}" required min="1">
+                </div>
+                
+                <!-- Horarios de Captura -->
+                <div class="form-group">
+                    <label for="scheduled_times_str">Horarios de Captura Diarios (Periodos)</label>
+                    <input type="text" name="scheduled_times_str" id="scheduled_times_str" class="form-control" value="{{ config.scheduled_times_str }}" placeholder="Ej: 07:05,12:05,17:05" required>
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">
+                        Separa las horas por comas. La Raspberry Pi sincronizará estos horarios al arrancar.
+                    </small>
+                </div>
+                
+                <!-- Especie Cultivada Actualmente -->
+                <div class="form-group">
+                    <label for="selected_crop_type">Especie Activa en la Torre</label>
+                    <select name="selected_crop_type" id="selected_crop_type" class="form-control" style="background-color: var(--bg-main);">
+                        {% for profile in profiles %}
+                            <option value="{{ profile.crop_type }}" {% if config.selected_crop_type == profile.crop_type %}selected{% endif %}>
+                                {{ profile.display_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">
+                        Afecta a los umbrales aplicados automáticamente en el pipeline de visión.
+                    </small>
+                </div>
+                
+                <!-- Fotos por Periodo -->
+                <div class="form-group">
+                    <label for="photos_per_period">Capturas por Sesión (Muestreo Temporal)</label>
+                    <div class="range-slider-container">
+                        <input type="range" name="photos_per_period" id="photos_per_period" class="range-slider" min="1" max="10" value="{{ config.photos_per_period }}" oninput="updateRangeLabel(this)">
+                        <span class="range-value" id="label-photos_per_period">{{ config.photos_per_period }}</span>
+                    </div>
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">
+                        Número de fotos consecutivas por cámara para promediar e invalidar atípicos (outliers).
+                    </small>
+                </div>
+                
+                <!-- Intervalo entre Capturas -->
+                <div class="form-group">
+                    <label for="capture_interval_sec">Intervalo entre tomas (Segundos)</label>
+                    <div class="range-slider-container">
+                        <input type="range" name="capture_interval_sec" id="capture_interval_sec" class="range-slider" min="1" max="5" value="{{ config.capture_interval_sec }}" oninput="updateRangeLabel(this)">
+                        <span class="range-value" id="label-capture_interval_sec">{{ config.capture_interval_sec }}s</span>
+                    </div>
+                </div>
+                
+                <!-- Apagado Seguro -->
+                <div class="form-group" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 20px;">
+                    <div class="switch-container">
+                        <div>
+                            <p style="font-size: 14px; font-weight: 600;">Apagado Seguro Automatizado</p>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px; max-width: 280px;">
+                                La Pi se apaga automáticamente (`sudo shutdown`) tras enviar las fotos con éxito. Ideal para uso con temporizador de reloj físico.
+                            </p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="safe_shutdown_enabled" id="safe_shutdown_enabled" value="true" {% if config.safe_shutdown_enabled %}checked{% endif %}>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <button type="submit" class="btn-primary" style="width: 100%;">
+                        <span class="material-icons-round" style="font-size: 16px; vertical-align: middle; margin-right: 6px;">save</span>
+                        Guardar Configuración de Captura
+                    </button>
+                </div>
+            </form>
+        </div>
+
+
+        
+        <!-- COLUMNA 2: EDICIÓN DE PERFILES DE COLOR (SEGMENTACIÓN DE IMAGEN) -->
+        <div class="glass-card">
+            <div class="glass-card-title">
+                <span class="material-icons-round">palette</span>
+                <h3>Calibración de Perfiles de Segmentación (PlantCV)</h3>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label for="profile-selector">Ver / Calibrar Especie</label>
+                <select id="profile-selector" class="form-control" style="background-color: var(--bg-main);" onchange="loadProfileValues(this.value)">
+                    {% for profile in profiles %}
+                        <option value="{{ profile.crop_type }}" {% if config.selected_crop_type == profile.crop_type %}selected{% endif %}>
+                            {{ profile.display_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <form action="{{ url_for('update_crop_profile') }}" method="POST">
+                <input type="hidden" name="crop_type" id="prof-crop_type" value="{{ selected_profile.crop_type }}">
+                
+                <!-- SECCIÓN HSV -->
+                <h4 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 12px; color: var(--accent-success); border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px;">
+                    Umbrales en Espacio de Color HSV (Follaje)
+                </h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="h_min">Hue Mínimo (H)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="h_min" id="h_min" class="range-slider" min="0" max="180" value="{{ selected_profile.h_min }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-h_min">{{ selected_profile.h_min }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="h_max">Hue Máximo (H)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="h_max" id="h_max" class="range-slider" min="0" max="180" value="{{ selected_profile.h_max }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-h_max">{{ selected_profile.h_max }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="s_min">Sat Mínima (S)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="s_min" id="s_min" class="range-slider" min="0" max="255" value="{{ selected_profile.s_min }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-s_min">{{ selected_profile.s_min }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="s_max">Sat Máxima (S)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="s_max" id="s_max" class="range-slider" min="0" max="255" value="{{ selected_profile.s_max }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-s_max">{{ selected_profile.s_max }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="v_min">Val Mínimo (V)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="v_min" id="v_min" class="range-slider" min="0" max="255" value="{{ selected_profile.v_min }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-v_min">{{ selected_profile.v_min }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="v_max">Val Máximo (V)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="v_max" id="v_max" class="range-slider" min="0" max="255" value="{{ selected_profile.v_max }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-v_max">{{ selected_profile.v_max }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN LAB -->
+                <h4 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 12px; color: var(--accent-primary); border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px;">
+                    Umbrales en Espacio de Color LAB (Aislamiento de Canopia)
+                </h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="a_min">Canal 'a' Mínimo (Verdes)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="a_min" id="a_min" class="range-slider" min="0" max="255" value="{{ selected_profile.a_min }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-a_min">{{ selected_profile.a_min }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="a_max">Canal 'a' Máximo (Verdes)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="a_max" id="a_max" class="range-slider" min="0" max="255" value="{{ selected_profile.a_max }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-a_max">{{ selected_profile.a_max }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="b_min">Canal 'b' Mínimo (Amarillos)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="b_min" id="b_min" class="range-slider" min="0" max="255" value="{{ selected_profile.b_min }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-b_min">{{ selected_profile.b_min }}</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="b_max">Canal 'b' Máximo (Amarillos)</label>
+                        <div class="range-slider-container">
+                            <input type="range" name="b_max" id="b_max" class="range-slider" min="0" max="255" value="{{ selected_profile.b_max }}" oninput="updateRangeLabel(this)">
+                            <span class="range-value" id="label-b_max">{{ selected_profile.b_max }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CALIBRACIÓN FÍSICA -->
+                <h4 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 12px; color: var(--accent-warning); border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px;">
+                    Calibración de Escala Geométrica
+                </h4>
+                
+                <div class="form-group">
+                    <label for="pixel_to_cm_ratio">Factor de Conversión Física (cm por pixel)</label>
+                    <input type="number" step="0.0001" name="pixel_to_cm_ratio" id="pixel_to_cm_ratio" class="form-control" value="{{ selected_profile.pixel_to_cm_ratio }}" required>
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">
+                        Define la escala lineal. Por defecto `0.015` representa que 1 píxel equivale a 0.15 mm en el plano de calibración física.
+                    </small>
+                </div>
+
+                <!-- Tallo Switch -->
+                <div class="form-group" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 15px;">
+                    <div class="switch-container">
+                        <div>
+                            <p style="font-size: 14px; font-weight: 600;">Especie con Tallo Principal</p>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px; max-width: 280px;">
+                                Si está inactivo (ej: lechuga o espinaca), se omitirá la medición del diámetro del tallo y la altura se acotará desde la canastilla.
+                            </p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="has_stem" id="has_stem" value="true" {% if selected_profile.has_stem %}checked{% endif %}>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <button type="submit" class="btn-primary" style="width: 100%;">
+                        <span class="material-icons-round" style="font-size: 16px; vertical-align: middle; margin-right: 6px;">tune</span>
+                        Actualizar Umbrales de Especie vegetal
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Guardar los perfiles disponibles del lado del cliente para recargar dinámicamente sin recargar la página
+    const profilesCache = {
+        {% for p in profiles %}
+        "{{ p.crop_type }}": {
+            crop_type: "{{ p.crop_type }}",
+            display_name: "{{ p.display_name }}",
+            h_min: {{ p.h_min }}, h_max: {{ p.h_max }},
+            s_min: {{ p.s_min }}, s_max: {{ p.s_max }},
+            v_min: {{ p.v_min }}, v_max: {{ p.v_max }},
+            l_min: {{ p.l_min }}, l_max: {{ p.l_max }},
+            a_min: {{ p.a_min }}, a_max: {{ p.a_max }},
+            b_min: {{ p.b_min }}, b_max: {{ p.b_max }},
+            pixel_to_cm_ratio: {{ p.pixel_to_cm_ratio }},
+            has_stem: {% if p.has_stem %}true{% else %}false{% endif %}
+        },
+        {% endfor %}
+    };
+
+    /**
+     * Actualiza la burbuja del valor al deslizar el slider.
+     */
+    function updateRangeLabel(slider) {
+        const val = slider.value;
+        const id = slider.id;
+        const label = document.getElementById(`label-${id}`);
+        
+        if (id === 'capture_interval_sec') {
+            label.textContent = `${val}s`;
+        } else {
+            label.textContent = val;
+        }
+    }
+
+    /**
+     * Carga dinámicamente los valores guardados en caché al cambiar
+     * de especie vegetal en el selector del panel de calibración.
+     */
+    function loadProfileValues(cropType) {
+        const p = profilesCache[cropType];
+        if (!p) return;
+        
+        document.getElementById('prof-crop_type').value = p.crop_type;
+        document.getElementById('pixel_to_cm_ratio').value = p.pixel_to_cm_ratio;
+        
+        // Cargar estado de tallo principal
+        const hasStemCheckbox = document.getElementById('has_stem');
+        if (hasStemCheckbox) {
+            hasStemCheckbox.checked = p.has_stem;
+        }
+        
+        // Lista de sliders
+        const sliders = ['h_min', 'h_max', 's_min', 's_max', 'v_min', 'v_max', 'a_min', 'a_max', 'b_min', 'b_max'];
+        
+        sliders.forEach(key => {
+            const slider = document.getElementById(key);
+            if (slider) {
+                slider.value = p[key];
+                updateRangeLabel(slider);
+            }
+        });
+        
+        console.log(`Cargado perfil de segmentación: ${p.display_name}`);
+    }
+
+
+</script>
+{% endblock %}

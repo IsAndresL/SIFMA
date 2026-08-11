@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block title %}Galería de Capturas{% endblock %}
+{% block heading %}Comparador de Procesamiento Digital{% endblock %}
+
+{% block content %}
+<div class="content-viewport">
+    
+    <!-- Filtros de Periodos y Selección de Capturas -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round">filter_list</span>
+            <h3>Filtros por Periodo de Muestreo</h3>
+        </div>
+        
+        <!-- Botones de Período -->
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <button class="btn-period active" data-target-period="mañana" onclick="filterPeriod('mañana')">
+                <span class="material-icons-round">light_mode</span>
+                Mañana
+            </button>
+            <button class="btn-period" data-target-period="mediodía" onclick="filterPeriod('mediodía')">
+                <span class="material-icons-round">wb_sunny</span>
+                Mediodía
+            </button>
+            <button class="btn-period" data-target-period="tarde" onclick="filterPeriod('tarde')">
+                <span class="material-icons-round">nights_stay</span>
+                Tarde
+            </button>
+        </div>
+
+        <!-- Lista Horizontal de Capturas Disponibles para el Período Activo -->
+        <div class="captures-list-container" style="border-top: 1px solid var(--glass-border); padding-top: 20px;">
+            <h4 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 12px; color: var(--text-muted);">
+                Capturas Recientes en este Periodo:
+            </h4>
+            
+            <div id="captures-grid" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px;">
+                {% if sessions %}
+                    {% for session in sessions %}
+                        {% if session.metrics %}
+                            {% set metric = session.metrics[0] %}
+                            <div class="capture-thumb-card" data-period="{{ session.period }}" data-session-id="{{ session.id }}" onclick="selectSession({{ session.id }})">
+                                <div class="thumb-images">
+                                    <img src="{{ url_for('static', filename=metric.image_path_cenital_orig) }}" class="thumb-img">
+                                    <img src="{{ url_for('static', filename=metric.image_path_lateral_orig) }}" class="thumb-img">
+                                </div>
+                                <div class="thumb-info">
+                                    <span class="thumb-date">{{ session.timestamp.strftime('%d/%m %H:%M') }}</span>
+                                    <span class="thumb-crop">{{ session.crop_type.replace('_', ' ').upper() }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); font-size: 13px;">No hay capturas disponibles.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Mensaje de no capturas para el período seleccionado -->
+            <div id="no-captures-message" style="display: none; color: var(--text-muted); font-size: 13px; padding: 10px 0;">
+                No se encontraron capturas registradas en este periodo para el cultivo activo.
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DETALLADA DEL COMPARADOR COMPARATIVO DE LA SESIÓN SELECCIONADA -->
+    <div id="comparators-container">
+        {% if sessions %}
+            {% for session in sessions %}
+                {% if session.metrics %}
+                    {% set metric = session.metrics[0] %}
+                    <div class="session-comparator-card" id="comparator-{{ session.id }}" style="display: none;">
+                        <div class="glass-card" style="margin-bottom: 10px;">
+                            <!-- Cabecera de la sesión -->
+                            <div class="gallery-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <span class="badge {% if session.period == 'mañana' %}badge-success{% elif session.period == 'mediodía' %}badge-primary{% else %}badge-warning{% endif %}" style="font-size: 12px; padding: 6px 12px;">
+                                        {{ session.period.upper() }}
+                                    </span>
+                                    <span class="gallery-title" style="font-size: 18px; font-family: var(--font-heading);">
+                                        Comparador de Fenotipado - Captura del {{ session.timestamp.strftime('%d/%m/%Y a las %H:%M') }}
+                                    </span>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <!-- BOTÓN PARA REVISAR LAS GRÁFICAS DE ESE DÍA -->
+                                    <a href="/processing" class="btn-primary" style="display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 8px 14px; text-decoration: none; border-radius: 8px;">
+                                        <span class="material-icons-round" style="font-size: 16px;">analytics</span>
+                                        Revisar gráficas del día
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Datos Consolidados de la sesión -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: rgba(255,255,255,0.01); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 25px; text-align: center; font-size: 13px;">
+                                <div>
+                                    <p style="color: var(--text-muted);">Área Foliar</p>
+                                    <p style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-success); margin-top: 3px;">{{ metric.foliar_area_cm2 }} cm²</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted);">Altura Planta</p>
+                                    <p style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary); margin-top: 3px;">{{ metric.plant_height_cm }} cm</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted);">Diámetro Tallo</p>
+                                    <p style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-warning); margin-top: 3px;">{{ metric.stem_diameter_mm }} mm</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted);">Índice Salud</p>
+                                    <p style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: {% if metric.health_index >= 90 %}var(--accent-success){% else %}var(--accent-warning){% endif %}; margin-top: 3px;">{{ metric.health_index }}%</p>
+                                </div>
+                            </div>
+
+                            <!-- Grid de Doble Comparador (Cenital y Lateral) -->
+                            <div class="split-gallery-grid">
+                                
+                                <!-- Comparador 1: Cámara Cenital -->
+                                <div class="gallery-card">
+                                    <div class="gallery-header">
+                                        <span class="gallery-title" style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="material-icons-round text-success">center_focus_strong</span>
+                                            Cámara Cenital (Canopia)
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="img-slider-container">
+                                        <!-- Imagen original de fondo (Before) -->
+                                        <img class="img-slider-image img-slider-before" src="{{ url_for('static', filename=metric.image_path_cenital_orig) }}" alt="Foto Cenital Original">
+                                        
+                                        <!-- Imagen procesada recortada (After) -->
+                                        <img class="img-slider-image img-slider-after" src="{{ url_for('static', filename=metric.image_path_cenital_proc) }}" alt="Foto Cenital Segmentada">
+                                        
+                                        <!-- Elementos visuales del slider -->
+                                        <div class="img-slider-bar"></div>
+                                        <div class="img-slider-button">
+                                            <span class="material-icons-round">unfold_more</span>
+                                        </div>
+                                        
+                                        <!-- Input deslizable invisible que captura la interacción -->
+                                        <input class="img-slider-range" type="range" min="0" max="100" value="50" oninput="slideImages(this)">
+                                    </div>
+                                    
+                                    <div class="slider-labels">
+                                        <span class="label-original">Original (Pi 5)</span>
+                                        <span class="label-processed">Segmentación (LAB / HSV)</span>
+                                    </div>
+                                </div>
+
+                                <!-- Comparador 2: Cámara Lateral -->
+                                <div class="gallery-card">
+                                    <div class="gallery-header">
+                                        <span class="gallery-title" style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="material-icons-round text-primary">photo_size_select_small</span>
+                                            Cámara Lateral (Estructura)
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="img-slider-container">
+                                        <img class="img-slider-image img-slider-before" src="{{ url_for('static', filename=metric.image_path_lateral_orig) }}" alt="Foto Lateral Original">
+                                        <img class="img-slider-image img-slider-after" src="{{ url_for('static', filename=metric.image_path_lateral_proc) }}" alt="Foto Lateral Calibrada">
+                                        <div class="img-slider-bar"></div>
+                                        <div class="img-slider-button">
+                                            <span class="material-icons-round">unfold_more</span>
+                                        </div>
+                                        <input class="img-slider-range" type="range" min="0" max="100" value="50" oninput="slideImages(this)">
+                                    </div>
+                                    
+                                    <div class="slider-labels">
+                                        <span class="label-original">Original (Pi 5)</span>
+                                        <span class="label-processed">Métricas (Altura / Tallo)</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 350px; text-align: center; color: var(--text-muted);">
+                <span class="material-icons-round" style="font-size: 64px; color: var(--text-inactive); margin-bottom: 15px;">collections</span>
+                <h3 style="font-family: var(--font-heading); color: var(--text-main); font-size: 20px;">Galería Vacía</h3>
+                <p style="margin-top: 5px; max-width: 400px; font-size: 14px;">
+                    No se han registrado sesiones de fotos aún.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    /**
+     * Ajusta dinámicamente la máscara de clip-path y el posicionador de la barra
+     * deslizable basándose en la posición del slider del usuario.
+     */
+    function slideImages(slider) {
+        const val = slider.value;
+        const container = slider.parentElement;
+        
+        const afterImg = container.querySelector('.img-slider-after');
+        const bar = container.querySelector('.img-slider-bar');
+        const button = container.querySelector('.img-slider-button');
+        
+        // Ajustar el clip-path de la imagen de arriba (processed/after)
+        afterImg.style.clipPath = `polygon(0 0, ${val}% 0, ${val}% 100%, 0 100%)`;
+        
+        // Posicionar barra central y botón interactivo
+        bar.style.left = `${val}%`;
+        button.style.left = `${val}%`;
+    }
+
+    /**
+     * Filtra la lista horizontal de miniaturas por periodo (mañana, mediodía, tarde)
+     */
+    function filterPeriod(period) {
+        // Actualizar estados activos en los botones
+        document.querySelectorAll('.btn-period').forEach(btn => {
+            if (btn.getAttribute('data-target-period') === period) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Filtrar las miniaturas
+        let visibleCount = 0;
+        let firstSessionId = null;
+
+        document.querySelectorAll('.capture-thumb-card').forEach(card => {
+            const cardPeriod = card.getAttribute('data-period');
+            if (cardPeriod === period) {
+                card.style.display = 'block';
+                visibleCount++;
+                if (firstSessionId === null) {
+                    firstSessionId = card.getAttribute('data-session-id');
+                }
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Mostrar / Ocultar mensaje de no resultados
+        const noMsg = document.getElementById('no-captures-message');
+        if (visibleCount === 0) {
+            noMsg.style.display = 'block';
+            hideAllComparators();
+        } else {
+            noMsg.style.display = 'none';
+            // Seleccionar automáticamente la primera captura del periodo filtrado
+            if (firstSessionId) {
+                selectSession(firstSessionId);
+            }
+        }
+    }
+
+    /**
+     * Oculta todos los comparadores detallados
+     */
+    function hideAllComparators() {
+        document.querySelectorAll('.session-comparator-card').forEach(card => {
+            card.style.display = 'none';
+        });
+    }
+
+    /**
+     * Muestra el comparador correspondiente a la sesión seleccionada y marca la miniatura activa
+     */
+    function selectSession(sessionId) {
+        // Quitar estado activo a todas las miniaturas
+        document.querySelectorAll('.capture-thumb-card').forEach(card => {
+            if (card.getAttribute('data-session-id') == sessionId) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+
+        // Ocultar todos los comparadores detallados y mostrar solo el activo
+        document.querySelectorAll('.session-comparator-card').forEach(card => {
+            if (card.id === `comparator-${sessionId}`) {
+                card.style.display = 'block';
+                
+                // Reiniciar los sliders de esa tarjeta al 50% para buena UX
+                const rangeInputs = card.querySelectorAll('.img-slider-range');
+                rangeInputs.forEach(rangeInput => {
+                    rangeInput.value = 50;
+                    slideImages(rangeInput);
+                });
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // Inicializar cargando las capturas de la 'mañana' al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+        filterPeriod('mañana');
+    });
+</script>
+{% endblock %}

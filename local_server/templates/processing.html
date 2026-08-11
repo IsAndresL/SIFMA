@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Procesamiento de Imagen{% endblock %}
+{% block heading %}Análisis y Procesamiento Digital de Imágenes{% endblock %}
+
+{% block content %}
+
+<!-- GRID DE GRÁFICAS BIOMÉTRICAS DETALLADAS (ANÁLISIS DE IMAGEN) -->
+<div class="chart-grid-2" style="margin-bottom: 25px;">
+    <!-- Gráfica 1: Área Foliar -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #10b981;">spa</span>
+            <h3>Área Foliar Estimada (cm²)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="foliarAreaChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 2: Altura Planta -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #3b82f6;">straighten</span>
+            <h3>Altura Estimada de la Planta (cm)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="plantHeightChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 3: Diámetro del Tallo -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #f59e0b;">adjust</span>
+            <h3>Diámetro del Tallo Basal (mm)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="stemDiameterChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 4: Índice de Salud -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round" style="color: #dc2626;">health_and_safety</span>
+            <h3>Índice de Salud Foliar (%)</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="healthIndexChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="config-grid">
+    <!-- Último Procesamiento (Cámara Cenital y Lateral) -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round">camera_enhance</span>
+            <h3>Última Sesión de Procesamiento</h3>
+        </div>
+        
+        {% if latest_session and latest_metric %}
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);">
+                <span>Periodo: <strong class="text-success">{{ latest_session.period.upper() }}</strong></span>
+                <span>Especie: <strong>{{ selected_profile.display_name if selected_profile else latest_session.crop_type }}</strong></span>
+                <span>Fecha: <strong>{{ latest_session.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong></span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <!-- Miniatura Cenital -->
+                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; height: 210px;">
+                    <img src="{{ url_for('static', filename=latest_metric.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--accent-success); color: var(--accent-success);">
+                        CENITAL (Máscara)
+                    </div>
+                </div>
+                <!-- Miniatura Lateral -->
+                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; height: 210px;">
+                    <img src="{{ url_for('static', filename=latest_metric.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--accent-primary); color: var(--accent-primary);">
+                        LATERAL (Calibración)
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; margin-top: 5px; text-align: center;">
+                <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border);">
+                    <p style="color: var(--text-muted);">Índice de Compacidad</p>
+                    <p style="font-weight: 700; font-size: 18px; margin-top: 4px; color: var(--accent-success);">{{ latest_metric.compacity_index }}</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border);">
+                    <p style="color: var(--text-muted);">Frutos Detectados</p>
+                    <p style="font-weight: 700; font-size: 18px; margin-top: 4px; color: var(--accent-warning);">{{ latest_metric.fruits_count }}</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 260px; color: var(--text-muted); text-align: center;">
+            <span class="material-icons-round" style="font-size: 56px; margin-bottom: 12px; color: var(--text-inactive);">photo_camera</span>
+            <p>No se han recibido lotes de imágenes aún.</p>
+            <p style="font-size: 12px; margin-top: 4px;">Usa el script de simulación para subir tus primeras capturas.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Registro de Capturas Recientes -->
+    <div class="glass-card">
+        <div class="glass-card-title">
+            <span class="material-icons-round">list_alt</span>
+            <h3>Historial Reciente de Muestreo</h3>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Periodo</th>
+                        <th>Área Foliar</th>
+                        <th>Altura</th>
+                        <th>Tallo</th>
+                        <th>Salud</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_sessions %}
+                        {% for session in recent_sessions %}
+                            {% if session.metrics %}
+                            {% set metric = session.metrics[0] %}
+                            <tr>
+                                <td>{{ session.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <span class="badge {% if session.period == 'mañana' %}badge-success{% elif session.period == 'mediodía' %}badge-primary{% else %}badge-warning{% endif %}">
+                                        {{ session.period.upper() }}
+                                    </span>
+                                </td>
+                                <td>{{ metric.foliar_area_cm2 }} cm²</td>
+                                <td>{{ metric.plant_height_cm }} cm</td>
+                                <td>{{ metric.stem_diameter_mm }} mm</td>
+                                <td>
+                                    <span style="color: {% if metric.health_index >= 90 %}var(--accent-success){% elif metric.health_index >= 75 %}var(--accent-warning){% else %}var(--accent-danger){% endif %}; font-weight: 600;">
+                                        {{ metric.health_index }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px 0;">
+                                Ningún muestreo diario registrado.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Inyectar datos históricos de crecimiento biométrico desde Flask
+    const growthData = {{ growth_data | tojson | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/processing.js') }}"></script>
+{% endblock %}

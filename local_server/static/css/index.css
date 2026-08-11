@@ -1,0 +1,1132 @@
+/* ==========================================================================
+   SIFMA - PREMIUM GLASSMORPHISM SYSTEM DESIGN (LIGHT THEME)
+   ========================================================================== */
+
+/* 1. VARIABLES Y DISEÑO CORE */
+:root {
+    --bg-main: #f3f6fc;
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-sidebar: rgba(255, 255, 255, 0.85);
+    
+    /* HSL Tailored Palettes */
+    --accent-success: #10b981;       /* Emerald / Mint */
+    --accent-success-glow: rgba(16, 185, 129, 0.08);
+    --accent-primary: #3b82f6;       /* Electric Blue */
+    --accent-primary-glow: rgba(59, 130, 246, 0.08);
+    --accent-warning: #d97706;       /* Amber - Darker for readability */
+    --accent-danger: #dc2626;        /* Crimson Red - Darker for readability */
+    
+    /* Text colors */
+    --text-main: #0f172a;            /* Slate-900 */
+    --text-muted: #475569;           /* Slate-600 */
+    --text-inactive: #94a3b8;        /* Slate-400 */
+    
+    /* Glassmorphism Specs */
+    --glass-border: rgba(15, 23, 42, 0.08);
+    --glass-border-focus: rgba(16, 185, 129, 0.5);
+    --shadow-premium: 0 10px 30px 0 rgba(15, 23, 42, 0.04);
+    --shadow-glow: 0 0 20px 0 rgba(16, 185, 129, 0.15);
+    
+    /* Fonts */
+    --font-heading: 'Outfit', 'Inter', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    
+    /* Transition times */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Reset y configuraciones generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 23, 42, 0.15) transparent;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.07) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.07) 0%, transparent 50%);
+    background-attachment: fixed;
+}
+
+/* Contenedor Principal de la App */
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ==========================================================================
+   2. ESTILOS DE LA BARRA LATERAL (SIDEBAR)
+   ========================================================================== */
+.sidebar {
+    width: 280px;
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: 30px 24px;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 45px;
+    padding-left: 6px;
+}
+
+.brand-logo-container {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.brand-icon-focus {
+    position: absolute;
+    font-size: 40px !important;
+    color: rgba(16, 185, 129, 0.3);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand-icon-leaf {
+    position: absolute;
+    font-size: 20px !important;
+    color: var(--accent-success);
+    text-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Micro-animación de escaneo de visión por computadora */
+.brand-logo-container:hover .brand-icon-focus {
+    transform: rotate(45deg);
+    color: var(--accent-success);
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.brand-logo-container:hover .brand-icon-leaf {
+    transform: scale(1.25);
+    text-shadow: 0 0 16px rgba(16, 185, 129, 1);
+}
+
+.sidebar-brand h2 {
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, var(--text-main), var(--text-muted));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+}
+
+.nav-item span {
+    font-size: 22px;
+}
+
+.nav-item:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.03);
+    transform: translateX(4px);
+}
+
+.nav-item.active {
+    color: var(--text-main);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.03) 100%);
+    border-left: 3px solid var(--accent-success);
+    box-shadow: inset 8px 0 16px -8px rgba(16, 185, 129, 0.2);
+}
+
+.nav-item.active span {
+    color: var(--accent-success);
+}
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.node-status-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-indicator.online {
+    background-color: var(--accent-success);
+    box-shadow: 0 0 8px var(--accent-success);
+}
+
+.status-indicator.online::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--accent-success);
+    animation: pulse-ring 2s infinite;
+}
+
+.status-details .status-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-details .status-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.footer-copy {
+    font-size: 11px;
+    color: var(--text-inactive);
+    text-align: center;
+}
+
+/* ==========================================================================
+   3. ÁREA DE CONTENIDO PRINCIPAL
+   ========================================================================== */
+.main-content {
+    flex-grow: 1;
+    margin-left: 280px;
+    min-height: 100vh;
+    padding: 40px 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 25px;
+}
+
+.header-title .pre-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent-success);
+    font-weight: 600;
+}
+
+.header-title h1 {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.time-badge {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.time-badge span.text-success {
+    color: var(--accent-success);
+}
+
+/* Contenedor del Viewport */
+.content-viewport {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+}
+
+/* ==========================================================================
+   4. COMPONENTES: DISEÑO GLASSMORPHISM (CARDS)
+   ========================================================================== */
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 26px;
+    box-shadow: var(--shadow-premium);
+    transition: var(--transition-smooth);
+}
+
+.glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.6);
+}
+
+.glass-card-title {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+}
+
+.glass-card-title span {
+    color: var(--accent-success);
+}
+
+/* ==========================================================================
+   5. GRIDS Y LAYOUTS MÓVILES/RESPONSIVOS
+   ========================================================================== */
+/* Grid de Tarjetas de Métricas de Crecimiento */
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 20px;
+}
+
+.metric-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.metric-header .icon-container {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+}
+
+.metric-header .icon-container.success {
+    background: var(--accent-success-glow);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: var(--accent-success);
+}
+
+.metric-header .icon-container.primary {
+    background: var(--accent-primary-glow);
+    border-color: rgba(59, 130, 246, 0.2);
+    color: var(--accent-primary);
+}
+
+.metric-header .icon-container.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: var(--accent-warning);
+}
+
+.metric-header .icon-container.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: var(--accent-danger);
+}
+
+.metric-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.metric-value-container {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.metric-value {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.metric-unit {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.metric-footer {
+    font-size: 11px;
+    color: var(--text-inactive);
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    padding-top: 10px;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Grid de Gráficas */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
+}
+
+.chart-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+@media (max-width: 1024px) {
+    .chart-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-container {
+    height: 320px;
+    position: relative;
+    width: 100%;
+}
+
+/* Grid de Configuración */
+.config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 25px;
+}
+
+@media (max-width: 1200px) {
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   6. COMPARADOR DE IMÁGENES SLIDER (GALERÍA)
+   ========================================================================== */
+.split-gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+@media (max-width: 900px) {
+    .split-gallery-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gallery-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gallery-title {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.gallery-date-badge {
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    color: var(--text-muted);
+}
+
+/* Slider de Comparación de Imágenes interactivo */
+.img-slider-container {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.img-slider-image {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.img-slider-before {
+    z-index: 1;
+}
+
+.img-slider-after {
+    z-index: 2;
+    clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+    transition: clip-path 0.05s linear;
+}
+
+.img-slider-range {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    opacity: 0;
+    cursor: ew-resize;
+    z-index: 5;
+    -webkit-appearance: none;
+}
+
+.img-slider-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 3px;
+    background: var(--accent-success);
+    z-index: 3;
+    pointer-events: none;
+    box-shadow: 0 0 10px var(--accent-success);
+    transform: translateX(-50%);
+}
+
+.img-slider-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    border: 3px solid var(--accent-success);
+    z-index: 4;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-success);
+}
+
+.img-slider-button span {
+    font-size: 18px;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.label-original {
+    color: var(--text-muted);
+}
+
+.label-processed {
+    color: var(--accent-success);
+}
+
+/* ==========================================================================
+   7. FORMULARIOS, SLIDERS Y CONTROLES
+   ========================================================================== */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: var(--transition-smooth);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-success);
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+
+/* Control Deslizante (Range Input) */
+.range-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.range-slider {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.05);
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-success);
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--accent-success);
+    transition: var(--transition-smooth);
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.range-value {
+    width: 45px;
+    text-align: right;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-success);
+}
+
+/* Botones Premium */
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    filter: brightness(1.05);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+/* Toggle Switch */
+.switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.08);
+    transition: .4s;
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+}
+
+.slider-round:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-muted);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider-round {
+    background-color: var(--accent-success-glow);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+input:checked + .slider-round:before {
+    transform: translateX(24px);
+    background-color: var(--accent-success);
+    box-shadow: 0 0 6px var(--accent-success);
+}
+
+/* ==========================================================================
+   8. TABLAS DE DATOS PREMIUM
+   ========================================================================== */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.premium-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+.premium-table th {
+    padding: 16px 20px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.premium-table td {
+    padding: 16px 20px;
+    color: var(--text-main);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.premium-table tr:hover {
+    background: rgba(15, 23, 42, 0.02);
+}
+
+/* Badges y Etiquetas */
+.badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge-success {
+    background: var(--accent-success-glow);
+    color: var(--accent-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-primary {
+    background: var(--accent-primary-glow);
+    color: var(--accent-primary);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* ==========================================================================
+   9. KEYFRAMES Y ANIMACIONES
+   ========================================================================== */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.pulse-text {
+    animation: text-pulse 2s infinite;
+}
+
+@keyframes text-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.65;
+    }
+}
+
+/* ==========================================================================
+   10. SOPORTE DE BARRA LATERAL OCULTABLE, RESPONSIVA Y REDIMENSIONABLE
+   ========================================================================== */
+
+/* Resizer de arrastre vertical */
+.sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 110;
+    background: transparent;
+    transition: background 0.2s ease;
+}
+.sidebar-resizer:hover,
+.sidebar-resizer.resizing {
+    background: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Evitar retraso de animación mientras se arrastra y redimensiona */
+.sidebar.resizing {
+    transition: none !important;
+}
+.main-content.resizing {
+    transition: none !important;
+}
+
+/* Botón interactivo de colapso en cabecera */
+.sidebar-toggle-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-premium);
+}
+.sidebar-toggle-btn span {
+    font-size: 20px;
+}
+.sidebar-toggle-btn:hover {
+    border-color: var(--accent-success);
+    color: var(--accent-success);
+    background: var(--accent-success-glow);
+    transform: scale(1.05);
+}
+.sidebar-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Estilos de barra lateral colapsada (Escritorio) */
+.sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 0 !important;
+    padding: 0 !important;
+    border-right: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+.main-content.sidebar-collapsed {
+    margin-left: 0 !important;
+}
+
+/* Vista Responsive para tabletas y dispositivos móviles */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px !important;
+        opacity: 0;
+        pointer-events: none;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        z-index: 120;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(0) !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 24px 20px !important;
+    }
+    
+    .sidebar-resizer {
+        display: none !important;
+    }
+    
+    /* Overlay translúcido de fondo para colapsar en móvil */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 115;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* Fallback robusto para asegurar que los iconos de Google siempre se rendericen como fuente tipográfica */
+.material-icons-round {
+    font-family: 'Material Icons Round', 'Material Icons' !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
+}
+
+/* ==========================================================================
+   11. ESTILOS DE LA GALERÍA CON FILTROS Y MINIATURAS INTERACTIVAS
+   ========================================================================== */
+
+/* Botón interactivo de período */
+.btn-period {
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+}
+
+.btn-period:hover {
+    transform: translateY(-1px);
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--text-main);
+}
+
+.btn-period.active {
+    background: var(--accent-success-glow);
+    border-color: var(--accent-success);
+    color: var(--accent-success);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+}
+
+/* Tarjeta Miniatura de Captura */
+.capture-thumb-card {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-premium);
+}
+
+.capture-thumb-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(15, 23, 42, 0.15);
+}
+
+.capture-thumb-card.active {
+    border-color: var(--accent-success);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(16, 185, 129, 0.01) 100%);
+}
+
+.thumb-images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 65px;
+    border: 1px solid var(--glass-border);
+    margin-bottom: 10px;
+}
+
+.thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumb-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+.thumb-date {
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.thumb-crop {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-inactive);
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   12. TARJETAS DE ALERTA DE TELEMETRÍA (LÍMITES SEGURIDAD ESP32)
+   ========================================================================== */
+.glass-card.alert-warning {
+    border-color: var(--accent-warning);
+    background: rgba(217, 119, 6, 0.04);
+    box-shadow: 0 0 15px rgba(217, 119, 6, 0.08);
+}
+
+.glass-card.alert-critical {
+    background: #ff5b5b !important;
+    border-color: #ff3b3b !important;
+    box-shadow: 0 10px 30px rgba(255, 91, 91, 0.25) !important;
+}
+
+.glass-card.alert-critical .metric-value,
+.glass-card.alert-critical .metric-label,
+.glass-card.alert-critical .metric-unit,
+.glass-card.alert-critical .metric-footer,
+.glass-card.alert-critical .metric-footer span {
+    color: #ffffff !important;
+}
+
+.glass-card.alert-critical .icon-container {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.glass-card.alert-overload {
+    border-color: var(--accent-danger);
+    background: rgba(220, 38, 38, 0.02);
+    animation: border-pulse-red 2s infinite alternate;
+}
+
+@keyframes border-pulse-red {
+    0% {
+        border-color: rgba(220, 38, 38, 0.2);
+        box-shadow: var(--shadow-premium);
+    }
+    100% {
+        border-color: rgba(220, 38, 38, 0.85);
+        box-shadow: 0 0 15px rgba(220, 38, 38, 0.15);
+    }
+}
+

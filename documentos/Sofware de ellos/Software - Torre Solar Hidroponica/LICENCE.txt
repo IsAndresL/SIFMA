@@ -1,0 +1,14 @@
+---
+ `LICENSE.txt` (Vertical Ascend)
+```
+Copyright (c) 2025 Vertical Ascend. Todos los derechos reservados.
+
+Este software es propiedad de Vertical Ascend.
+Está prohibida su copia, modificación, distribución o uso comercial sin autorización expresa por escrito.
+
+Condiciones de uso:
+- El software se entrega junto con la torre solar hidropónica como valor agregado.
+- No se permite su venta o distribución independiente sin consentimiento.
+- Vertical Ascend no se hace responsable por daños derivados del mal uso del software.
+
+Contacto: [ventas@verticalascend.com]

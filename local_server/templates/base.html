@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SIFMA: Sistema Integral de Procesamiento de Imágenes Asistido por Computadora, Fenotipado y Monitoreo Ambiental en Torre Hidropónica.">
+    <title>SIFMA - {% block title %}Dashboard{% endblock %}</title>
+    
+    <!-- Google Fonts: Outfit (títulos) e Inter (cuerpo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Chart.js para gráficas fluidas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Estilos Premium Personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="light-theme">
+    <div class="app-container">
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo-container" title="Enfoque de Fenotipado por Visión SIFMA">
+                    <span class="material-icons-round brand-icon-focus">center_focus_strong</span>
+                    <span class="material-icons-round brand-icon-leaf">spa</span>
+                </div>
+                <h2>SIFMA</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('index') }}" class="nav-item {% if request.path == '/' %}active{% endif %}" id="nav-dashboard">
+                    <span class="material-icons-round">dashboard</span>
+                    <span>Monitoreo</span>
+                </a>
+                <a href="{{ url_for('detailed_sensors') }}" class="nav-item {% if '/sensors' in request.path %}active{% endif %}" id="nav-sensors">
+                    <span class="material-icons-round">sensors</span>
+                    <span>Sensores</span>
+                </a>
+                <a href="{{ url_for('processing_panel') }}" class="nav-item {% if '/processing' in request.path %}active{% endif %}" id="nav-processing">
+                    <span class="material-icons-round">memory</span>
+                    <span>Procesamiento</span>
+                </a>
+                <a href="{{ url_for('gallery') }}" class="nav-item {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery">
+                    <span class="material-icons-round">photo_library</span>
+                    <span>Galería</span>
+                </a>
+                <a href="{{ url_for('configuration_panel') }}" class="nav-item {% if '/config' in request.path %}active{% endif %}" id="nav-config">
+                    <span class="material-icons-round">settings</span>
+                    <span>Configuración</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-item" id="nav-logout" style="margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--accent-danger);">
+                    <span class="material-icons-round">logout</span>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="node-status-card">
+                    <div class="status-indicator online"></div>
+                    <div class="status-details">
+                        <p class="status-title">Nodo RPi 5</p>
+                        <p class="status-desc">Alineado Secuencial</p>
+                    </div>
+                </div>
+                <p class="footer-copy">&copy; 2026 SIFMA Project</p>
+            </div>
+            <!-- Resize handle bar -->
+            <div class="sidebar-resizer" id="sidebar-resizer"></div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Mostrar/Ocultar Menú">
+                        <span class="material-icons-round">menu</span>
+                    </button>
+                    <div class="header-title">
+                        <span class="pre-title">Torre Hidropónica Vertical</span>
+                        <h1 id="page-heading">{% block heading %}Dashboard de Monitoreo{% endblock %}</h1>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="time-badge">
+                        <span class="material-icons-round text-success">schedule</span>
+                        <span id="header-time">--:--:--</span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-viewport">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Actualizar reloj del header en tiempo real
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('header-time').textContent = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+    
+    <script>
+        // LÓGICA DE BARRA LATERAL OCULTABLE, RESPONSIVA Y REDIMENSIONABLE (DRAGGABLE)
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+            const resizer = document.getElementById('sidebar-resizer');
+            
+            // 1. COMPORTAMIENTO DE OCULTAR / COLAPSAR
+            // Cargar preferencia persistente de localStorage
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            if (isCollapsed && window.innerWidth > 768) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('sidebar-collapsed');
+            }
+            
+            // Crear el overlay para móvil si no existe
+            let overlay = document.querySelector('.sidebar-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'sidebar-overlay';
+                document.body.appendChild(overlay);
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    // Móvil: abre como cajón/drawer
+                    sidebar.classList.toggle('mobile-open');
+                    overlay.classList.toggle('active');
+                } else {
+                    // Escritorio: colapsa lateralmente
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+                }
+            });
+            
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            });
+            
+            // 2. COMPORTAMIENTO REDIMENSIONABLE (DRAG ARRASTRAR - SÓLO ESCRITORIO)
+            let isResizing = false;
+            
+            // Cargar ancho guardado si existe
+            const savedWidth = localStorage.getItem('sidebar-width');
+            if (savedWidth && window.innerWidth > 768 && !isCollapsed) {
+                sidebar.style.width = savedWidth + 'px';
+                mainContent.style.marginLeft = savedWidth + 'px';
+            }
+            
+            resizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizing = true;
+                resizer.classList.add('resizing');
+                sidebar.classList.add('resizing');
+                mainContent.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                let newWidth = e.clientX;
+                
+                // Restricciones de ancho (Min 180px, Max 450px)
+                if (newWidth < 180) newWidth = 180;
+                if (newWidth > 450) newWidth = 450;
+                
+                sidebar.style.width = newWidth + 'px';
+                mainContent.style.marginLeft = newWidth + 'px';
+                localStorage.setItem('sidebar-width', newWidth);
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    resizer.classList.remove('resizing');
+                    sidebar.classList.remove('resizing');
+                    mainContent.classList.remove('resizing');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    
+                    // Notificar a Chart.js que el contenedor cambió de tamaño para redibujar
+                    if (window.Chart) {
+                        Object.values(Chart.instances).forEach(chart => chart.resize());
+                    }
+                }
+            });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
