@@ -35,41 +35,49 @@
             </div>
             
             <nav class="sidebar-nav">
-                <a href="{{ url_for('index') }}" class="nav-item {% if request.path == '/' %}active{% endif %}" id="nav-dashboard">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.path == '/' %}active{% endif %}" id="nav-dashboard">
                     <span class="material-icons-round">dashboard</span>
                     <span>Monitoreo</span>
                 </a>
-                <a href="{{ url_for('detailed_sensors') }}" class="nav-item {% if '/sensors' in request.path %}active{% endif %}" id="nav-sensors">
+                <a href="{{ url_for('dashboard.detailed_sensors') }}" class="nav-item {% if '/sensors' in request.path %}active{% endif %}" id="nav-sensors">
                     <span class="material-icons-round">sensors</span>
                     <span>Sensores</span>
                 </a>
-                <a href="{{ url_for('processing_panel') }}" class="nav-item {% if '/processing' in request.path %}active{% endif %}" id="nav-processing">
+                <a href="{{ url_for('dashboard.processing_panel') }}" class="nav-item {% if '/processing' in request.path %}active{% endif %}" id="nav-processing">
                     <span class="material-icons-round">memory</span>
                     <span>Procesamiento</span>
                 </a>
-                <a href="{{ url_for('gallery') }}" class="nav-item {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery">
+                <a href="{{ url_for('dashboard.gallery') }}" class="nav-item {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery">
                     <span class="material-icons-round">photo_library</span>
                     <span>Galería</span>
                 </a>
-                <a href="{{ url_for('configuration_panel') }}" class="nav-item {% if '/config' in request.path %}active{% endif %}" id="nav-config">
+                <a href="{{ url_for('dashboard.configuration_panel') }}" class="nav-item {% if '/config' in request.path %}active{% endif %}" id="nav-config">
                     <span class="material-icons-round">settings</span>
                     <span>Configuración</span>
                 </a>
-                <a href="{{ url_for('logout') }}" class="nav-item" id="nav-logout" style="margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--accent-danger);">
+                <a href="{{ url_for('dashboard.logout') }}" class="nav-item" id="nav-logout" style="margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--accent-danger);">
                     <span class="material-icons-round">logout</span>
                     <span>Cerrar Sesión</span>
                 </a>
             </nav>
             
             <div class="sidebar-footer">
-                <div class="node-status-card">
-                    <div class="status-indicator online"></div>
-                    <div class="status-details">
-                        <p class="status-title">Nodo RPi 5</p>
-                        <p class="status-desc">Alineado Secuencial</p>
+                <div class="node-status-card" style="background: rgba(16, 185, 129, 0.05); border: 1px solid var(--accent-success); padding: 10px; border-radius: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                        <div class="status-indicator online"></div>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--accent-success); text-transform: uppercase;">Canastilla de Cultivo</span>
                     </div>
+                    <select id="active-plant-selector" style="width: 100%; background: var(--bg-main); color: var(--text-heading); border: 1px solid var(--glass-border); padding: 6px 8px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;" onchange="window.location.href='{{ url_for('dashboard.set_active_plant', plant_id=0) }}'.replace('0', this.value)">
+                        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>🧺 Canastilla #1 (Nodo RPi 1)</option>
+                        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>🧺 Canastilla #2 (Nodo RPi 2)</option>
+                        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>🧺 Canastilla #3 (Nodo RPi 3)</option>
+                        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>🧺 Canastilla #4 (Nodo RPi 4)</option>
+                    </select>
                 </div>
-                <p class="footer-copy">&copy; 2026 SIFMA Project</p>
+                <p class="footer-copy" style="font-size: 11px; line-height: 1.4; color: var(--text-muted); margin-top: 8px;">
+                    Elaborado por Estudiantes de Ing. de Sistemas<br>
+                    <strong style="color: var(--text-heading);">Andres Luna y Cristian Peña</strong>
+                </p>
             </div>
             <!-- Resize handle bar -->
             <div class="sidebar-resizer" id="sidebar-resizer"></div>

@@ -5,46 +5,158 @@
 
 {% block content %}
 
+<!-- PANEL DE CARGA E IMPORTACIÓN DESDE MEMORIA USB (MODO OFFLINE) -->
+<div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid var(--accent-success);">
+    <div class="glass-card-title" style="justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="material-icons-round" style="color: #10b981; font-size: 28px;">usb</span>
+            <div>
+                <h3 style="font-size: 18px;">Importar Lotes de USB por Calendario</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Procesamiento offline para <strong>Canastilla #{{ active_plant_id }} (Nodo RPi {{ active_plant_id }})</strong></p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline" id="btn-mode-usb" onclick="switchImportMode('usb')" style="padding: 6px 14px; font-size: 12px; border-color: var(--accent-success); color: var(--accent-success);">
+                <span class="material-icons-round" style="font-size: 16px;">usb_drive</span> Detección Automática USB
+            </button>
+            <button class="btn btn-outline" id="btn-mode-drag" onclick="switchImportMode('drag')" style="padding: 6px 14px; font-size: 12px;">
+                <span class="material-icons-round" style="font-size: 16px;">file_upload</span> Arrastrar Archivos / ZIP
+            </button>
+        </div>
+    </div>
+
+    <!-- CALENDARIO ÚNICO DE SELECCIÓN DE FECHA -->
+    <div style="background: rgba(16, 185, 129, 0.04); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--accent-success); margin-top: 15px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="color: var(--accent-success); font-size: 28px;">calendar_month</span>
+                <div>
+                    <label style="font-weight: 700; font-size: 15px; color: var(--text-heading);">
+                        Calendario de Muestreo - Seleccionar Fecha del Lote
+                    </label>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                        Selecciona la fecha para procesar y asignar las fotos de la <strong>Canastilla #{{ active_plant_id }}</strong>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- SELECTOR DE FECHA DE CALENDARIO -->
+            <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-main); padding: 8px 16px; border-radius: 10px; border: 1.5px solid var(--accent-success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);">
+                <span class="material-icons-round" style="font-size: 20px; color: var(--accent-success);">edit_calendar</span>
+                <input type="date" id="calendar-date-picker" class="form-control" style="background: transparent; border: none; font-weight: 700; font-size: 15px; color: var(--text-heading); cursor: pointer;" onchange="onCalendarDateChange(this.value)">
+            </div>
+        </div>
+
+        <!-- LISTADO DE FECHAS YA REGISTRADAS Y PROCESADAS -->
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                <span class="material-icons-round" style="font-size: 14px;">check_circle</span> Fechas ya Registradas:
+            </span>
+            {% if processed_periods %}
+                {% for p in processed_periods %}
+                    <span class="badge badge-success" style="font-size: 11px; cursor: pointer;" title="Haz clic para seleccionar esta fecha" onclick="selectProcessedDate('{{ p }}')">
+                        ✅ {{ p }}
+                    </span>
+                {% endfor %}
+            {% else %}
+                <span style="font-size: 11px; color: var(--text-muted);">Ninguna fecha registrada aún para esta canastilla</span>
+            {% endif %}
+        </div>
+
+        <!-- ADVERTENCIA DE SOBREESCRITURA SI LA FECHA YA FUE PROCESADA -->
+        <div id="overwrite-warning-box" style="display: none; margin-top: 12px; background: rgba(245, 158, 11, 0.12); border: 1px solid var(--accent-warning); padding: 10px 14px; border-radius: 8px; color: var(--accent-warning); font-size: 12px; font-weight: 600; align-items: center; gap: 8px;">
+            <span class="material-icons-round" style="font-size: 20px;">warning</span>
+            <span id="overwrite-warning-text">Advertencia: Esta fecha ya tiene un muestreo registrado. Si procesas de nuevo se actualizarán y reemplazarán los datos.</span>
+        </div>
+    </div>
+
+    <!-- MODO 1: DETECCIÓN AUTOMÁTICA DE MEMORIAS USB CONECTADAS -->
+    <div id="import-mode-usb-container" style="margin-top: 15px; background: rgba(255,255,255,0.02); padding: 18px; border-radius: 12px; border: 1px dashed var(--glass-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-heading);">Carpetas y Lotes USB Detectados:</span>
+            <button class="btn btn-primary" onclick="scanUSBDrives()" style="padding: 6px 14px; font-size: 12px;">
+                <span class="material-icons-round" style="font-size: 16px;">search</span> Escanear Memorias USB
+            </button>
+        </div>
+        
+        <div id="usb-scan-results" style="display: flex; flex-direction: column; gap: 10px; min-height: 50px;">
+            <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 10px;">
+                Haz clic en <strong>"Escanear Memorias USB"</strong> para buscar las carpetas guardadas en la memoria.
+            </p>
+        </div>
+    </div>
+
+    <!-- MODO 2: ARRASTRAR Y SOLTAR ARCHIVOS / ZIP (DRAG & DROP) -->
+    <div id="import-mode-drag-container" style="margin-top: 15px; display: none;">
+        <form id="upload-form" enctype="multipart/form-data">
+            <div id="drop-zone" style="border: 2px dashed var(--accent-success); border-radius: 12px; padding: 30px; text-align: center; background: rgba(16, 185, 129, 0.03); cursor: pointer; transition: all 0.2s ease;">
+                <span class="material-icons-round" style="font-size: 48px; color: var(--accent-success); margin-bottom: 8px;">cloud_upload</span>
+                <h4 style="margin-bottom: 4px; font-size: 15px;">Arrastra aquí la carpeta de imágenes de la fecha seleccionada</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">O haz clic para seleccionar las fotos cenitales y laterales del día</p>
+                <input type="file" id="file-input" name="images" multiple accept="image/*,.zip" style="display: none;">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click();">
+                    Seleccionar Archivos de la USB
+                </button>
+            </div>
+            
+            <div id="selected-files-summary" style="margin-top: 12px; font-size: 13px; color: var(--accent-success); display: none;">
+                <span class="material-icons-round" style="vertical-align: middle; font-size: 18px;">check_circle</span>
+                <span id="files-count-text">0 archivos seleccionados</span>
+                <button type="button" class="btn btn-primary" id="btn-submit-manual" onclick="submitManualBatch()" style="margin-left: 15px; padding: 8px 18px; font-weight: 700;">
+                    Subir y Procesar Lote para Canastilla #{{ active_plant_id }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- BARRA DE PROGRESO DE PROCESAMIENTO (0% A 100%) -->
+    <div id="processing-status-bar" style="margin-top: 15px; display: none; background: rgba(0,0,0,0.4); padding: 16px 20px; border-radius: 10px; border: 1px solid var(--accent-success);">
+        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+            <span id="status-message" style="font-weight: 600; color: var(--accent-success);">Iniciando algoritmos de visión artificial OpenCV/PlantCV...</span>
+            <span id="status-percent" style="font-weight: 700; color: var(--accent-success); font-size: 16px;">0%</span>
+        </div>
+        <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+            <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.3s ease;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- GRID DE GRÁFICAS BIOMÉTRICAS DETALLADAS (ANÁLISIS DE IMAGEN) -->
 <div class="chart-grid-2" style="margin-bottom: 25px;">
-    <!-- Gráfica 1: Área Foliar -->
     <div class="glass-card">
         <div class="glass-card-title">
             <span class="material-icons-round" style="color: #10b981;">spa</span>
-            <h3>Área Foliar Estimada (cm²)</h3>
+            <h3>Área Foliar Estimada (cm²) - Canastilla #{{ active_plant_id }}</h3>
         </div>
         <div class="chart-container">
             <canvas id="foliarAreaChart"></canvas>
         </div>
     </div>
 
-    <!-- Gráfica 2: Altura Planta -->
     <div class="glass-card">
         <div class="glass-card-title">
             <span class="material-icons-round" style="color: #3b82f6;">straighten</span>
-            <h3>Altura Estimada de la Planta (cm)</h3>
+            <h3>Altura Estimada de la Planta (cm) - Canastilla #{{ active_plant_id }}</h3>
         </div>
         <div class="chart-container">
             <canvas id="plantHeightChart"></canvas>
         </div>
     </div>
 
-    <!-- Gráfica 3: Diámetro del Tallo -->
     <div class="glass-card">
         <div class="glass-card-title">
             <span class="material-icons-round" style="color: #f59e0b;">adjust</span>
-            <h3>Diámetro del Tallo Basal (mm)</h3>
+            <h3>Diámetro del Tallo Basal (mm) - Canastilla #{{ active_plant_id }}</h3>
         </div>
         <div class="chart-container">
             <canvas id="stemDiameterChart"></canvas>
         </div>
     </div>
 
-    <!-- Gráfica 4: Índice de Salud -->
     <div class="glass-card">
         <div class="glass-card-title">
             <span class="material-icons-round" style="color: #dc2626;">health_and_safety</span>
-            <h3>Índice de Salud Foliar (%)</h3>
+            <h3>Índice de Salud Foliar (%) - Canastilla #{{ active_plant_id }}</h3>
         </div>
         <div class="chart-container">
             <canvas id="healthIndexChart"></canvas>
@@ -53,30 +165,27 @@
 </div>
 
 <div class="config-grid">
-    <!-- Último Procesamiento (Cámara Cenital y Lateral) -->
     <div class="glass-card">
         <div class="glass-card-title">
             <span class="material-icons-round">camera_enhance</span>
-            <h3>Última Sesión de Procesamiento</h3>
+            <h3>Última Sesión Procesada (Canastilla #{{ active_plant_id }})</h3>
         </div>
         
         {% if latest_session and latest_metric %}
         <div style="display: flex; flex-direction: column; gap: 15px;">
             <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);">
-                <span>Periodo: <strong class="text-success">{{ latest_session.period.upper() }}</strong></span>
+                <span>Fecha/Muestreo: <strong class="text-success">{{ latest_session.period.upper() }}</strong></span>
                 <span>Especie: <strong>{{ selected_profile.display_name if selected_profile else latest_session.crop_type }}</strong></span>
-                <span>Fecha: <strong>{{ latest_session.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong></span>
+                <span>Registrado: <strong>{{ latest_session.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong></span>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <!-- Miniatura Cenital -->
                 <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; height: 210px;">
                     <img src="{{ url_for('static', filename=latest_metric.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
                     <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--accent-success); color: var(--accent-success);">
                         CENITAL (Máscara)
                     </div>
                 </div>
-                <!-- Miniatura Lateral -->
                 <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; height: 210px;">
                     <img src="{{ url_for('static', filename=latest_metric.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
                     <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--accent-primary); color: var(--accent-primary);">
@@ -99,8 +208,8 @@
         {% else %}
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 260px; color: var(--text-muted); text-align: center;">
             <span class="material-icons-round" style="font-size: 56px; margin-bottom: 12px; color: var(--text-inactive);">photo_camera</span>
-            <p>No se han recibido lotes de imágenes aún.</p>
-            <p style="font-size: 12px; margin-top: 4px;">Usa el script de simulación para subir tus primeras capturas.</p>
+            <p>No hay muestreos registrados para la <strong>Canastilla #{{ active_plant_id }}</strong>.</p>
+            <p style="font-size: 12px; margin-top: 4px;">Selecciona la fecha en el calendario arriba y procesa fotos desde la USB.</p>
         </div>
         {% endif %}
     </div>
@@ -109,15 +218,15 @@
     <div class="glass-card">
         <div class="glass-card-title">
             <span class="material-icons-round">list_alt</span>
-            <h3>Historial Reciente de Muestreo</h3>
+            <h3>Historial de Muestreo (Canastilla #{{ active_plant_id }})</h3>
         </div>
         
         <div class="table-responsive">
             <table class="premium-table">
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Periodo</th>
+                        <th>Fecha Muestreo</th>
+                        <th>Etiqueta</th>
                         <th>Área Foliar</th>
                         <th>Altura</th>
                         <th>Tallo</th>
@@ -125,14 +234,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if recent_sessions %}
-                        {% for session in recent_sessions %}
+                    {% if sessions %}
+                        {% for session in sessions %}
                             {% if session.metrics %}
                             {% set metric = session.metrics[0] %}
                             <tr>
                                 <td>{{ session.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td>
-                                    <span class="badge {% if session.period == 'mañana' %}badge-success{% elif session.period == 'mediodía' %}badge-primary{% else %}badge-warning{% endif %}">
+                                    <span class="badge badge-success" style="font-weight: 700;">
                                         {{ session.period.upper() }}
                                     </span>
                                 </td>
@@ -150,7 +259,7 @@
                     {% else %}
                         <tr>
                             <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px 0;">
-                                Ningún muestreo diario registrado.
+                                Ningún muestreo registrado para esta canastilla.
                             </td>
                         </tr>
                     {% endif %}
@@ -163,8 +272,305 @@
 
 {% block scripts %}
 <script>
-    // Inyectar datos históricos de crecimiento biométrico desde Flask
+    const activePlantId = {{ active_plant_id }};
+    const processedPeriods = {{ processed_periods | tojson | safe }};
+    let progressTimer = null;
+
+    // Inicializar picker con la fecha de hoy
+    document.addEventListener('DOMContentLoaded', () => {
+        const datePicker = document.getElementById('calendar-date-picker');
+        if (datePicker && !datePicker.value) {
+            const today = new Date().toISOString().split('T')[0];
+            datePicker.value = today;
+            onCalendarDateChange(today);
+        }
+    });
+
+    function getSelectedCultivationPeriod() {
+        const dateVal = document.getElementById('calendar-date-picker').value;
+        if (dateVal) {
+            const parts = dateVal.split('-');
+            return `Fecha: ${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        const todayStr = new Date().toLocaleDateString('es-ES');
+        return `Fecha: ${todayStr}`;
+    }
+
+    function checkOverwriteStatus() {
+        const periodStr = getSelectedCultivationPeriod();
+        const warningBox = document.getElementById('overwrite-warning-box');
+        const warningText = document.getElementById('overwrite-warning-text');
+        
+        const isProcessed = processedPeriods.includes(periodStr);
+        if (isProcessed) {
+            warningBox.style.display = 'flex';
+            warningText.innerHTML = `<strong>⚠️ Muestreo Ya Registrado:</strong> La ${periodStr} ya tiene datos en la <strong>Canastilla #${activePlantId}</strong>. Al procesar se <u>sobreescribirán</u> los datos y la gráfica se actualizará.`;
+        } else {
+            warningBox.style.display = 'none';
+        }
+    }
+
+    function onCalendarDateChange(dateStr) {
+        if (!dateStr) return;
+        checkOverwriteStatus();
+        if (document.getElementById('usb-scan-results').children.length > 1) {
+            scanUSBDrives();
+        }
+    }
+
+    function selectProcessedDate(periodStr) {
+        // Formato esperado: "Fecha: DD/MM/YYYY"
+        const match = periodStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+            const yyyyMmDd = `${match[3]}-${match[2]}-${match[1]}`;
+            const datePicker = document.getElementById('calendar-date-picker');
+            if (datePicker) {
+                datePicker.value = yyyyMmDd;
+                onCalendarDateChange(yyyyMmDd);
+            }
+        }
+    }
+
+    function switchImportMode(mode) {
+        if (mode === 'usb') {
+            document.getElementById('import-mode-usb-container').style.display = 'block';
+            document.getElementById('import-mode-drag-container').style.display = 'none';
+            document.getElementById('btn-mode-usb').style.borderColor = 'var(--accent-success)';
+            document.getElementById('btn-mode-usb').style.color = 'var(--accent-success)';
+            document.getElementById('btn-mode-drag').style.borderColor = 'var(--glass-border)';
+            document.getElementById('btn-mode-drag').style.color = 'inherit';
+        } else {
+            document.getElementById('import-mode-usb-container').style.display = 'none';
+            document.getElementById('import-mode-drag-container').style.display = 'block';
+            document.getElementById('btn-mode-drag').style.borderColor = 'var(--accent-success)';
+            document.getElementById('btn-mode-drag').style.color = 'var(--accent-success)';
+            document.getElementById('btn-mode-usb').style.borderColor = 'var(--glass-border)';
+            document.getElementById('btn-mode-usb').style.color = 'inherit';
+        }
+    }
+
+    async function scanUSBDrives() {
+        const resultsDiv = document.getElementById('usb-scan-results');
+        resultsDiv.innerHTML = '<p style="color: var(--accent-primary); padding: 10px;">Escaneando carpetas en la memoria USB...</p>';
+        
+        try {
+            const resp = await fetch('/api/scan_usb');
+            const data = await resp.json();
+            
+            if (data.status === 'success' && data.batches.length > 0) {
+                let html = '';
+                const currentPeriod = getSelectedCultivationPeriod();
+                const isOverwrite = processedPeriods.includes(currentPeriod);
+                const btnText = isOverwrite ? `⚠️ Sobreescribir ${currentPeriod}` : `Asignar y Procesar para ${currentPeriod}`;
+                const btnStyle = isOverwrite ? "background: #f59e0b; border-color: #f59e0b; color: #000;" : "";
+
+                data.batches.forEach((b, idx) => {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div>
+                                <strong style="color: var(--accent-success); font-size: 14px;">📂 ${b.batch_name}</strong>
+                                <p style="font-size: 11px; color: var(--text-muted);">${b.path}</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="processUSBPath('${b.path.replace(/\\/g, '\\\\')}')" style="padding: 6px 14px; font-size: 12px; font-weight: 700; ${btnStyle}">
+                                ${btnText} (Canastilla #${activePlantId})
+                            </button>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = '<p style="color: var(--accent-warning); padding: 10px;">No se encontraron carpetas en las USB conectadas. Inserta la USB o usa el modo "Arrastrar Archivos".</p>';
+            }
+        } catch (e) {
+            resultsDiv.innerHTML = `<p style="color: var(--accent-danger); padding: 10px;">Error al escanear USB: ${e.message}</p>`;
+        }
+    }
+
+    async function processUSBPath(folderPath) {
+        const periodStr = getSelectedCultivationPeriod();
+        const isOverwrite = processedPeriods.includes(periodStr);
+        if (isOverwrite) {
+            if (!confirm(`La ${periodStr} ya existe registrada en la Canastilla #${activePlantId}.\n\n¿Deseas sobreescribir y reemplazar los datos y fotos de esta fecha?`)) {
+                return;
+            }
+        }
+
+        startSimulatedProgressBar(`Procesando lote para ${periodStr} en Canastilla #${activePlantId}...`);
+        try {
+            const resp = await fetch('/api/process_usb_path', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    folder_path: folderPath,
+                    period: periodStr,
+                    plant_id: activePlantId
+                })
+            });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                completeProgressBar("¡Procesamiento de muestreo finalizado con éxito! Actualizando vistas...");
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                alert("Error procesando USB: " + data.message);
+                hideProgressBar();
+            }
+        } catch (e) {
+            alert("Error de procesamiento: " + e.message);
+            hideProgressBar();
+        }
+    }
+
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('selected-files-summary').style.display = 'block';
+            document.getElementById('files-count-text').innerText = `${this.files.length} archivo(s) listo(s) para procesar`;
+            
+            const periodStr = getSelectedCultivationPeriod();
+            const isOverwrite = processedPeriods.includes(periodStr);
+            const btn = document.getElementById('btn-submit-manual');
+            if (isOverwrite) {
+                btn.innerText = `⚠️ Sobreescribir ${periodStr} (Canastilla #${activePlantId})`;
+                btn.style.background = "#f59e0b";
+                btn.style.borderColor = "#f59e0b";
+                btn.style.color = "#000";
+            } else {
+                btn.innerText = `Subir y Procesar Lote para Canastilla #${activePlantId}`;
+                btn.style.background = "";
+                btn.style.borderColor = "";
+                btn.style.color = "";
+            }
+        }
+    });
+
+    async function submitManualBatch() {
+        const files = fileInput.files;
+        if (!files.length) return;
+
+        const periodStr = getSelectedCultivationPeriod();
+        const isOverwrite = processedPeriods.includes(periodStr);
+        if (isOverwrite) {
+            if (!confirm(`La ${periodStr} ya existe registrada en la Canastilla #${activePlantId}.\n\n¿Deseas sobreescribir y reemplazar los datos y fotos de esta fecha?`)) {
+                return;
+            }
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+            formData.append('images', files[i]);
+        }
+        formData.append('period', periodStr);
+        formData.append('plant_id', activePlantId);
+
+        startSimulatedProgressBar(`Subiendo y procesando lote para ${periodStr} en Canastilla #${activePlantId}...`);
+        try {
+            const resp = await fetch('/api/upload_manual_batch', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                completeProgressBar("¡Procesamiento de muestreo finalizado! Recargando vistas...");
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                alert("Error al procesar: " + data.message);
+                hideProgressBar();
+            }
+        } catch (e) {
+            alert("Error al subir archivos: " + e.message);
+            hideProgressBar();
+        }
+    }
+
+    function startSimulatedProgressBar(msg) {
+        document.getElementById('processing-status-bar').style.display = 'block';
+        document.getElementById('status-message').innerText = msg;
+        
+        let currentPercent = 5;
+        updateProgressBarUI(currentPercent);
+        
+        if (progressTimer) clearInterval(progressTimer);
+        progressTimer = setInterval(() => {
+            if (currentPercent < 90) {
+                currentPercent += Math.floor(Math.random() * 8) + 3;
+                if (currentPercent > 90) currentPercent = 90;
+                updateProgressBarUI(currentPercent);
+            }
+        }, 200);
+    }
+
+    function completeProgressBar(msg) {
+        if (progressTimer) clearInterval(progressTimer);
+        updateProgressBarUI(100);
+        if (msg) document.getElementById('status-message').innerText = msg;
+    }
+
+    function updateProgressBarUI(percent) {
+        document.getElementById('progress-bar-fill').style.width = percent + '%';
+        document.getElementById('status-percent').innerText = percent + '%';
+    }
+
+    function hideProgressBar() {
+        if (progressTimer) clearInterval(progressTimer);
+        document.getElementById('processing-status-bar').style.display = 'none';
+    }
+
+    // Inyectar e inicializar gráficas de análisis biométrico en processing.html
     const growthData = {{ growth_data | tojson | safe }};
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof Chart !== 'undefined' && growthData && growthData.length > 0) {
+            const labels = growthData.map(d => d.date);
+            const areaData = growthData.map(d => d.area);
+            const heightData = growthData.map(d => d.height);
+            const diameterData = growthData.map(d => d.diameter);
+            const healthData = growthData.map(d => d.health);
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                }
+            };
+
+            const ctxArea = document.getElementById('foliarAreaChart');
+            if (ctxArea) {
+                new Chart(ctxArea, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Área (cm²)', data: areaData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#10b981' }] },
+                    options: commonOptions
+                });
+            }
+
+            const ctxHeight = document.getElementById('plantHeightChart');
+            if (ctxHeight) {
+                new Chart(ctxHeight, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Altura (cm)', data: heightData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#3b82f6' }] },
+                    options: commonOptions
+                });
+            }
+
+            const ctxStem = document.getElementById('stemDiameterChart');
+            if (ctxStem) {
+                new Chart(ctxStem, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Tallo (mm)', data: diameterData, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#f59e0b' }] },
+                    options: commonOptions
+                });
+            }
+
+            const ctxHealth = document.getElementById('healthIndexChart');
+            if (ctxHealth) {
+                new Chart(ctxHealth, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Salud (%)', data: healthData, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#ef4444' }] },
+                    options: commonOptions
+                });
+            }
+        }
+    });
 </script>
-<script src="{{ url_for('static', filename='js/processing.js') }}"></script>
 {% endblock %}

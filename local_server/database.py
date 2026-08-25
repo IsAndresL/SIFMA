@@ -17,6 +17,9 @@ class Config(db.Model):
     safe_shutdown_enabled = Column(Boolean, default=False)
     selected_crop_type = Column(String(50), default="lechuga")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     @property
     def scheduled_times(self):
         return [t.strip() for t in self.scheduled_times_str.split(",") if t.strip()]
@@ -38,10 +41,9 @@ class Config(db.Model):
 
 class CropProfile(db.Model):
     __tablename__ = 'crop_profile'
-    crop_type = Column(String(50), primary_key=True) # e.g. "lechuga", "espinaca", "tomate_cherry"
+    crop_type = Column(String(50), primary_key=True)
     display_name = Column(String(100), nullable=False)
     
-    # HSV Thresholds
     h_min = Column(Integer, default=30)
     h_max = Column(Integer, default=95)
     s_min = Column(Integer, default=35)
@@ -49,19 +51,18 @@ class CropProfile(db.Model):
     v_min = Column(Integer, default=35)
     v_max = Column(Integer, default=255)
     
-    # LAB Thresholds (L = Lightness, A = Green-Red, B = Blue-Yellow)
     l_min = Column(Integer, default=0)
     l_max = Column(Integer, default=255)
     a_min = Column(Integer, default=0)
-    a_max = Column(Integer, default=125) # Excluye tonos rojizos, favorece verdes en canal 'a'
-    b_min = Column(Integer, default=125) # Favorece amarillentos/verdes en canal 'b'
+    a_max = Column(Integer, default=125)
+    b_min = Column(Integer, default=125)
     b_max = Column(Integer, default=200)
     
-    # Physical Calibration (cm per pixel)
-    pixel_to_cm_ratio = Column(Float, default=0.015) # Valor de escala por defecto
-    
-    # Rosette vs Stemmed crop switch
+    pixel_to_cm_ratio = Column(Float, default=0.015)
     has_stem = Column(Boolean, default=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def to_json(self):
         return {
@@ -88,11 +89,14 @@ class SensorReading(db.Model):
 
     sessions = relationship("CaptureSession", back_populates="sensor_reading")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 class CaptureSession(db.Model):
     __tablename__ = 'capture_session'
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, default=datetime.now)
-    period = Column(String(50), nullable=False) # "mañana", "mediodía", "tarde"
+    period = Column(String(50), nullable=False)
     plant_id = Column(Integer, default=1)
     crop_type = Column(String(50), nullable=False)
     
@@ -101,33 +105,36 @@ class CaptureSession(db.Model):
     
     metrics = relationship("BiometricMetric", back_populates="session", cascade="all, delete-orphan")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 class BiometricMetric(db.Model):
     __tablename__ = 'biometric_metric'
     id = Column(Integer, primary_key=True)
     session_id = Column(Integer, ForeignKey('capture_session.id'), nullable=False)
     session = relationship("CaptureSession", back_populates="metrics")
     
-    # Biometric computed data
     foliar_area_cm2 = Column(Float, default=0.0)
     plant_height_cm = Column(Float, default=0.0)
     stem_diameter_mm = Column(Float, default=0.0)
-    health_index = Column(Float, default=100.0) # 0 to 100 % greenness
+    health_index = Column(Float, default=100.0)
     compacity_index = Column(Float, default=0.0)
     spots_count = Column(Integer, default=0)
     fruits_count = Column(Integer, default=0)
     
-    # Storage relative paths
     image_path_cenital_orig = Column(String(300), nullable=True)
     image_path_cenital_proc = Column(String(300), nullable=True)
     image_path_lateral_orig = Column(String(300), nullable=True)
     image_path_lateral_proc = Column(String(300), nullable=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 def init_db_data(app):
     """Inicializa la base de datos con configuraciones por defecto si no existen."""
     with app.app_context():
         db.create_all()
         
-        # 1. Configuración por defecto
         if not Config.query.first():
             default_config = Config(
                 server_url="http://127.0.0.1:5000",
@@ -139,16 +146,14 @@ def init_db_data(app):
                 selected_crop_type="lechuga"
             )
             db.session.add(default_config)
-            print("Base de datos sembrada: Configuración por defecto creada.")
 
-        # 2. Perfiles de color por especie vegetal
         default_profiles = [
             CropProfile(
                 crop_type="lechuga",
                 display_name="Lechuga (Lactuca sativa)",
                 h_min=20, h_max=100, s_min=25, s_max=255, v_min=5, v_max=255,
                 l_min=0, l_max=255, a_min=0, a_max=132, b_min=120, b_max=215,
-                pixel_to_cm_ratio=0.015, # 1px = ~0.15mm
+                pixel_to_cm_ratio=0.015,
                 has_stem=False
             ),
             CropProfile(
@@ -164,7 +169,7 @@ def init_db_data(app):
                 display_name="Tomate Cherry (Solanum lycopersicum)",
                 h_min=35, h_max=85, s_min=55, s_max=255, v_min=45, v_max=255,
                 l_min=10, l_max=240, a_min=0, a_max=122, b_min=132, b_max=200,
-                pixel_to_cm_ratio=0.012, # Escala diferente debido a altura
+                pixel_to_cm_ratio=0.012,
                 has_stem=True
             ),
             CropProfile(
@@ -178,15 +183,15 @@ def init_db_data(app):
             CropProfile(
                 crop_type="cebollin",
                 display_name="Cebollín (Allium schoenoprasum)",
-                h_min=30, h_max=95, s_min=20, s_max=255, v_min=40, v_max=255,
-                l_min=10, l_max=230, a_min=0, a_max=125, b_min=128, b_max=180,
+                h_min=20, h_max=100, s_min=15, s_max=255, v_min=15, v_max=255,
+                l_min=0, l_max=255, a_min=0, a_max=140, b_min=100, b_max=255,
                 pixel_to_cm_ratio=0.018,
                 has_stem=True
             ),
             CropProfile(
                 crop_type="ornamentales",
                 display_name="Flores Ornamentales (Color No Convencional)",
-                h_min=5, h_max=170, s_min=30, s_max=255, v_min=40, v_max=255, # Umbral ampliado
+                h_min=5, h_max=170, s_min=30, s_max=255, v_min=40, v_max=255,
                 l_min=5, l_max=250, a_min=0, a_max=255, b_min=0, b_max=255,
                 pixel_to_cm_ratio=0.015,
                 has_stem=True
@@ -196,6 +201,5 @@ def init_db_data(app):
         for profile in default_profiles:
             if not CropProfile.query.filter_by(crop_type=profile.crop_type).first():
                 db.session.add(profile)
-                print(f"Base de datos sembrada: Perfil de especie '{profile.display_name}' creado.")
 
         db.session.commit()
