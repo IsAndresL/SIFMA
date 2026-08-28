@@ -49,39 +49,42 @@ class BiometricCalculator:
     def calculate_lateral_metrics(img, mask, contours, profile):
         """
         Calcula la altura estimada de la planta (cm) y el diámetro del tallo (mm).
-        El nivel del suelo (borde de la canastilla) se sitúa al 73% de la altura de la imagen.
+        La altura se calcula con precisión entre el ápice más alto y la base del tallo detectado.
         """
         h, w, _ = img.shape
         height_cm = 0.0
         stem_diameter_mm = 0.0
         stem_draw_y = None
         stem_row_pixels = None
+        y_min = None
+        y_max = None
+        x_points = None
         
         if contours:
             all_points = np.vstack([c for c in contours])
             y_points = all_points[:, 0, 1]
             x_points = all_points[:, 0, 0]
             
-            y_min = np.min(y_points) # Punto más alto de las hojas
-            basket_rim_y = int(h * 0.73) # Suelo de referencia
+            y_min = int(np.min(y_points)) # Punto más alto de las hojas
+            y_max = int(np.max(y_points)) # Base más baja del tallo segmentado
             
-            if y_min < basket_rim_y:
-                y_max = basket_rim_y
+            if y_min < y_max:
                 height_pixels = y_max - y_min
                 height_cm = height_pixels * profile.pixel_to_cm_ratio
                 
                 # Cálculo de diámetro de tallo basal (si la especie tiene tallo)
                 has_stem = getattr(profile, 'has_stem', True)
-                if has_stem and height_cm >= 2.0:
+                if has_stem and height_cm >= 0.5:
                     widths = []
                     valid_y = []
-                    for offset in range(3, 9):
+                    # Evaluar los primeros píxeles de la base del tallo
+                    for offset in range(2, 10):
                         test_y = y_max - offset
                         if 0 <= test_y < h:
                             row_pixels = np.where(mask[test_y, :] > 0)[0]
                             if len(row_pixels) > 0:
                                 w_px = np.max(row_pixels) - np.min(row_pixels)
-                                if w_px < 60: # Evitar hojas bajas
+                                if 1 <= w_px < 60: # Descartar hojas anchas
                                     widths.append(w_px)
                                     valid_y.append(test_y)
                     
@@ -94,9 +97,9 @@ class BiometricCalculator:
         return {
             "height_cm": round(height_cm, 2),
             "stem_diameter_mm": round(stem_diameter_mm, 2),
-            "y_min": y_min if contours else None,
-            "y_max": int(h * 0.73) if contours else None,
-            "x_points": x_points if contours else None,
+            "y_min": y_min,
+            "y_max": y_max,
+            "x_points": x_points,
             "stem_draw_y": stem_draw_y,
             "stem_row_pixels": stem_row_pixels
         }

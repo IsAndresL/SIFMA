@@ -27,10 +27,33 @@ class DatabaseService:
         return profile
 
     @staticmethod
-    def save_capture_session_with_metrics(period, crop_type, sensor_data, final_metrics, cenital_paths, lateral_paths, plant_id=1):
+    def save_capture_session_with_metrics(period, crop_type, sensor_data, final_metrics, individual_metrics=None, cenital_paths=None, lateral_paths=None, plant_id=1):
         """
-        Guarda o sobreescribe una sesión de captura y sus métricas asociadas a la Canastilla y fecha dada.
+        Guarda o sobreescribe una sesión de captura y sus métricas (tanto las individuales como el promedio).
         """
+        if not cenital_paths: cenital_paths = {}
+        if not lateral_paths: lateral_paths = {}
+        if not sensor_data: sensor_data = {}
+
+        # Asociar lectura de sensor real si viene en la solicitud o buscar en la base de datos
+        sensor_id = None
+        if sensor_data and any(sensor_data.values()):
+            sensor_record = SensorReading(
+                temperature=float(sensor_data.get("temperature", 0.0)),
+                humidity=float(sensor_data.get("humidity", 0.0)),
+                uv_solar=float(sensor_data.get("uv_solar", 0.0)),
+                motor_current=float(sensor_data.get("motor_current", 0.0))
+            )
+            db.session.add(sensor_record)
+            db.session.flush()
+            sensor_id = sensor_record.id
+        else:
+            # Buscar lectura real más cercana en base de datos si existe
+            nearest_sensor = SensorReading.query.order_by(
+                db.func.abs(db.func.strftime('%s', SensorReading.timestamp) - db.func.strftime('%s', datetime.now()))
+            ).first()
+            sensor_id = nearest_sensor.id if nearest_sensor else None
+
         # Verificar si ya existe un registro para esta fecha/periodo en esta Canastilla (Sobreescritura)
         existing_session = CaptureSession.query.filter_by(
             plant_id=int(plant_id),
@@ -41,81 +64,31 @@ class DatabaseService:
             session_record = existing_session
             session_record.timestamp = datetime.now()
             session_record.crop_type = crop_type
-            
-            # Actualizar sensor asociados
-            if session_record.sensor_reading:
-                sensor_record = session_record.sensor_reading
-                sensor_record.temperature = float(sensor_data.get("temperature", 22.0))
-                sensor_record.humidity = float(sensor_data.get("humidity", 60.0))
-                sensor_record.uv_solar = float(sensor_data.get("uv_solar", 300.0))
-                sensor_record.motor_current = float(sensor_data.get("motor_current", 0.4))
-            else:
-                sensor_record = SensorReading(
-                    temperature=float(sensor_data.get("temperature", 22.0)),
-                    humidity=float(sensor_data.get("humidity", 60.0)),
-                    uv_solar=float(sensor_data.get("uv_solar", 300.0)),
-                    motor_current=float(sensor_data.get("motor_current", 0.4))
-                )
-                db.session.add(sensor_record)
-                db.session.flush()
-                session_record.sensor_reading_id = sensor_record.id
+            if sensor_id:
+                session_record.sensor_reading_id = sensor_id
 
-            # Actualizar métrica asociada
-            if session_record.metrics:
-                metrics_record = session_record.metrics[0]
-                metrics_record.foliar_area_cm2 = final_metrics.get("foliar_area_cm2", 0.0)
-                metrics_record.plant_height_cm = final_metrics.get("plant_height_cm", 0.0)
-                metrics_record.stem_diameter_mm = final_metrics.get("stem_diameter_mm", 0.0)
-                metrics_record.health_index = final_metrics.get("health_index", 100.0)
-                metrics_record.compacity_index = final_metrics.get("compacity_index", 0.0)
-                metrics_record.spots_count = final_metrics.get("spots_count", 0)
-                metrics_record.fruits_count = final_metrics.get("fruits_count", 0)
-                metrics_record.image_path_cenital_orig = cenital_paths.get("orig")
-                metrics_record.image_path_cenital_proc = cenital_paths.get("proc")
-                metrics_record.image_path_lateral_orig = lateral_paths.get("orig")
-                metrics_record.image_path_lateral_proc = lateral_paths.get("proc")
-            else:
-                metrics_record = BiometricMetric(
-                    session_id=session_record.id,
-                    foliar_area_cm2=final_metrics.get("foliar_area_cm2", 0.0),
-                    plant_height_cm=final_metrics.get("plant_height_cm", 0.0),
-                    stem_diameter_mm=final_metrics.get("stem_diameter_mm", 0.0),
-                    health_index=final_metrics.get("health_index", 100.0),
-                    compacity_index=final_metrics.get("compacity_index", 0.0),
-                    spots_count=final_metrics.get("spots_count", 0),
-                    fruits_count=final_metrics.get("fruits_count", 0),
-                    image_path_cenital_orig=cenital_paths.get("orig"),
-                    image_path_cenital_proc=cenital_paths.get("proc"),
-                    image_path_lateral_orig=lateral_paths.get("orig"),
-                    image_path_lateral_proc=lateral_paths.get("proc")
-                )
-                db.session.add(metrics_record)
-                
-            db.session.commit()
-            return session_record.id, metrics_record
+            # Limpiar métricas anteriores para sobreescritura limpia
+            for m in list(session_record.metrics):
+                db.session.delete(m)
+            db.session.flush()
 
-        # Si no existe, crear nuevo registro
-        sensor_record = SensorReading(
-            temperature=float(sensor_data.get("temperature", 22.0)),
-            humidity=float(sensor_data.get("humidity", 60.0)),
-            uv_solar=float(sensor_data.get("uv_solar", 300.0)),
-            motor_current=float(sensor_data.get("motor_current", 0.4))
-        )
-        db.session.add(sensor_record)
-        db.session.flush()
-        
-        session_record = CaptureSession(
-            period=period,
-            plant_id=int(plant_id),
-            crop_type=crop_type,
-            sensor_reading_id=sensor_record.id,
-            timestamp=datetime.now()
-        )
-        db.session.add(session_record)
-        db.session.flush()
-        
-        metrics_record = BiometricMetric(
+        else:
+            session_record = CaptureSession(
+                period=period,
+                plant_id=int(plant_id),
+                crop_type=crop_type,
+                sensor_reading_id=sensor_id,
+                timestamp=datetime.now()
+            )
+            db.session.add(session_record)
+            db.session.flush()
+
+        # 1. Guardar el registro de Promedio Consolidado (photo_index = 0, is_average = True)
+        avg_record = BiometricMetric(
             session_id=session_record.id,
+            photo_index=0,
+            is_average=True,
+            capture_exact_time=datetime.now(),
             foliar_area_cm2=final_metrics.get("foliar_area_cm2", 0.0),
             plant_height_cm=final_metrics.get("plant_height_cm", 0.0),
             stem_diameter_mm=final_metrics.get("stem_diameter_mm", 0.0),
@@ -128,7 +101,30 @@ class DatabaseService:
             image_path_lateral_orig=lateral_paths.get("orig"),
             image_path_lateral_proc=lateral_paths.get("proc")
         )
-        db.session.add(metrics_record)
+        db.session.add(avg_record)
+
+        # 2. Guardar cada foto individual si se proporcionaron (photo_index = 1..5, is_average = False)
+        if individual_metrics:
+            for item in individual_metrics:
+                idx = item.get("photo_index", 1)
+                ind_record = BiometricMetric(
+                    session_id=session_record.id,
+                    photo_index=idx,
+                    is_average=False,
+                    capture_exact_time=item.get("capture_time", datetime.now()),
+                    foliar_area_cm2=item.get("foliar_area_cm2", 0.0),
+                    plant_height_cm=item.get("plant_height_cm", 0.0),
+                    stem_diameter_mm=item.get("stem_diameter_mm", 0.0),
+                    health_index=item.get("health_index", 100.0),
+                    compacity_index=item.get("compacity_index", 0.0),
+                    spots_count=item.get("spots_count", 0),
+                    fruits_count=item.get("fruits_count", 0),
+                    image_path_cenital_orig=item.get("cenital_orig"),
+                    image_path_cenital_proc=item.get("cenital_proc"),
+                    image_path_lateral_orig=item.get("lateral_orig"),
+                    image_path_lateral_proc=item.get("lateral_proc")
+                )
+                db.session.add(ind_record)
+
         db.session.commit()
-        
-        return session_record.id, metrics_record
+        return session_record.id, avg_record

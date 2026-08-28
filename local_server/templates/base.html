@@ -47,6 +47,10 @@
                     <span class="material-icons-round">memory</span>
                     <span>Procesamiento</span>
                 </a>
+                <a href="{{ url_for('dashboard.cross_analysis') }}" class="nav-item {% if '/cross_analysis' in request.path %}active{% endif %}" id="nav-cross-analysis">
+                    <span class="material-icons-round">sync_alt</span>
+                    <span>Cruce de Datos</span>
+                </a>
                 <a href="{{ url_for('dashboard.gallery') }}" class="nav-item {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery">
                     <span class="material-icons-round">photo_library</span>
                     <span>Galería</span>
@@ -68,10 +72,10 @@
                         <span style="font-size: 11px; font-weight: 700; color: var(--accent-success); text-transform: uppercase;">Canastilla de Cultivo</span>
                     </div>
                     <select id="active-plant-selector" style="width: 100%; background: var(--bg-main); color: var(--text-heading); border: 1px solid var(--glass-border); padding: 6px 8px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;" onchange="window.location.href='{{ url_for('dashboard.set_active_plant', plant_id=0) }}'.replace('0', this.value)">
-                        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>🧺 Canastilla #1 (Nodo RPi 1)</option>
-                        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>🧺 Canastilla #2 (Nodo RPi 2)</option>
-                        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>🧺 Canastilla #3 (Nodo RPi 3)</option>
-                        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>🧺 Canastilla #4 (Nodo RPi 4)</option>
+                        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1 (Nodo RPi 1)</option>
+                        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2 (Nodo RPi 2)</option>
+                        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3 (Nodo RPi 3)</option>
+                        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4 (Nodo RPi 4)</option>
                     </select>
                 </div>
                 <p class="footer-copy" style="font-size: 11px; line-height: 1.4; color: var(--text-muted); margin-top: 8px;">

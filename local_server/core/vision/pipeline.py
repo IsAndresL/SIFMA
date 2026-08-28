@@ -4,12 +4,12 @@ import numpy as np
 
 from .segmentation import ImageSegmenter
 from .metrics import BiometricCalculator
-from .fruit_detector import FruitDetector
 
 class VisionPipelineManager:
     """
-    Orquestador principal del pipeline de visión computacional.
-    Procesa imágenes cenitales y laterales y dibuja la cobertura foliar en ROJO.
+    Orquestador principal del pipeline de visión computacional agronómica.
+    Procesa imágenes cenitales y laterales, segmenta tejido foliar en ROJO y
+    calcula área foliar, índice de salud, altura y diámetro de tallo.
     """
     
     @staticmethod
@@ -35,18 +35,14 @@ class VisionPipelineManager:
                 hull = cv2.convexHull(all_pts)
                 cv2.drawContours(overlay, [hull], -1, (0, 0, 255), 2)
             
-        fruits_count = FruitDetector.detect_fruits(img, overlay)
-        metrics["fruits_count"] = fruits_count
+        metrics["fruits_count"] = 0
         metrics["spots_count"] = 0
         
-        # Superponer leyenda de métricas en color destacado (Rojo / Amarillo / Blanco)
+        # Superponer leyenda de métricas biométricas
         cv2.putText(overlay, f"Area Foliar: {metrics['area_cm2']:.1f} cm2", (20, 40), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
         cv2.putText(overlay, f"Salud Foliar: {metrics['health_index']:.1f}%", (20, 75), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        if fruits_count > 0:
-            cv2.putText(overlay, f"Frutos: {fruits_count}", (20, 110), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
                         
         cv2.imwrite(output_path, overlay)
         return metrics
@@ -125,12 +121,10 @@ class VisionPipelineManager:
             areas = [r["area_cm2"] for r in cenital_results]
             healths = [r["health_index"] for r in cenital_results]
             compacities = [r["compacity_index"] for r in cenital_results]
-            fruits = [r["fruits_count"] for r in cenital_results]
             
             final_metrics["foliar_area_cm2"] = round(get_robust_mean(areas), 2)
             final_metrics["health_index"] = round(get_robust_mean(healths), 2)
             final_metrics["compacity_index"] = round(get_robust_mean(compacities), 3)
-            final_metrics["fruits_count"] = int(np.round(np.median(fruits)))
             
         if lateral_results:
             heights = [r["plant_height_cm"] for r in lateral_results]
@@ -140,3 +134,4 @@ class VisionPipelineManager:
             final_metrics["stem_diameter_mm"] = round(get_robust_mean(diameters), 2)
             
         return final_metrics
+

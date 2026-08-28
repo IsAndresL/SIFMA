@@ -97,29 +97,23 @@ def index():
 
 @dashboard_bp.route('/sensors')
 def detailed_sensors():
+    from services.telemetry_service import TelemetryService
+    from services.analytics_service import AnalyticsCrossService
     config = Config.query.first()
     active_plant_id = get_active_plant_id()
     
-    sensors = SensorReading.query.order_by(SensorReading.timestamp.desc()).limit(100).all()
-    sensors_chrono = list(sensors)
-    sensors_chrono.reverse()
-    
-    sensor_history = []
-    for s in sensors_chrono:
-        sensor_history.append({
-            "timestamp": s.timestamp.strftime('%H:%M:%S (%d/%m)'),
-            "temperature": round(s.temperature, 2),
-            "humidity": round(s.humidity, 2),
-            "uv_solar": round(s.uv_solar, 2),
-            "motor_current": round(s.motor_current, 2)
-        })
-        
-    latest_sensor = sensors[0] if sensors else None
+    telemetry = TelemetryService.get_instance()
+    telemetry_status = telemetry.get_status()
+    available_ports = telemetry.get_available_ports()
+
+    requested_date = request.args.get('date', 'auto')
+    sensor_data = AnalyticsCrossService.get_sensor_timeline_data(target_date=requested_date)
+
     return render_template('sensors.html', 
                            config=config, 
-                           sensors=sensors, 
-                           latest_sensor=latest_sensor,
-                           sensor_history=sensor_history,
+                           sensor_data=sensor_data,
+                           telemetry_status=telemetry_status,
+                           available_ports=available_ports,
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/processing')
@@ -165,29 +159,80 @@ def processing_panel():
 def gallery():
     config = Config.query.first()
     active_plant_id = get_active_plant_id()
-    
     profiles = CropProfile.query.all()
 
-    # Traer TODAS las sesiones registradas para esta Canastilla sin filtrar por cultivo
+    # Traer TODAS las sesiones registradas para esta Canastilla
     sessions = CaptureSession.query.filter_by(
         plant_id=active_plant_id
     ).order_by(CaptureSession.timestamp.desc()).all()
     
-    gallery_items = []
+    gallery_sessions = []
     for s in sessions:
         if s.metrics:
-            metric = s.metrics[0]
-            gallery_items.append({
+            # Obtener promedio y fotos individuales
+            avg_metric = next((m for m in s.metrics if m.is_average or m.photo_index == 0), s.metrics[0])
+            individual_photos = [m.to_dict() for m in s.metrics if not m.is_average and m.photo_index > 0]
+            individual_photos.sort(key=lambda x: x["photo_index"])
+
+            gallery_sessions.append({
                 "session": s,
-                "metric": metric
+                "avg_metric": avg_metric.to_dict(),
+                "individual_photos": individual_photos,
+                "all_metrics_json": [m.to_dict() for m in s.metrics]
             })
             
     return render_template('gallery.html',
                            config=config,
                            profiles=profiles,
                            sessions=sessions,
-                           gallery_items=gallery_items,
+                           gallery_sessions=gallery_sessions,
                            active_plant_id=active_plant_id)
+
+@dashboard_bp.route('/cross_analysis')
+def cross_analysis():
+    from services.analytics_service import AnalyticsCrossService
+    from services.telemetry_service import TelemetryService
+    from database import AgronomicConclusion
+    
+    config = Config.query.first()
+    active_plant_id = get_active_plant_id()
+    profiles = CropProfile.query.all()
+    
+    telemetry = TelemetryService.get_instance()
+    telemetry_status = telemetry.get_status()
+    available_ports = telemetry.get_available_ports()
+    
+    cross_data = AnalyticsCrossService.get_cross_referenced_dataset(plant_id=active_plant_id)
+    correlations = AnalyticsCrossService.calculate_agronomic_correlations(cross_data)
+    
+    # Obtener fechas únicas disponibles en las sesiones
+    dates_query = db.session.query(
+        db.func.strftime('%Y-%m-%d', CaptureSession.timestamp)
+    ).filter_by(plant_id=active_plant_id).distinct().all()
+    available_dates = [d[0] for d in dates_query if d[0]]
+    if not available_dates:
+        # Fallback a fechas de sensores
+        dates_sensor = db.session.query(
+            db.func.strftime('%Y-%m-%d', SensorReading.timestamp)
+        ).distinct().all()
+        available_dates = [d[0] for d in dates_sensor if d[0]]
+        
+    available_dates.sort(reverse=True)
+    
+    conclusions = AgronomicConclusion.query.filter_by(
+        plant_id=active_plant_id
+    ).order_by(AgronomicConclusion.timestamp.desc()).all()
+    
+    return render_template('cross_analysis.html',
+                           config=config,
+                           profiles=profiles,
+                           active_plant_id=active_plant_id,
+                           cross_data=cross_data,
+                           correlations=correlations,
+                           available_dates=available_dates,
+                           conclusions=[c.to_dict() for c in conclusions],
+                           telemetry_status=telemetry_status,
+                           available_ports=available_ports)
 
 @dashboard_bp.route('/config', methods=['GET', 'POST'])
 def configuration_panel():
