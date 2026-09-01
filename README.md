@@ -1,183 +1,237 @@
-# Documentación Técnica Exhaustiva: Sistema SIFMA
-### *Sistema Integral de Fenotipado y Monitoreo Agrícola en Torres Hidropónicas Verticales*
+<div align="center">
+  <img src="local_server/static/img/sifma_logo.svg" alt="SIFMA Logo" width="110" height="110" />
+  <h1>SIFMA</h1>
+  <h3>Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Aeropónicas</h3>
+  <p><strong>Versión 2.5 - Documentación Técnica y Manual de Operación</strong></p>
+  <p><em>Plataforma para automatización de fenotipado no destructivo, análisis biométrico por visión artificial y telemetría microclimática multivariable</em></p>
+</div>
 
 ---
 
-## 1. Resumen Ejecutivo y Propósito
+## 1. Resumen Ejecutivo y Propósito del Sistema
 
-El proyecto **SIFMA** es una plataforma tecnológica integral diseñada para la automatización del fenotipado no destructivo, la inspección fitosanitaria y el análisis biométrico en cultivos hidropónicos verticales. El sistema permite registrar con precisión milimétrica la evolución del crecimiento vegetal (**área foliar, altura de planta, diámetro del tallo basal e índice de salud clorofílica**) operando en condiciones de campo mediante un esquema híbrido y desacoplado:
+**SIFMA** es una infraestructura tecnológica integral concebida para la investigación agronómica, la optimización de cultivos y la sustentación científica en torres aeropónicas e hidropónicas verticales. El sistema permite cuantificar con exactitud matemática la evolución morfométrica de las plantas (**área foliar fotosintéticamente activa, altura vertical, diámetro del tallo basal, compacidad e índice de salud clorofílica**) correlacionada con las variables ambientales (**temperatura, humedad relativa, radiación solar y consumo energético de la bomba**).
 
-1. **Captura visual autónoma en campo**: Nodos de visión basados en Raspberry Pi dedicados exclusivamente a la adquisición de imágenes multiespectrales/RGB de alta resolución.
-2. **Telemetría ambiental inalámbrica**: Módulos de sensado agronómico que transmiten lecturas ambientales mediante un enlace de radiofrecuencia/red local hacia una antena receptora conectada por USB a la computadora central.
-3. **Procesamiento analítico centralizado**: Servidor local que consolida los datos biométricos y la telemetría climática sin requerir conexión a internet.
+### Principios Fundamentales del Sistema:
+1. **Fenotipado no destructivo de alta resolución**: Adquisición automatizada en ángulos cenital y lateral sin perturbar el dosel vegetal.
+2. **Procesamiento de visión computacional robusto**: Pipeline híbrido basado en espacios de color HSV y CIELAB con segmentación de Otsu y contornos perimetrales en rojo.
+3. **Telemetría ambiental desacoplada**: Recepción inalámbrica mediante antena USB o importación universal de registros CSV.
+4. **Operación 100% autónoma y offline**: Capacidad de operar en entornos de campo sin dependencia de conectividad a internet.
+5. **Generación automática de dossiers y reportes científicos**: Exportación de fichas técnicas en PDF con rigor estadístico paramétrico y suite de firma digital.
 
 ---
 
-## 2. Arquitectura General y Topología del Sistema
+## 2. Topología y Arquitectura del Sistema
 
-El sistema se estructura en tres subsistemas claramente diferenciados:
+El sistema implementa una **Arquitectura Limpia (Clean Architecture)** distribuida en tres niveles de hardware y software:
 
 ```
-                      +-------------------------------------------------------------+
-                      |         TORRE HIDROPÓNICA VERTICAL (CAMPO / OFFLINE)        |
-                      |                                                             |
-                      |   [ Canastilla #1 ]  ---> Nodo RPi 1 (Cámara Cenital/Lateral)|
-                      |   [ Canastilla #2 ]  ---> Nodo RPi 2 (Cámara Cenital/Lateral)|
-                      |   [ Canastilla #3 ]  ---> Nodo RPi 3 (Cámara Cenital/Lateral)|
-                      |   [ Canastilla #4 ]  ---> Nodo RPi 4 (Cámara Cenital/Lateral)|
-                      |                                                             |
-                      |   [ Módulo de Sensores ] ---> Transmisor Inalámbrico RF     |
-                      +-------------------+--------------------+--------------------+
-                                          |                    |
-                                 (Extracción USB)       (Señal Inalámbrica RF)
-                                          |                    |
-                                          v                    v
-                      +-----------------------+     +-------------------------------+
-                      | MEMORIA USB DE CAMPO  |     | ANTENA RECEPTORA DE RED LOCAL |
-                      | SIFMA_CAPTURES/       |     | Conectada por USB a la PC     |
-                      +-----------+-----------+     +---------------+---------------+
-                                  |                                 |
-                                  +----------------+----------------+
-                                                   |
-                                                   v
-                      +-------------------------------------------------------------+
-                      |               SERVIDOR LOCAL SIFMA (PC / LAPTOP)            |
-                      |                                                             |
-                      |  1. Escaneo Automático USB de Imágenes / Drag & Drop        |
-                      |  2. Recepción de Telemetría desde Antena USB Local          |
-                      |  3. Pipeline Visión Computacional (OpenCV / PlantCV)        |
-                      |  4. Base de Datos SQLite (Histórico & Sobreescritura)       |
-                      |  5. Dashboard Web Interactivo (Chart.js / Comparador)       |
-                      +-------------------------------------------------------------+
++-----------------------------------------------------------------------------+
+|               TORRE AEROPÓNICA VERTICAL (CAMPO / IN-SITU)                  |
+|                                                                             |
+|   [ Canastilla #4 - Cúspide ]   ---> Nodo Cámara Dual (Cenital / Lateral)   |
+|   [ Canastilla #3 - Medio-Alto] ---> Nodo Cámara Dual (Cenital / Lateral)   |
+|   [ Canastilla #2 - Medio-Bajo] ---> Nodo Cámara Dual (Cenital / Lateral)   |
+|   [ Canastilla #1 - Base ]      ---> Nodo Cámara Dual (Cenital / Lateral)   |
+|                                                                             |
+|   [ Estación Microclimática ]   ---> Módulo RF / Microcontrolador           |
++----------------------+------------------------------+-----------------------+
+                       |                              |
+              (Descarga USB / Archivo)         (Enlace Serial / RF)
+                       |                              |
+                       v                              v
++-------------------------------+       +-------------------------------------+
+|      MEMORIA USB DE CAMPO     |       |   ANTENA RECEPTORA USB DE TELEMETRÍA|
+| SIFMA_CAPTURES/YYYY-MM-DD/    |       | Transmisión inalámbrica en tiempo   |
+|  [manana | mediodia | tarde]  |       | real conectada a la PC              |
++---------------+---------------+       +------------------+------------------+
+                |                                          |
+                +--------------------+---------------------+
+                                     |
+                                     v
++-----------------------------------------------------------------------------+
+|                         SERVIDOR CENTRAL SIFMA (PC)                         |
+|                                                                             |
+|  1. Ingestión USB Automática / Carga Manual Drag & Drop                     |
+|  2. Pipeline de Visión Computacional (OpenCV + NumPy + LAB + HSV)           |
+|  3. Motor de Métricas Biométricas y Filtrado Estadístico (+-2 Sigma)        |
+|  4. Base de Datos Relacional SQLite (sifma.db / SQLAlchemy)                 |
+|  5. Motor Analítico de Correlaciones de Pearson y RGR/AGR                   |
+|  6. Interfaz Web Responsiva (Glassmorphism / Chart.js / Time-Lapse)         |
+|  7. Generador de Dossiers Científicos & Suite de Firma Digital              |
++-----------------------------------------------------------------------------+
 ```
 
-1. **Nodos de Visión Raspberry Pi (`raspi_node/`)**: Nodos embebidos instalados en cada una de las 4 canastillas de la torre. Su función exclusiva es el disparo programado de cámaras cenitales y laterales y el almacenamiento ordenado en la memoria USB.
-2. **Estación de Telemetría y Antena Receptora USB**: Los sensores ambientales (temperatura, humedad, radiación UV, corriente del motor de recirculación) operan de forma independiente y transmiten sus mediciones por señal inalámbrica hacia la antena receptora conectada por USB a la PC.
-3. **Servidor Local SIFMA (`local_server/`)**: Aplicación web ejecutada en la computadora que procesa las imágenes de la memoria USB, recibe la telemetría directa desde la antena y presenta las curvas de crecimiento y monitoreo en tiempo real.
+---
+
+## 3. Desglose Exhaustivo de Módulos y Secciones
+
+SIFMA cuenta con una suite completa de módulos accesibles desde la barra lateral:
+
+### 3.1. General
+
+#### A. Resumen Diario (`/`)
+* **KPIs Instantáneos**: Visualización en vivo de temperatura ambiente, humedad relativa, radiación solar, área foliar actual y altura de la canastilla activa.
+* **Curva Evolutiva Multivariable**: Gráfica temporal con área foliar y condiciones microclimáticas.
+* **Diagnóstico de Estado**: Indicador de confort fisiológico y resumen de la última captura.
+
+#### B. Calendario Interactivo (`/calendar`)
+* **Matriz Mensual de Muestreo**: Calendario interactivo con navegación entre meses y años.
+* **Insignias de Registro**:
+  * *Insignias Verdes*: Muestreos de fenotipado fotográfico procesados (número de lotes y área foliar).
+  * *Insignias Azules*: Registros de telemetría de sensores disponibles (lecturas, temperatura y humedad media).
+* **Modal Inspector de Jornada**: Al hacer clic sobre cualquier día del calendario, despliega el desglose hora por hora de las sesiones fotográficas y los promedios de microclima con accesos directos al Dashboard y al Reporte Científico.
 
 ---
 
-## 3. Stack Tecnológico, Lenguajes y Librerías
+### 3.2. Fenotipado y Visión
 
-### 3.1. Lenguajes de Programación
-- **Python 3.10+**: Lenguaje central para los nodos de captura y el servidor web local.
-- **JavaScript (ES6+)**: Interactividad del cliente web, gráficos con Chart.js, peticiones asíncronas y control del comparador de imágenes.
-- **HTML5 & CSS3**: Estructura semántica y diseño visual mediante Vanilla CSS basado en variables, tarjetas traslúcidas (Glassmorphism) y adaptabilidad responsiva.
+#### C. Procesamiento e Importación (`/processing`)
+* **Detección Automática de Unidades USB**: Escaneo en caliente de memorias USB insertadas (`D:\`, etc.) para importar lotes por fecha y turno (*Mañana, Mediodía, Tarde*).
+* **Carga Manual Drag & Drop**: Subida directa de archivos comprimidos `.ZIP` o imágenes individuales.
+* **Barra de Progreso en Tiempo Real**: Notificación dinámica del avance de segmentación OpenCV (0% a 100%).
+* **Gráficas Biométricas en Tiempo Real**:
+  * Curva de Área Foliar Estimada ($cm^2$).
+  * Curva de Altura Estimada de Planta ($cm$).
+  * Curva de Diámetro del Tallo Basal ($mm$).
+  * Curva de Índice de Salud Foliar ($\%$).
+* **Comparador de Máscaras**: Visualización de la última segmentación cenital y lateral con contornos de calibración.
 
-### 3.2. Frameworks y Librerías del Servidor Local (`local_server`)
-| Tecnología | Tipo | Función en el Sistema |
-| :--- | :--- | :--- |
-| **Flask** | Framework Web | Servidor web central, ruteo mediante Blueprints y gestión de sesiones. |
-| **SQLAlchemy** | ORM | Mapeo objeto-relacional y persistencia de métricas y telemetría. |
-| **SQLite3** | Base de Datos | Motor de base de datos relacional ligero contenido en `sifma.db`. |
-| **OpenCV (`cv2`)** | Visión por Computadora | Procesamiento matricial, conversiones HSV/LAB, máscaras morfológicas y trazado de contornos. |
-| **NumPy** | Computación Numérica | Operaciones algebraicas sobre matrices de imagen y filtrado estadístico (+- 2 sigma). |
-| **Chart.js** | Visualización | Gráficos dinámicos de curvas biométricas y lecturas climatológicas. |
+#### D. Galería de Lotes y Comparador de Biomasa (`/gallery`)
+* **Comparador Deslizante Interactivo**: Control deslizante antes/después para cotejar la imagen original RAW con la segmentación perimetral en contorno rojo.
+* **Filtros por Período**: Visualización selectiva de tomas (*Todos, Mañana, Mediodía, Tarde*).
+* **Modal de Inspección Detallada**: Ampliación en alta resolución de las 5 tomas individuales que componen el promedio del lote.
 
-### 3.3. Tecnologías y Librerías del Nodo Raspberry Pi (`raspi_node`)
-| Tecnología | Tipo | Función en el Sistema |
-| :--- | :--- | :--- |
-| **Picamera2 / OpenCV VideoCapture** | API de Captura | Control de hardware para cámaras cenitales y laterales. |
-| **Platform / OS Filesystem** | Módulos del Sistema | Detección automática de memorias USB en Linux y Windows. |
+#### E. Comparador Inter-Canastillas y Gradiente Vertical (`/benchmark`)
+* **Superposición de Curvas Multicanastilla**: Comparación simultánea del desarrollo foliar y la altura entre la Canastilla #1, #2, #3 y #4 en un único lienzo interactivo.
+* **Evaluación del Gradiente Vertical en la Torre**:
+  * Estratificación por niveles: *Nivel 4 (Cúspide)*, *Nivel 3 (Medio-Alto)*, *Nivel 2 (Medio-Bajo)* y *Nivel 1 (Base)*.
+  * Análisis del impacto de la posición en la torre sobre la tasa de expansión vegetativa.
+* **Tasa de Crecimiento Relativo (RGR) y Absoluto (AGR)**:
+  $$\text{RGR} = \frac{\ln(A_{\text{final}}) - \ln(A_{\text{inicial}})}{\Delta t} \times 100 \quad (\%/\text{día})$$
+  $$\text{AGR} = \frac{\Delta A}{\Delta t} \quad (cm^2/\text{día})$$
+* **Exportación de Matriz Comparativa en CSV**: Descarga directa de tablas tabuladas de rendimiento.
 
----
-
-## 4. Desglose del Nodo Raspberry Pi (`raspi_node/`)
-
-### 4.1. Flujo de Ejecución Autónomo
-El script principal [main_capture.py](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/raspi_node/main_capture.py) opera de forma dedicada para la captura fotográfica:
-
-1. **Detección del Período Horario (`determine_period`)**:
-   - Consulta el reloj del sistema:
-     - Antes de 10:00 -> `manana`.
-     - Entre 10:00 y 15:00 -> `medio_dia`.
-     - Posterior a 15:00 -> `tarde`.
-2. **Estructuración en Memoria USB (`OfflineStorageService`)**:
-   - Detecta la unidad USB conectada y crea la estructura correspondiente:
-     ```text
-     SIFMA_CAPTURES/YYYY-MM-DD/[manana | medio_dia | tarde]/
-     ```
-3. **Captura Secuencial de Imágenes (`CameraCaptureService`)**:
-   - Cámara Cenital (índice 0): 5 tomas consecutivas -> `cenital_1.png` a `cenital_5.png`.
-   - Cámara Lateral (índice 1): 5 tomas consecutivas -> `lateral_1.png` a `lateral_5.png`.
-4. **Serialización de Metadatos (`metadata.json`)**:
-   - Registra fecha, período, identificador de canastilla (`plant_id`), especie vegetal y confirmación de captura.
+#### F. Time-Lapse & Evolución Biológica (`/timelapse`)
+* **Motor de Reproducción Temporal**: Reproducción fluida de la secuencia biológica con velocidades variables ($0.5\times$, $1\times$, $2\times$, $4\times$), modo bucle (*Loop*) y control mediante barra espaciadora.
+* **Control Deslizante Scrubber**: Desplazamiento manual fotograma a fotograma desde el primer día de cultivo hasta el último lote.
+* **Selector de Ángulo de Cámara**:
+  * Vista Cenital (Área foliar y clorofila).
+  * Vista Lateral (Altura y tallo).
+  * Vista Dual (Pantalla dividida sincronizada lado a lado).
+* **Gauges Biométricos y Ambientales Dinámicos**: Indicadores analógicos/digitales que se actualizan en vivo con las métricas exactas del fotograma reproducido.
+* **Carrousel de Fotogramas (Filmstrip)**: Cinta inferior de miniaturas para saltos instantáneos.
 
 ---
 
-## 5. Desglose del Servidor Local (`local_server/`)
+### 3.3. Telemetría y Ambiente
 
-### 5.1. Arquitectura del Backend
-Implementado con el patrón Application Factory en [app.py](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/app.py) y dividido en dos módulos funcionales:
-- **`dashboard_bp.py`**: Interfaz de usuario (Monitoreo, Procesamiento, Galería, Sensores, Configuración).
-- **`api_bp.py`**: API REST para escaneo de memorias USB, procesamiento de lotes y recepción de datos.
+#### G. Sensores Ambientales (`/sensors`)
+* **Monitoreo Microclimático**: Registro de Temperatura (°C), Humedad Relativa (%), Radiación UV (lux) y Amperaje de Bomba (A).
+* **Conexión Serial USB en Vivo**: Selector de puerto COM / ttyUSB y baudrate con reconexión automática.
+* **Importador Universal CSV**: Motor de lectura flexible compatible con delimitadores de coma o punto y coma, fechas simples o compuestas y formatos de hardware externos.
+* **Aislamiento por Canastilla y Borrado Seguro**: Opción de compartir la telemetría en toda la torre o aislarla por perfil de canastilla con borrado individualizado sin afectar datos globales.
 
-### 5.2. Pipeline de Visión Computacional (`core/vision/`)
-
-#### A. Segmentación Cromática Dual y Filtrado Morfológico ([segmentation.py](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/core/vision/segmentation.py))
-1. **Espacio HSV**: Aislamiento del rango espectral de clorofila.
-2. **Espacio CIELAB**: Rechazo de fondos no biológicos y reflectancias mediante canales a y b.
-3. **Fusión con Fallback de Seguridad**:
-   Mascara Final = Mascara_HSV AND Mascara_LAB
-   *Si el canal LAB resulta sobre-restrictivo, el sistema conmuta automáticamente a Mascara_HSV.*
-4. **Limpieza Morfológica**: Filtros de Cierre y Apertura para eliminar imperfecciones sin reducir el área foliar real.
-
-#### B. Cálculo Biométrico ([metrics.py](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/core/vision/metrics.py))
-- **Área Foliar (cm2)**:
-  Area Foliar = (Suma de Pixeles de Contornos Validos) * (Ratio_px_cm)^2
-- **Compacidad**:
-  Compacidad = (4 * PI * Area del Contorno Mayor) / (Perimetro^2)
-- **Altura de Planta (cm)**:
-  Distancia vertical entre el borde de la canastilla (y_base) y el punto apical más elevado (y_min).
-- **Diámetro del Tallo Basal (mm)**:
-  Mediana del ancho de la columna del tallo muestreada en la base.
-- **Índice de Salud Foliar (%)**:
-  Relación porcentual de píxeles en reflectancia verde óptima frente al área total segmentada.
-
-#### C. Superposición Visual en ROJO ([pipeline.py](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/core/vision/pipeline.py))
-- Contornos de la planta y envolvente convexa perimetral dibujados en **ROJO PURO** (`BGR: (0, 0, 255)`).
-- Filtrado estadístico robusto de valores atípicos (+- 2 sigma) sobre las 5 tomas de cada muestreo.
+#### H. Cruce y Correlaciones Multivariables (`/cross_analysis`)
+* **Matriz de Correlación de Pearson Multivariable (Heatmap)**: Mapa de calor cruzado que correlaciona cada sensor ambiental con cada biomarcador de la planta con cálculo del coeficiente $r$ de Pearson.
+* **Laboratorio Dinámico de Cruce**: Selector libre de dos o más parámetros con generador de gráficos en tiempo real (Lineal, Barras, Radar, Polar, Dispersión).
+* **Matriz de Cruce Sincronizado por Período**: Tabla técnica que desglosa lote a lote las condiciones ambientales y la respuesta morfométrica con visor de fotos integrado.
+* **Escrutinio Foto a Foto**: Registro individual de cada una de las 5 tomas de cada turno con capacidad de colapsar/desplegar sesiones.
+* **Bitácora Agronómica del Investigador**: Formulario para asentar observaciones cualitativas de vigor, respuesta climática y decisiones de manejo agronómico.
 
 ---
 
-## 6. Módulos de la Interfaz de Usuario
+### 3.4. Generación de Informes y Publicación
 
-### 6.1. Monitoreo Principal ([dashboard.html](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/templates/dashboard.html))
-- Indicadores biométricos clave y gráfico de evolución temporal del cultivo.
-
-### 6.2. Procesamiento e Importación ([processing.html](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/templates/processing.html))
-- Selector de fecha por calendario único, soporte para Canastillas #1 a #4, control de sobreescritura y barra de progreso dinámica (0% a 100%).
-
-### 6.3. Galería y Comparador ([gallery.html](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/templates/gallery.html))
-- Comparador deslizante antes/después con altura de 420px y filtros de período flexibles (Todos, Mañana, Mediodía, Tarde).
-
-### 6.4. Telemetría Ambiental ([sensors.html](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/templates/sensors.html))
-- Visualización de datos climáticos recibidos a través de la antena USB conectada a la computadora central.
-
-### 6.5. Calibración ([config.html](file:///c:/Luna-Dev%20Compartido/Dev/Luna%20-%20Personal/SIFMA/local_server/templates/config.html))
-- Configuración de parámetros cromáticos y biométricos con tooltips explicativos.
+#### I. Ficha Técnica y Reporte Científico en PDF (`/report/scientific`)
+* **Formato Académico Certificado (IEEE / APA / Springer)**: Documento técnico listo para sustentación de tesis, anexos de investigación o bitácoras oficiales.
+* **Contenido Paramétrico Riguroso**:
+  * Metadatos de la muestra (ID de informe, nivel en torre, especie, fecha de muestreo).
+  * Diagnóstico agronómico automatizado.
+  * Matriz estadística descriptiva completa de microclima ($\mu$, $\sigma$, varianza $s^2$, mínimo, máximo, mediana, $IQR$, coeficiente de variación $CV\%$ y total de lecturas $N$).
+  * Matriz estadística descriptiva de biometría foliar.
+  * Matriz de correlaciones lineales de Pearson con interpretación fisiológica.
+  * Desglose cronológico turno a turno.
+  * **Registro Fotográfico Comparativo**: Ángulos cenital y lateral (Original RAW vs Procesada con contorno rojo) con ajuste proporcional sin recortes.
+  * Anotaciones de la bitácora del investigador.
+* **Suite de Firma Digital Integrada**:
+  * *Subida de Imagen de Firma (PNG/JPG)*: Algoritmo de remoción automática de fondo blanco para escaneos en papel.
+  * *Trazado a Mano Alzada*: Lienzo táctil y de mouse con tinta digital (*Negro Tinta* y *Azul Marino*).
+  * *Campos Editables en Pantalla*: Edición directa del nombre y cargo de los evaluadores.
+  * *Persistencia Local (`localStorage`)*: Opción para recordar la firma para futuros reportes.
+  * *Exportación Limpia (`window.print()`)*: Impresión y guardado en PDF de alta resolución con ocultación de controles interactivos.
 
 ---
 
-## 7. Esquema de Base de Datos (`sifma.db`)
+### 3.5. Configuración y Administración
+
+#### J. Parámetros de Cultivo y Calibración (`/config`)
+* **Gestión de Perfiles Botánicos**: Calibración para Cebollín (*Allium schoenoprasum*), Albahaca (*Ocimum basilicum*), Lechuga (*Lactuca sativa*) y Fresa (*Fragaria*).
+* **Umbrales Cromáticos HSV & LAB**: Calibración de matrices de segmentación por especie.
+* **Factor de Escala Píxel a Centímetro**: Ajuste milimétrico de la relación $\text{px}/\text{cm}$.
+* **Modo de Aislamiento de Telemetría**: Conmutador para compartir lecturas de sensores en toda la torre o aislar registros por canastilla.
+
+#### K. Control de Usuarios y Roles (`/users`)
+* **Administrador Principal**: Acceso total al sistema, configuración, calibración y gestión de usuarios.
+* **Investigador / Agrónomo**: Acceso a procesamiento, bitácora, análisis de cruces, time-lapse y emisión de reportes.
+* **Operador de Torre**: Visualización de dashboard, ingreso de datos de campo y carga de lotes.
+
+---
+
+## 4. Pipeline de Visión Computacional (`core/vision/`)
+
+El procesamiento de imágenes implementa un flujo matemático riguroso:
+
+1. **Preprocesamiento y Filtrado de Ruido**:
+   - Corrección de balance de blancos y reducción de ruido con filtro Gaussiano ($k=5$).
+2. **Segmentación Cromática Dual (HSV + CIELAB)**:
+   - *Espacio HSV*: Aislamiento del tono de clorofila ($H \in [h_{\min}, h_{\max}]$) y saturación vegetal.
+   - *Espacio CIELAB*: Discriminación de reflectancias no fotosintéticas en el plano $a^* b^*$.
+   - *Fusión Lógica*:
+     $$\text{Máscara Final} = \text{Máscara}_{\text{HSV}} \cap \text{Máscara}_{\text{LAB}}$$
+     *(Con conmutación automática de respaldo a HSV si LAB resulta sobre-restrictivo).*
+3. **Operaciones Morfológicas**:
+   - Clausura morfológica con elemento estructurante elíptico para rellenar vacuolas sin alterar el perímetro foliar exterior.
+4. **Extracción de Contornos y Métricas Morfométricas**:
+   - **Área Foliar ($cm^2$)**:
+     $$A_{\text{foliar}} = \left( \sum \text{píxeles}_{\text{planta}} \right) \times \left(\text{ratio}_{\text{px\_cm}}\right)^2$$
+   - **Altura de Planta ($cm$)**:
+     $$H_{\text{planta}} = (y_{\text{base}} - y_{\text{apical}}) \times \text{ratio}_{\text{px\_cm}}$$
+   - **Compacidad**:
+     $$\text{Compacidad} = \frac{4 \pi \cdot A_{\text{contorno}}}{P_{\text{contorno}}^2}$$
+   - **Diámetro de Tallo ($mm$)**: Muestreo transversal en la zona basal.
+   - **Índice de Salud Foliar ($\%$)**: Proporción de píxeles en reflectancia verde saludable respecto al total del dosel.
+5. **Superposición Visual de Contorno**:
+   - Delimitación perimetral en **Rojo Puro** (`BGR: (0, 0, 255)`) y línea de altura en amarillo.
+6. **Filtrado Estadístico de Lote ($\pm 2\sigma$)**:
+   - Descarte automático de fotogramas atípicos sobre las 5 capturas del muestreo para calcular el valor representativo del período.
+
+---
+
+## 5. Esquema de Base de Datos Relacional (`sifma.db`)
 
 ```mermaid
 erDiagram
-    CONFIG ||--o{ CROP_PROFILE : "configura especie activa"
-    CAPTURE_SESSION ||--o{ BIOMETRIC_METRIC : "contiene metricas"
+    CONFIG ||--o{ CROP_PROFILE : "configura especie"
+    USER ||--o{ AGRONOMIC_CONCLUSION : "registra notas"
+    CAPTURE_SESSION ||--o{ BIOMETRIC_METRIC : "contiene tomas"
     CAPTURE_SESSION }|--|| SENSOR_READING : "asocia telemetria"
 
     CAPTURE_SESSION {
         int id PK
-        string period "Fecha y Periodo"
+        string period "Fecha y Turno"
         int plant_id "Canastilla 1 a 4"
         string crop_type "Especie vegetal"
+        int sensor_reading_id FK
         datetime timestamp
     }
 
     BIOMETRIC_METRIC {
         int id PK
         int session_id FK
+        int photo_index "0=Promedio, 1..5=Individual"
+        boolean is_average
+        datetime capture_exact_time
         float foliar_area_cm2
         float plant_height_cm
         float stem_diameter_mm
@@ -199,8 +253,7 @@ erDiagram
     }
 
     CROP_PROFILE {
-        int id PK
-        string crop_type UK
+        string crop_type PK
         string display_name
         int h_min
         int h_max
@@ -215,20 +268,150 @@ erDiagram
         float pixel_to_cm_ratio
         boolean has_stem
     }
+
+    AGRONOMIC_CONCLUSION {
+        int id PK
+        int plant_id
+        string date_str
+        string period_type
+        text growth_obs
+        text climate_obs
+        text nutrition_obs
+        text general_conclusion
+        string author
+        datetime timestamp
+    }
+
+    USER {
+        int id PK
+        string username UK
+        string password_hash
+        string name
+        string role
+        string email
+        boolean is_active
+        datetime created_at
+    }
 ```
 
 ---
 
-## 8. Guía Rápida de Ejecución
+## 6. Requisitos y Dependencias
 
-1. **Iniciar el Servidor Web Central**:
-   ```bash
-   python local_server/app.py
-   ```
-2. **Acceder a la Plataforma**:
-   - Navegador web: `http://127.0.0.1:5000`
-   - Credenciales: Usuario: `admin` | Contraseña: `sifma2026`
-3. **Ejecutar Captura Fotográfica en Raspberry Pi**:
-   ```bash
-   python raspi_node/main_capture.py
-   ```
+### 6.1. Requisitos de Software
+* Python 3.10 o superior.
+* Sistema Operativo: Linux (Raspberry Pi OS / Ubuntu / Debian) o Windows 10/11.
+* Navegador Web Moderno (Google Chrome, Mozilla Firefox, Microsoft Edge, Safari).
+
+### 6.2. Librerías Principales (`requirements.txt`)
+```text
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Login>=0.6.3
+Werkzeug>=3.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+pyserial>=3.5
+gunicorn>=21.2.0
+```
+
+---
+
+## 7. Instalación y Guía de Inicio Rápido
+
+### Paso 1: Clonar el Repositorio
+```bash
+git clone https://github.com/IsAndresL/SIFMA.git
+cd SIFMA
+```
+
+### Paso 2: Crear Entorno Virtual e Instalar Dependencias
+```bash
+# En Linux / macOS
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# En Windows (PowerShell)
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### Paso 3: Iniciar el Servidor Web Central
+```bash
+python local_server/app.py
+```
+
+### Paso 4: Acceder a la Plataforma Web
+* Abrir el navegador en: **`http://127.0.0.1:5000`**
+* **Credenciales por Defecto**:
+  * **Usuario**: `admin`
+  * **Contraseña**: `sifma2026`
+
+### Paso 5: Ejecución del Nodo Raspberry Pi (Opcional en Campo)
+```bash
+python raspi_node/main_capture.py
+```
+
+---
+
+## 8. Estructura de Directorios del Proyecto
+
+```text
+SIFMA/
+|-- local_server/                    # Servidor Web y Motor Central
+|   |-- app.py                       # Punto de entrada y configuracion de Flask
+|   |-- application/                 # Capa de Aplicacion (Servicios y Casos de Uso)
+|   |   `-- services/                # AnalyticsService, TelemetryService, SystemService
+|   |-- domain/                      # Capa de Dominio (Entidades y Modelos de Negocio)
+|   |   `-- models/                  # CropProfile, CaptureSession, BiometricMetric, User
+|   |-- infrastructure/              # Capa de Infraestructura (DB, Sensores, OpenCV)
+|   |   |-- database/                # Repositorios SQLAlchemy y conexion sifma.db
+|   |   |-- telemetry/               # SerialReceiver, CSVImporter
+|   |   `-- vision/                  # OpenCV Pipeline, Segmentacion HSV/LAB, Metricas
+|   |-- presentation/                # Capa de Presentacion (Rutas Web y API REST)
+|   |   |-- web/                     # DashboardRoutes, AuthRoutes
+|   |   `-- api/                     # TelemetryRoutes, VisionRoutes, AnalyticsRoutes
+|   |-- static/                      # Archivos Estaticos (CSS, JS, Imagenes, SVGs)
+|   |   |-- css/                     # Estilos ejecutivos y responsivos index.css
+|   |   |-- js/                      # Logica cliente dashboard.js, Chart.js
+|   |   |-- img/                     # sifma_logo.svg (Emblema institucional)
+|   |   `-- data/                    # Almacenamiento local de fotos y uploads
+|   `-- templates/                   # Plantillas HTML5 Jinja2
+|       |-- base.html                # Layout maestro y barra lateral
+|       |-- dashboard.html           # Resumen diario y monitoreo
+|       |-- calendar.html            # Calendario interactivo
+|       |-- processing.html          # Procesamiento USB / ZIP y graficas
+|       |-- gallery.html             # Galeria y comparador antes/despues
+|       |-- benchmark.html           # Comparador inter-canastillas y RGR/AGR
+|       |-- timelapse.html           # Time-lapse interactivo y visor biologico
+|       |-- sensors.html             # Telemetria ambiental y graficos
+|       |-- cross_analysis.html      # Cruce multivariable y bitacora
+|       |-- scientific_report.html   # Reporte PDF y firmador digital
+|       |-- config.html              # Parametros de cultivo y umbrales
+|       |-- users.html               # Gestion de usuarios y roles
+|       `-- login.html               # Autenticacion de usuarios
+|-- raspi_node/                      # Software del Nodo de Captura Raspberry Pi
+|   |-- main_capture.py              # Script principal de ejecucion
+|   |-- config.py                    # Parametros de camaras e intervalos
+|   `-- services/                    # CameraService, StorageService
+|-- requirements.txt                 # Dependencias del proyecto
+`-- README.md                        # Documentacion tecnica oficial
+```
+
+---
+
+## 9. Despliegue en Producción
+
+* **En la Nube (PaaS)**: Compatible con **Render.com**, **Railway.app** y **Fly.io** utilizando `gunicorn -w 2 -b 0.0.0.0:$PORT --chdir local_server app:app` con montaje de disco persistente.
+* **En Servidores Locales con Acceso Remoto**: Compatible con **Cloudflare Tunnels** (`cloudflared`) para exponer el dashboard mediante HTTPS sin apertura de puertos.
+
+---
+
+## 10. Licencia y Créditos
+
+* **Proyecto**: SIFMA - Sistema Integrado de Fenotipado y Monitoreo Agronómico.
+* **Desarrollo y Autoría**: Ing. Andrés Luna y colaboradores.
+* **Institución**: Laboratorio de Automatización & Fenotipado Digital.
+* **Licencia**: MIT License - Uso académico, científico y de investigación.
