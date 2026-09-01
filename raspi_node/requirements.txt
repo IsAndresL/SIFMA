@@ -1,5 +1,5 @@
-# Dependencias para la Raspberry Pi 5 (raspi_node)
+# Dependencias para el nodo de captura Raspberry Pi (raspi_node)
 # Nota: python3-picamera2 viene preinstalado en Raspberry Pi OS Bookworm por defecto.
 
-requests>=2.31.0
+opencv-python-headless>=4.8.0
 pillow>=10.2.0

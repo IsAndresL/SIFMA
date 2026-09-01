@@ -304,7 +304,7 @@
         const isProcessed = processedPeriods.includes(periodStr);
         if (isProcessed) {
             warningBox.style.display = 'flex';
-            warningText.innerHTML = `<strong>⚠️ Muestreo Ya Registrado:</strong> La ${periodStr} ya tiene datos en la <strong>Canastilla #${activePlantId}</strong>. Al procesar se <u>sobreescribirán</u> los datos y la gráfica se actualizará.`;
+            warningText.innerHTML = `<strong>AVISO - Muestreo Ya Registrado:</strong> La ${periodStr} ya tiene datos en la <strong>Canastilla #${activePlantId}</strong>. Al procesar se <u>sobreescribirán</u> los datos y la gráfica se actualizará.`;
         } else {
             warningBox.style.display = 'none';
         }
@@ -514,7 +514,7 @@
             const isOverwrite = processedPeriods.includes(periodStr);
             const btn = document.getElementById('btn-submit-manual');
             if (isOverwrite) {
-                btn.innerText = `⚠️ Sobreescribir ${periodStr} (Canastilla #${activePlantId})`;
+                btn.innerText = `Sobreescribir ${periodStr} (Canastilla #${activePlantId})`;
                 btn.style.background = "#f59e0b";
                 btn.style.borderColor = "#f59e0b";
                 btn.style.color = "#000";
