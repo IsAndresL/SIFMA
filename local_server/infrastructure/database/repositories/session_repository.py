@@ -14,11 +14,22 @@ class CaptureSessionRepository:
             period=period
         ).first()
 
+    def get_all(self) -> List[CaptureSession]:
+        return CaptureSession.query.order_by(CaptureSession.timestamp.desc()).all()
+
     def get_all_by_plant(self, plant_id: int, order_asc: bool = False) -> List[CaptureSession]:
         query = CaptureSession.query.filter_by(plant_id=int(plant_id))
         if order_asc:
             return query.order_by(CaptureSession.timestamp.asc()).all()
         return query.order_by(CaptureSession.timestamp.desc()).all()
+
+    def get_by_date_and_plant(self, date_str: str, plant_id: int) -> List[CaptureSession]:
+        if not date_str or date_str == "todos":
+            return self.get_all_by_plant(plant_id, order_asc=True)
+        return CaptureSession.query.filter(
+            CaptureSession.plant_id == int(plant_id),
+            db.func.strftime('%Y-%m-%d', CaptureSession.timestamp) == date_str
+        ).order_by(CaptureSession.timestamp.asc()).all()
 
     def get_available_dates(self, plant_id: int) -> List[str]:
         dates_query = db.session.query(

@@ -7,17 +7,16 @@ from datetime import datetime
 class OfflineStorageService:
     """
     Servicio encargado de detectar automáticamente memorias USB conectadas a la Raspberry Pi
-    y estructurar el almacenamiento por fecha y período:
+    y estructurar el almacenamiento por fecha y período con metadatos de alta resolución temporal:
     Estructura en USB: SIFMA_CAPTURES/YYYY-MM-DD/periodo/
     """
     
     @staticmethod
-    def wait_and_find_storage_directory(timeout_sec=10):
+    def wait_and_find_storage_directory(timeout_sec=15):
         """
         Espera a que el sistema operativo monte la memoria USB al encender.
         Si tras el tiempo límite no se detecta USB, utiliza almacenamiento local de respaldo.
         """
-        # 1. Comprobación inmediata
         initial_check = OfflineStorageService._find_target_storage_directory_once()
         if initial_check and "SIFMA_OFFLINE_STORAGE" not in initial_check:
             print(f"[ALMACENAMIENTO] Memoria USB detectada en: {initial_check}")
@@ -88,7 +87,7 @@ class OfflineStorageService:
         SIFMA_CAPTURES/YYYY-MM-DD/periodo/
         """
         if wait_for_usb:
-            base_dir = OfflineStorageService.wait_and_find_storage_directory(timeout_sec=10)
+            base_dir = OfflineStorageService.wait_and_find_storage_directory(timeout_sec=15)
         else:
             base_dir = OfflineStorageService._find_target_storage_directory_once()
             
@@ -100,19 +99,33 @@ class OfflineStorageService:
         return batch_dir
 
     @staticmethod
-    def save_batch_metadata(batch_dir, period, crop_type="cebollin", image_files_count=10, plant_id=1):
+    def save_batch_metadata(
+        batch_dir, 
+        period, 
+        crop_type="cebollin", 
+        image_files_count=10, 
+        plant_id=1,
+        session_start=None,
+        session_end=None,
+        photos_info=None
+    ):
         """
-        Guarda el archivo metadata.json en el lote de la USB y sincroniza el disco.
+        Guarda el archivo metadata.json en el lote de la USB con el desglose de cada una de las 5 tomas
+        y sus marcas de tiempo individuales para el cruce cronológico preciso.
         """
+        now = datetime.now()
         meta_path = os.path.join(batch_dir, "metadata.json")
         payload = {
-            "timestamp": datetime.now().isoformat(),
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "exact_time": datetime.now().strftime("%H:%M:%S"),
+            "timestamp": session_start or now.strftime("%Y-%m-%d %H:%M:%S"),
+            "date": now.strftime("%Y-%m-%d"),
+            "exact_time": now.strftime("%H:%M:%S"),
             "period": period,
             "crop_type": crop_type,
             "plant_id": plant_id,
-            "images_count": image_files_count
+            "images_count": image_files_count,
+            "session_start": session_start or now.strftime("%Y-%m-%d %H:%M:%S"),
+            "session_end": session_end or now.strftime("%Y-%m-%d %H:%M:%S"),
+            "photos": photos_info or []
         }
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)

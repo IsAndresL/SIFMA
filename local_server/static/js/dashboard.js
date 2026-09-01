@@ -1,188 +1,44 @@
-/* ==========================================================================
-   SIFMA - FRONTEND INTERACTIVE CHARTS AND CLIENT LOGIC
-   ========================================================================== */
+/**
+ * SIFMA - LÓGICA DE GRÁFICAS DEL DASHBOARD ANALÍTICO DIARIO
+ * Renderizado de las 4 gráficas del día seleccionado usando Chart.js
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. CONFIGURACIÓN DEL GRÁFICO DE CRECIMIENTO BIOMÉTRICO
-    const ctxGrowth = document.getElementById('growthChart');
-    if (ctxGrowth && typeof growthData !== 'undefined') {
-        
-        // Preparar vectores de datos
-        const labels = growthData.map(d => {
-            // Formatear fecha simple: de YYYY-MM-DD a DD/MM
-            const parts = d.date.split('-');
-            return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d.date;
-        });
-        
-        const areaData = growthData.map(d => d.area);
-        const heightData = growthData.map(d => d.height);
-        const diameterData = growthData.map(d => d.diameter);
-        
-        // Crear gradiente verde para área foliar
-        const gradGreen = ctxGrowth.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        gradGreen.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
-        gradGreen.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
-        
-        // Crear gradiente azul para altura
-        const gradBlue = ctxGrowth.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        gradBlue.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
-        gradBlue.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+    if (typeof dailyData === 'undefined') return;
 
-        new Chart(ctxGrowth, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Área Foliar (cm²)',
-                        data: areaData,
-                        borderColor: '#10b981',
-                        borderWidth: 3,
-                        backgroundColor: gradGreen,
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#ffffff',
-                        pointHoverRadius: 8,
-                        yAxisID: 'yArea'
-                    },
-                    {
-                        label: 'Altura Planta (cm)',
-                        data: heightData,
-                        borderColor: '#3b82f6',
-                        borderWidth: 2.5,
-                        backgroundColor: gradBlue,
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#ffffff',
-                        pointHoverRadius: 6,
-                        yAxisID: 'yHeight'
-                    },
-                    {
-                        label: 'Diámetro Tallo (mm)',
-                        data: diameterData,
-                        borderColor: '#f59e0b',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.35,
-                        pointBackgroundColor: '#f59e0b',
-                        pointBorderColor: '#ffffff',
-                        pointHoverRadius: 6,
-                        yAxisID: 'yHeight' // Comparte el eje Y derecho
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: '#94a3b8',
-                            font: { family: 'Inter', size: 12, weight: '500' },
-                            usePointStyle: true,
-                            padding: 15
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#0f172a',
-                        titleColor: '#ffffff',
-                        bodyColor: '#e2e8f0',
-                        borderColor: 'rgba(255,255,255,0.08)',
-                        borderWidth: 1,
-                        padding: 12,
-                        cornerRadius: 10,
-                        usePointStyle: true
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(15, 23, 42, 0.04)' },
-                        ticks: { color: '#475569', font: { family: 'Inter' } }
-                    },
-                    yArea: {
-                        type: 'linear',
-                        position: 'left',
-                        beginAtZero: true,
-                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
-                        ticks: { 
-                            color: '#10b981', 
-                            font: { family: 'Inter', weight: '600' },
-                            callback: function(value) {
-                                const cleanVal = Math.floor(value) === value ? value : parseFloat(value.toFixed(2));
-                                return `${cleanVal} cm²`;
-                            }
-                        },
-                        title: { display: true, text: 'Área Foliar (cm²)', color: '#10b981' }
-                    },
-                    yHeight: {
-                        type: 'linear',
-                        position: 'right',
-                        beginAtZero: true,
-                        grid: { drawOnChartArea: false }, // Evita superposición de líneas cuadrículas
-                        ticks: { 
-                            color: '#475569', 
-                            font: { family: 'Inter' },
-                            callback: function(value) {
-                                return Math.floor(value) === value ? value : parseFloat(value.toFixed(2));
-                            }
-                        },
-                        title: { display: true, text: 'Altura (cm) / Espesor (mm)', color: '#475569' }
-                    }
-                }
-            }
-        });
-    }
+    // Configuración global de fuentes para Chart.js
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
 
-    // 2. CONFIGURACIÓN DEL GRÁFICO DE TELEMETRÍA RESUMIDA (CLIMATOLOGÍA)
-    const ctxSummary = document.getElementById('sensorSummaryChart');
-    if (ctxSummary && typeof sensorRaw !== 'undefined' && sensorRaw.length > 0) {
-        const labels = sensorRaw.map(s => s.time);
-        const tempData = sensorRaw.map(s => s.temp);
-        const humData = sensorRaw.map(s => s.hum);
+    // 1. GRÁFICA 1: CURVA TÉRMICA DE LA JORNADA
+    const ctxThermal = document.getElementById('thermalCurveChart');
+    if (ctxThermal) {
+        const thermal = dailyData.thermal_curve || {};
+        const labels = thermal.labels || ["07:00", "10:00", "13:00", "16:00", "19:00"];
+        const temps = thermal.temps || [0, 0, 0, 0, 0];
 
-        // Green/Blue gradient for Temperature and Humidity overlays
-        const gradRed = ctxSummary.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        gradRed.addColorStop(0, 'rgba(239, 68, 68, 0.15)');
-        gradRed.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+        const gradientTemp = ctxThermal.getContext('2d').createLinearGradient(0, 0, 0, 200);
+        gradientTemp.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
+        gradientTemp.addColorStop(1, 'rgba(37, 99, 235, 0.02)');
 
-        const gradBlue = ctxSummary.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        gradBlue.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
-        gradBlue.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-        new Chart(ctxSummary, {
+        new Chart(ctxThermal, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: 'Temperatura (°C)',
-                        data: tempData,
-                        borderColor: '#ef4444',
+                        data: temps,
+                        borderColor: '#2563eb',
+                        backgroundColor: gradientTemp,
                         borderWidth: 2.5,
-                        backgroundColor: gradRed,
                         fill: true,
                         tension: 0.35,
-                        pointBackgroundColor: '#ef4444',
+                        pointBackgroundColor: '#1d4ed8',
                         pointBorderColor: '#ffffff',
-                        pointHoverRadius: 7,
-                        yAxisID: 'yTemp'
-                    },
-                    {
-                        label: 'Humedad Relativa (%)',
-                        data: humData,
-                        borderColor: '#3b82f6',
-                        borderWidth: 2.5,
-                        backgroundColor: gradBlue,
-                        fill: true,
-                        tension: 0.35,
-                        pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#ffffff',
-                        pointHoverRadius: 7,
-                        yAxisID: 'yHum'
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }
                 ]
             },
@@ -190,52 +46,207 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: '#94a3b8',
-                            font: { family: 'Inter', size: 12, weight: '500' },
-                            usePointStyle: true,
-                            padding: 15
-                        }
-                    },
+                    legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0f172a',
+                        backgroundColor: '#09211a',
                         titleColor: '#ffffff',
                         bodyColor: '#e2e8f0',
-                        borderColor: 'rgba(255,255,255,0.08)',
-                        borderWidth: 1,
-                        padding: 12,
-                        cornerRadius: 10,
-                        usePointStyle: true
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (ctx) => ` Temperatura: ${ctx.parsed.y} °C`
+                        }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(15, 23, 42, 0.04)' },
-                        ticks: { color: '#475569', font: { family: 'Inter' } }
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
                     },
-                    yTemp: {
-                        type: 'linear',
-                        position: 'left',
-                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
-                        ticks: { 
-                            color: '#ef4444', 
-                            font: { family: 'Inter', weight: '600' },
-                            callback: value => `${value} °C`
+                    y: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: (v) => `${v}°C`,
+                            font: { size: 11 }
                         },
-                        title: { display: true, text: 'Temperatura', color: '#ef4444' }
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...temps, 30)
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. GRÁFICA 2: CRECIMIENTO Y MORFOMETRÍA POR PERÍODO
+    const ctxGrowth = document.getElementById('growthPeriodsChart');
+    if (ctxGrowth) {
+        const growth = dailyData.growth_chart || {};
+        const labels = growth.labels || ["Mañana", "Mediodía", "Tarde"];
+        const areas = growth.areas || [0, 0, 0];
+
+        const gradientBars = ctxGrowth.getContext('2d').createLinearGradient(0, 0, 0, 200);
+        gradientBars.addColorStop(0, '#059669');
+        gradientBars.addColorStop(1, '#10b981');
+
+        new Chart(ctxGrowth, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Área Foliar (cm²)',
+                    data: areas,
+                    backgroundColor: gradientBars,
+                    borderRadius: 8,
+                    barThickness: 36
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#09211a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (ctx) => ` Área Foliar: ${ctx.parsed.y} cm²`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 12, weight: 600 } }
                     },
-                    yHum: {
-                        type: 'linear',
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        ticks: { 
-                            color: '#3b82f6', 
-                            font: { family: 'Inter', weight: '600' },
-                            callback: value => `${value} %`
+                    y: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: (v) => `${v} cm²`,
+                            font: { size: 11 }
                         },
-                        title: { display: true, text: 'Humedad Relativa', color: '#3b82f6' }
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...areas, 50)
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. GRÁFICA 3: CORRIENTE DE BOMBA (AMPERAJE)
+    const ctxPump = document.getElementById('pumpCurrentChart');
+    if (ctxPump) {
+        const pump = dailyData.pump_chart || {};
+        const labels = pump.labels || ["07:00", "10:00", "13:00", "16:00", "19:00"];
+        const currents = pump.currents || [0, 0, 0, 0, 0];
+
+        const gradientPump = ctxPump.getContext('2d').createLinearGradient(0, 0, 0, 200);
+        gradientPump.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+        gradientPump.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+
+        new Chart(ctxPump, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Corriente Motor (A)',
+                    data: currents,
+                    borderColor: '#059669',
+                    backgroundColor: gradientPump,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#047857',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#09211a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (ctx) => ` Corriente: ${ctx.parsed.y} A`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    },
+                    y: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: (v) => `${v} A`,
+                            font: { size: 11 }
+                        },
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...currents, 0.6)
+                    }
+                }
+            }
+        });
+    }
+
+    // 4. GRÁFICA 4: RADIACIÓN SOLAR UV (LUX)
+    const ctxSolar = document.getElementById('solarIrradianceChart');
+    if (ctxSolar) {
+        const solar = dailyData.solar_chart || {};
+        const labels = solar.labels || ["07:00", "09:00", "11:00", "13:00", "15:00", "17:00", "19:00"];
+        const uvs = solar.uv_values || [0, 0, 0, 0, 0, 0, 0];
+
+        new Chart(ctxSolar, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Radiación (lux)',
+                    data: uvs,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 6,
+                    barThickness: 24
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#09211a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (ctx) => ` Radiación: ${ctx.parsed.y} lux`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    },
+                    y: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: (v) => `${v} lux`,
+                            font: { size: 11 }
+                        },
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...uvs, 600)
                     }
                 }
             }

@@ -3,7 +3,8 @@ from .services import (
     TelemetryApplicationService,
     VisionApplicationService,
     AnalyticsApplicationService,
-    ConclusionApplicationService
+    ConclusionApplicationService,
+    UserService
 )
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "TelemetryApplicationService",
     "VisionApplicationService",
     "AnalyticsApplicationService",
-    "ConclusionApplicationService"
+    "ConclusionApplicationService",
+    "UserService"
 ]

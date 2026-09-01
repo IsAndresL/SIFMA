@@ -5,6 +5,7 @@ from . import api_bp
 
 conclusion_service = ConclusionApplicationService()
 
+@api_bp.route('/api/conclusions', methods=['GET', 'POST'])
 @api_bp.route('/api/agronomic_conclusions', methods=['GET', 'POST'])
 def handle_agronomic_conclusions():
     if request.method == 'GET':
@@ -46,6 +47,7 @@ def handle_agronomic_conclusions():
             "note": new_note.to_dict()
         })
 
+@api_bp.route('/api/conclusions/<int:note_id>', methods=['DELETE'])
 @api_bp.route('/api/agronomic_conclusions/<int:note_id>', methods=['DELETE'])
 def delete_agronomic_conclusion(note_id: int):
     success = conclusion_service.delete_conclusion(note_id)

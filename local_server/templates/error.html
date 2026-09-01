@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Acceso Restringido{% endblock %}
+{% block heading %}Aviso de Seguridad{% endblock %}
+{% block subheading %}Permisos del sistema{% endblock %}
+
+{% block content %}
+<div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 14px; padding: 40px 24px; text-align: center; max-width: 550px; margin: 40px auto; box-shadow: var(--shadow-card);">
+    <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--accent-danger-subtle); color: var(--accent-danger); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+        <span class="material-icons-round" style="font-size: 32px;">shield</span>
+    </div>
+    <h2 style="font-family: var(--font-heading); font-size: 20px; font-weight: 700; color: var(--text-heading); margin-bottom: 8px;">{{ error_title or 'Acceso Restringido' }}</h2>
+    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;">{{ error_message or 'No posees los permisos necesarios para realizar esta acción.' }}</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn-header-action btn-header-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+        <span class="material-icons-round">arrow_back</span>
+        <span>Volver al Dashboard Principal</span>
+    </a>
+</div>
+{% endblock %}

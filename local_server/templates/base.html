@@ -2,109 +2,184 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SIFMA: Sistema Integral de Procesamiento de Imágenes Asistido por Computadora, Fenotipado y Monitoreo Ambiental en Torre Hidropónica.">
-    <title>SIFMA - {% block title %}Dashboard{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="SIFMA: Sistema Integrado de Fenotipado y Monitoreo Agronómico.">
+    <title>SIFMA - {% block title %}Dashboard Analítico{% endblock %}</title>
     
     <!-- Google Fonts: Outfit (títulos) e Inter (cuerpo) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Round" rel="stylesheet">
+    <!-- Google Material Icons Round -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <!-- Chart.js para gráficas fluidas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Estilos Premium Personalizados -->
+    <!-- Estilos Ejecutivos Personalizados -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     
     {% block head %}{% endblock %}
 </head>
-<body class="light-theme">
+<body>
     <div class="app-container">
-        <!-- BARRA LATERAL (SIDEBAR) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="brand-logo-container" title="Enfoque de Fenotipado por Visión SIFMA">
-                    <span class="material-icons-round brand-icon-focus">center_focus_strong</span>
-                    <span class="material-icons-round brand-icon-leaf">spa</span>
-                </div>
-                <h2>SIFMA</h2>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.path == '/' %}active{% endif %}" id="nav-dashboard">
-                    <span class="material-icons-round">dashboard</span>
-                    <span>Monitoreo</span>
-                </a>
-                <a href="{{ url_for('dashboard.detailed_sensors') }}" class="nav-item {% if '/sensors' in request.path %}active{% endif %}" id="nav-sensors">
-                    <span class="material-icons-round">sensors</span>
-                    <span>Sensores</span>
-                </a>
-                <a href="{{ url_for('dashboard.processing_panel') }}" class="nav-item {% if '/processing' in request.path %}active{% endif %}" id="nav-processing">
-                    <span class="material-icons-round">memory</span>
-                    <span>Procesamiento</span>
-                </a>
-                <a href="{{ url_for('dashboard.cross_analysis') }}" class="nav-item {% if '/cross_analysis' in request.path %}active{% endif %}" id="nav-cross-analysis">
-                    <span class="material-icons-round">sync_alt</span>
-                    <span>Cruce de Datos</span>
-                </a>
-                <a href="{{ url_for('dashboard.gallery') }}" class="nav-item {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery">
-                    <span class="material-icons-round">photo_library</span>
-                    <span>Galería</span>
-                </a>
-                <a href="{{ url_for('dashboard.configuration_panel') }}" class="nav-item {% if '/config' in request.path %}active{% endif %}" id="nav-config">
-                    <span class="material-icons-round">settings</span>
-                    <span>Configuración</span>
-                </a>
-                <a href="{{ url_for('dashboard.logout') }}" class="nav-item" id="nav-logout" style="margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--accent-danger);">
-                    <span class="material-icons-round">logout</span>
-                    <span>Cerrar Sesión</span>
-                </a>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <div class="node-status-card" style="background: rgba(16, 185, 129, 0.05); border: 1px solid var(--accent-success); padding: 10px; border-radius: 10px;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                        <div class="status-indicator online"></div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--accent-success); text-transform: uppercase;">Canastilla de Cultivo</span>
-                    </div>
-                    <select id="active-plant-selector" style="width: 100%; background: var(--bg-main); color: var(--text-heading); border: 1px solid var(--glass-border); padding: 6px 8px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;" onchange="window.location.href='{{ url_for('dashboard.set_active_plant', plant_id=0) }}'.replace('0', this.value)">
-                        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1 (Nodo RPi 1)</option>
-                        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2 (Nodo RPi 2)</option>
-                        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3 (Nodo RPi 3)</option>
-                        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4 (Nodo RPi 4)</option>
-                    </select>
-                </div>
-                <p class="footer-copy" style="font-size: 11px; line-height: 1.4; color: var(--text-muted); margin-top: 8px;">
-                    Elaborado por Estudiantes de Ing. de Sistemas<br>
-                    <strong style="color: var(--text-heading);">Andres Luna y Cristian Peña</strong>
-                </p>
-            </div>
-            <!-- Resize handle bar -->
-            <div class="sidebar-resizer" id="sidebar-resizer"></div>
-        </aside>
+        <!-- OVERLAY PARA DISPOSITIVOS MÓVILES -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- CONTENIDO PRINCIPAL -->
-        <main class="main-content">
-            <header class="top-header">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Mostrar/Ocultar Menú">
-                        <span class="material-icons-round">menu</span>
-                    </button>
-                    <div class="header-title">
-                        <span class="pre-title">Torre Hidropónica Vertical</span>
-                        <h1 id="page-heading">{% block heading %}Dashboard de Monitoreo{% endblock %}</h1>
+        <!-- BARRA LATERAL (SIDEBAR VERDE BOSQUE PROFUNDO) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <!-- LOGO Y TÍTULO SIFMA EXPANDIDO (OCULTO AL COLAPSAR) -->
+                <div class="sidebar-brand-group">
+                    <div class="sidebar-logo-icon" style="background: transparent; box-shadow: none; padding: 0;">
+                        <img src="{{ url_for('static', filename='img/sifma_logo.svg') }}" alt="SIFMA Logo" style="width: 38px; height: 38px; border-radius: 9px;">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2>SIFMA</h2>
+                        <span>Fenotipado & Telemetría</span>
                     </div>
                 </div>
                 
-                <div class="header-actions">
-                    <div class="time-badge">
-                        <span class="material-icons-round text-success">schedule</span>
-                        <span id="header-time">--:--:--</span>
+                <!-- BOTÓN TOGGLE (ARRIBA EN AMBOS ESTADOS) -->
+                <button class="sidebar-toggle-btn" id="sidebar-toggle" onclick="toggleSidebar()" title="Colapsar / Expandir Barra Lateral">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu-icon lucide-menu"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+                </button>
+            </div>
+            
+            <div class="sidebar-scrollable">
+                <!-- SECCIÓN: GENERAL -->
+                <div>
+                    <div class="nav-section-title">General</div>
+                    <div class="nav-group">
+                        <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.path == '/' %}active{% endif %}" id="nav-dashboard" title="Resumen Diario">
+                            <span class="material-icons-round">dashboard</span>
+                            <span class="nav-link-text">Resumen Diario</span>
+                        </a>
+                        <a href="{{ url_for('dashboard.calendar_view') }}" class="nav-link {% if '/calendar' in request.path %}active{% endif %}" id="nav-calendar" title="Calendario de Muestreos y Telemetría">
+                            <span class="material-icons-round">calendar_month</span>
+                            <span class="nav-link-text">Calendario</span>
+                        </a>
                     </div>
+                </div>
+
+                <!-- SECCIÓN: FENOTIPADO Y VISIÓN -->
+                <div>
+                    <div class="nav-section-title">Fenotipado y Visión</div>
+                    <div class="nav-group">
+                        <a href="{{ url_for('dashboard.processing_panel') }}" class="nav-link {% if '/processing' in request.path %}active{% endif %}" id="nav-processing" title="Procesamiento">
+                            <span class="material-icons-round">camera_enhance</span>
+                            <span class="nav-link-text">Procesamiento</span>
+                        </a>
+                        <a href="{{ url_for('dashboard.gallery') }}" class="nav-link {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery" title="Galería de Lotes">
+                            <span class="material-icons-round">photo_library</span>
+                            <span class="nav-link-text">Galería de Lotes</span>
+                        </a>
+                        <a href="{{ url_for('dashboard.inter_plant_benchmark') }}" class="nav-link {% if '/benchmark' in request.path %}active{% endif %}" id="nav-benchmark" title="Comparador Inter-Canastillas">
+                            <span class="material-icons-round">bar_chart</span>
+                            <span class="nav-link-text">Comparador de Nodos</span>
+                        </a>
+                        <a href="{{ url_for('dashboard.timelapse_viewer') }}" class="nav-link {% if '/timelapse' in request.path %}active{% endif %}" id="nav-timelapse" title="Time-Lapse Evolutivo">
+                            <span class="material-icons-round">slow_motion_video</span>
+                            <span class="nav-link-text">Time-Lapse Evolutivo</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: TELEMETRÍA Y AMBIENTE -->
+                <div>
+                    <div class="nav-section-title">Telemetría y Ambiente</div>
+                    <div class="nav-group">
+                        <a href="{{ url_for('dashboard.detailed_sensors') }}" class="nav-link {% if '/sensors' in request.path %}active{% endif %}" id="nav-sensors" title="Sensores Ambientales">
+                            <span class="material-icons-round">sensors</span>
+                            <span class="nav-link-text">Sensores Ambientales</span>
+                        </a>
+                        <a href="{{ url_for('dashboard.cross_analysis') }}" class="nav-link {% if '/cross_analysis' in request.path %}active{% endif %}" id="nav-cross-analysis" title="Cruce y Correlaciones">
+                            <span class="material-icons-round">sync_alt</span>
+                            <span class="nav-link-text">Cruce y Correlaciones</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: ADMINISTRACIÓN Y CONFIGURACIÓN -->
+                <div>
+                    <div class="nav-section-title">Configuración</div>
+                    <div class="nav-group">
+                        <a href="{{ url_for('dashboard.configuration_panel') }}" class="nav-link {% if '/config' in request.path %}active{% endif %}" id="nav-config" title="Parámetros de Cultivo">
+                            <span class="material-icons-round">tune</span>
+                            <span class="nav-link-text">Parámetros de Cultivo</span>
+                        </a>
+                        {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('dashboard.users_management') }}" class="nav-link {% if '/users' in request.path %}active{% endif %}" id="nav-users" title="Usuarios y Roles">
+                            <span class="material-icons-round">group</span>
+                            <span class="nav-link-text">Usuarios y Roles</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PIE DE PERFIL DE USUARIO / LOGO SIFMA INFERIOR -->
+            <div class="sidebar-footer">
+                <!-- WIDGET EXPANDIDO DE USUARIO -->
+                <div class="user-profile-widget">
+                    <div class="user-avatar-circle" title="{{ current_user.role_display }}">
+                        {{ current_user.avatar }}
+                    </div>
+                    <div class="user-info-text">
+                        <div class="user-name" title="{{ current_user.name }}">{{ current_user.name }}</div>
+                        <div class="user-role">{{ current_user.role_display }}</div>
+                    </div>
+                    <a href="{{ url_for('dashboard.logout') }}" class="user-logout-btn" title="Cerrar Sesión">
+                        <span class="material-icons-round">logout</span>
+                    </a>
+                </div>
+
+                <!-- ELEMENTOS INFERIORES CUANDO ESTÁ COLAPSADO: AVATAR + LOGO SIFMA + LOGOUT -->
+                <div class="sidebar-collapsed-bottom">
+                    <div class="user-avatar-circle" title="{{ current_user.name }} ({{ current_user.role_display }})">
+                        {{ current_user.avatar }}
+                    </div>
+                    <div class="sidebar-logo-icon" title="SIFMA - Fenotipado & Telemetría" style="width: 32px; height: 32px; border-radius: 8px; background: transparent; box-shadow: none; padding: 0;">
+                        <img src="{{ url_for('static', filename='img/sifma_logo.svg') }}" alt="SIFMA Logo" style="width: 100%; height: 100%; border-radius: 8px;">
+                    </div>
+                    <a href="{{ url_for('dashboard.logout') }}" class="user-logout-btn" title="Cerrar Sesión ({{ current_user.name }})">
+                        <span class="material-icons-round">logout</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content" id="main-content">
+            <header class="top-header">
+                <div class="header-left-col">
+                    <!-- BOTÓN MÓVIL SOLO EN PANTALLAS PEQUEÑAS -->
+                    <button class="mobile-sidebar-trigger" onclick="toggleSidebar()" title="Abrir Menú">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu-icon lucide-menu"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+                    </button>
+                    
+                    <div class="header-title-block">
+                        <h1 id="page-heading">{% block heading %}Dashboard Analítico{% endblock %}</h1>
+                        <p id="page-subheading">{% block subheading %}Resumen general de la jornada y fenotipado{% endblock %}</p>
+                    </div>
+                </div>
+                
+                <div class="header-controls-row">
+                    {% block header_controls %}
+                    <!-- Selector de Canastilla / Torre -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round text-muted" style="font-size: 18px;">view_in_ar</span>
+                        <select id="header-plant-selector" class="form-input-control" style="padding: 6px 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: auto;" onchange="switchActivePlant(this.value)">
+                            <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1</option>
+                            <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2</option>
+                            <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3</option>
+                            <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4</option>
+                        </select>
+                    </div>
+                    {% endblock %}
+
+                    {% block header_actions %}{% endblock %}
                 </div>
             </header>
             
@@ -115,110 +190,41 @@
     </div>
 
     <script>
-        // Actualizar reloj del header en tiempo real
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById('header-time').textContent = timeString;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
-    
-    <script>
-        // LÓGICA DE BARRA LATERAL OCULTABLE, RESPONSIVA Y REDIMENSIONABLE (DRAGGABLE)
-        document.addEventListener('DOMContentLoaded', () => {
+        function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            const mainContent = document.querySelector('.main-content');
-            const toggleBtn = document.getElementById('sidebar-toggle-btn');
-            const resizer = document.getElementById('sidebar-resizer');
+            const main = document.getElementById('main-content');
+            const overlay = document.getElementById('sidebar-overlay');
             
-            // 1. COMPORTAMIENTO DE OCULTAR / COLAPSAR
-            // Cargar preferencia persistente de localStorage
-            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-            if (isCollapsed && window.innerWidth > 768) {
-                sidebar.classList.add('collapsed');
-                mainContent.classList.add('sidebar-collapsed');
-            }
-            
-            // Crear el overlay para móvil si no existe
-            let overlay = document.querySelector('.sidebar-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'sidebar-overlay';
-                document.body.appendChild(overlay);
-            }
-            
-            toggleBtn.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    // Móvil: abre como cajón/drawer
-                    sidebar.classList.toggle('mobile-open');
-                    overlay.classList.toggle('active');
-                } else {
-                    // Escritorio: colapsa lateralmente
-                    sidebar.classList.toggle('collapsed');
-                    mainContent.classList.toggle('sidebar-collapsed');
-                    localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+            if (window.innerWidth <= 992) {
+                const isOpen = sidebar.classList.toggle('open');
+                if (overlay) {
+                    if (isOpen) overlay.classList.add('show');
+                    else overlay.classList.remove('show');
                 }
-            });
-            
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            });
-            
-            // 2. COMPORTAMIENTO REDIMENSIONABLE (DRAG ARRASTRAR - SÓLO ESCRITORIO)
-            let isResizing = false;
-            
-            // Cargar ancho guardado si existe
-            const savedWidth = localStorage.getItem('sidebar-width');
-            if (savedWidth && window.innerWidth > 768 && !isCollapsed) {
-                sidebar.style.width = savedWidth + 'px';
-                mainContent.style.marginLeft = savedWidth + 'px';
+            } else {
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                if (main) main.classList.toggle('expanded');
+                localStorage.setItem('sifma_sidebar_collapsed', isCollapsed);
             }
-            
-            resizer.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                isResizing = true;
-                resizer.classList.add('resizing');
-                sidebar.classList.add('resizing');
-                mainContent.classList.add('resizing');
-                document.body.style.cursor = 'col-resize';
-                document.body.style.userSelect = 'none';
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (!isResizing) return;
-                
-                let newWidth = e.clientX;
-                
-                // Restricciones de ancho (Min 180px, Max 450px)
-                if (newWidth < 180) newWidth = 180;
-                if (newWidth > 450) newWidth = 450;
-                
-                sidebar.style.width = newWidth + 'px';
-                mainContent.style.marginLeft = newWidth + 'px';
-                localStorage.setItem('sidebar-width', newWidth);
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if (isResizing) {
-                    isResizing = false;
-                    resizer.classList.remove('resizing');
-                    sidebar.classList.remove('resizing');
-                    mainContent.classList.remove('resizing');
-                    document.body.style.cursor = '';
-                    document.body.style.userSelect = '';
-                    
-                    // Notificar a Chart.js que el contenedor cambió de tamaño para redibujar
-                    if (window.Chart) {
-                        Object.values(Chart.instances).forEach(chart => chart.resize());
-                    }
+        }
+
+        function switchActivePlant(newPlantId) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('plant_id', newPlantId);
+            window.location.href = url.toString();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth > 992) {
+                const saved = localStorage.getItem('sifma_sidebar_collapsed');
+                if (saved === 'true') {
+                    document.getElementById('sidebar')?.classList.add('collapsed');
+                    document.getElementById('main-content')?.classList.add('expanded');
                 }
-            });
+            }
         });
     </script>
-    
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

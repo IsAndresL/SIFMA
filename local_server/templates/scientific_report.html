@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Científico - {{ dossier.report_id }} - SIFMA</title>
+    
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <style>
+        :root {
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-color: #cbd5e1;
+            --border-dark: #334155;
+            --bg-subtle: #f8fafc;
+            --accent-emerald: #059669;
+            --accent-blue: #0284c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-main);
+            background: #e2e8f0;
+            font-size: 11.5px;
+            line-height: 1.45;
+            padding: 24px;
+        }
+
+        /* CONTENEDOR TIPO HOJA A4 */
+        .report-page-sheet {
+            max-width: 960px;
+            margin: 0 auto 30px auto;
+            background: #ffffff;
+            padding: 36px 42px;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            border: 1px solid #cbd5e1;
+            position: relative;
+        }
+
+        /* BARRA SUPERIOR DE HERRAMIENTAS (FLOTANTE EN PANTALLA, OCULTA AL IMPRIMIR) */
+        .toolbar-screen-only {
+            max-width: 960px;
+            margin: 0 auto 16px auto;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            border: none;
+        }
+
+        .btn-primary-action {
+            background: var(--accent-emerald);
+            color: #ffffff;
+        }
+
+        .btn-primary-action:hover {
+            background: #047857;
+        }
+
+        .btn-sign-action {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .btn-sign-action:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-outline-action {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-outline-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ENCABEZADO INSTITUCIONAL */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 18px;
+            border-bottom: 2px solid var(--border-dark);
+            margin-bottom: 20px;
+        }
+
+        .report-logo-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .report-logo-svg-wrapper {
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(6, 78, 59, 0.25);
+        }
+
+        .report-header-title h1 {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.4px;
+            line-height: 1.15;
+        }
+
+        .report-header-title p {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 3px;
+        }
+
+        .report-meta-box {
+            text-align: right;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .report-meta-box strong {
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+        }
+
+        /* METADATOS DE LA MUESTRA (TABLA GRID) */
+        .meta-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 22px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+        }
+
+        .meta-grid-table td {
+            padding: 7px 12px;
+            border: 1px solid var(--border-color);
+            font-size: 11px;
+        }
+
+        .meta-grid-table .meta-label {
+            font-weight: 700;
+            color: var(--text-muted);
+            width: 22%;
+            background: #f1f5f9;
+        }
+
+        .meta-grid-table .meta-val {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* SECCIONES Y TÍTULOS */
+        .section-block {
+            margin-bottom: 24px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 6px;
+            border-bottom: 1.5px solid var(--border-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .section-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: var(--text-main);
+            color: #ffffff;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* TABLAS CIENTÍFICAS */
+        .scientific-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            margin-bottom: 12px;
+        }
+
+        .scientific-table th {
+            background: #f1f5f9;
+            color: var(--text-main);
+            font-weight: 700;
+            text-align: left;
+            padding: 6px 8px;
+            border-top: 1.5px solid var(--border-dark);
+            border-bottom: 1.5px solid var(--border-dark);
+            font-size: 10.5px;
+        }
+
+        .scientific-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .scientific-table tr:last-child td {
+            border-bottom: 1.5px solid var(--border-dark);
+        }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+        /* REGISTRO FOTOGRÁFICO COMPARATIVO */
+        .photo-comp-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            background: #ffffff;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }
+
+        .photo-comp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid var(--border-color);
+            background: #f8fafc;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
+
+        .photo-duo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .photo-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .photo-frame {
+            width: 100%;
+            height: 200px;
+            background: #0f172a;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .photo-frame img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+        }
+
+        .photo-box-caption {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .photo-box-caption.proc {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        /* ALERTAS / INSIGHTS */
+        .insight-box {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            line-height: 1.4;
+            border-left: 3px solid;
+        }
+
+        .insight-box.warning {
+            background: #fffbeb;
+            border-color: #d97706;
+            color: #92400e;
+        }
+
+        .insight-box.positive {
+            background: #ecfdf5;
+            border-color: var(--accent-emerald);
+            color: #065f46;
+        }
+
+        /* SECCIÓN DE FIRMAS DIGITALES */
+        .signatures-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-top: 35px;
+            padding-top: 15px;
+            page-break-inside: avoid;
+        }
+
+        .signature-line {
+            text-align: center;
+            position: relative;
+        }
+
+        .signature-box-area {
+            height: 90px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 4px;
+            position: relative;
+        }
+
+        .signature-stamp-img {
+            max-height: 82px;
+            max-width: 220px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+        }
+
+        .signature-placeholder-btn {
+            width: 100%;
+            height: 65px;
+            border: 1.5px dashed #94a3b8;
+            border-radius: 6px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: #64748b;
+            font-size: 10.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .signature-placeholder-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.04);
+        }
+
+        .signature-actions-hover {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: none;
+            gap: 4px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .signature-box-area:hover .signature-actions-hover {
+            display: flex;
+        }
+
+        .sig-mini-btn {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .sig-mini-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .signature-rule {
+            border-top: 1.5px solid var(--border-dark);
+            margin-top: 2px;
+            padding-top: 6px;
+        }
+
+        .editable-field {
+            outline: none;
+            border-radius: 3px;
+            padding: 1px 4px;
+            transition: background 0.15s ease;
+        }
+
+        .editable-field:hover, .editable-field:focus {
+            background: #f1f5f9;
+        }
+
+        .editable-field:focus {
+            box-shadow: 0 0 0 1.5px #2563eb;
+        }
+
+        /* MODAL DEL FIRMADOR DIGITAL DE DOCUMENTOS */
+        .sig-modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .sig-modal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 540px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .sig-modal-header {
+            padding: 16px 20px;
+            background: #0f172a;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sig-modal-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sig-modal-body {
+            padding: 20px;
+        }
+
+        .sig-tabs-nav {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 18px;
+        }
+
+        .sig-tab-btn {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .sig-tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .sig-tab-content {
+            display: none;
+        }
+
+        .sig-tab-content.active {
+            display: block;
+        }
+
+        /* DROPZONE DE ARCHIVO */
+        .sig-dropzone {
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sig-dropzone:hover, .sig-dropzone.dragover {
+            border-color: #2563eb;
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        /* CANVAS DE FIRMA A MANO ALZADA */
+        .sig-canvas-wrapper {
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+            position: relative;
+            touch-action: none;
+        }
+
+        #signature-pad {
+            width: 100%;
+            height: 180px;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .sig-canvas-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+
+        .sig-color-picker {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .sig-color-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .sig-color-dot.active {
+            border-color: #0f172a;
+            transform: scale(1.15);
+        }
+
+        /* ESTILOS DE IMPRESIÓN Y EXPORTACIÓN A PDF */
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                font-size: 10pt !important;
+            }
+
+            .toolbar-screen-only {
+                display: none !important;
+            }
+
+            .sig-modal-backdrop {
+                display: none !important;
+            }
+
+            .signature-placeholder-btn {
+                display: none !important;
+            }
+
+            .signature-actions-hover {
+                display: none !important;
+            }
+
+            .editable-field:hover, .editable-field:focus {
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+
+            .report-page-sheet {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .section-block {
+                page-break-inside: avoid;
+            }
+
+            .photo-comp-card {
+                page-break-inside: avoid;
+            }
+
+            .signatures-row {
+                page-break-inside: avoid;
+            }
+
+            @page {
+                size: A4 portrait;
+                margin: 15mm 12mm 15mm 12mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR FLOTANTE PARA PANTALLA (NO SALE EN PDF) -->
+    <div class="toolbar-screen-only">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="/cross_analysis?plant_id={{ active_plant_id }}" class="btn-action btn-outline-action">
+                <span class="material-icons-round" style="font-size: 16px;">arrow_back</span>
+                <span>Volver a SIFMA</span>
+            </a>
+            <span style="font-weight: 700; font-size: 13px;">Ficha Técnica Científica: {{ dossier.target_date }}</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <!-- Selector de Fecha de la Ficha -->
+            <select onchange="window.location.href='/report/scientific?date=' + this.value + '&plant_id={{ active_plant_id }}'" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 5px 8px; border-radius: 4px; font-size: 11.5px;">
+                {% for d in dossier.available_dates %}
+                    <option value="{{ d }}" {% if dossier.target_date == d %}selected{% endif %} style="color: #000;">Fecha: {{ d }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Botón del Firmador Digital -->
+            <button type="button" class="btn-action btn-sign-action" onclick="openSignatureModal(1)">
+                <span class="material-icons-round" style="font-size: 16px;">draw</span>
+                <span>Firmar Documento</span>
+            </button>
+
+            <!-- Botón de Impresión Directa / Guardar PDF -->
+            <button type="button" class="btn-action btn-primary-action" onclick="window.print()">
+                <span class="material-icons-round" style="font-size: 16px;">print</span>
+                <span>Imprimir / Exportar PDF</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- CUERPO DE LA FICHA TÉCNICA CIENTÍFICA -->
+    <div class="report-page-sheet">
+        
+        <!-- ENCABEZADO CIENTÍFICO INSTITUCIONAL CON LOGO SIFMA VECTORIAL -->
+        <header class="report-header">
+            <div class="report-logo-box">
+                <div class="report-logo-svg-wrapper">
+                    <img src="{{ url_for('static', filename='img/sifma_logo.svg') }}" alt="SIFMA Emblem" style="width: 100%; height: 100%; display: block;">
+                </div>
+                <div class="report-header-title">
+                    <h1>SIFMA - DOSSIER CIENTÍFICO</h1>
+                    <p>Sistema de Fenotipado & Telemetría Agronómica en Torres Aeropónicas</p>
+                </div>
+            </div>
+            <div class="report-meta-box">
+                <div>INFORME ID: <strong>{{ dossier.report_id }}</strong></div>
+                <div>FECHA DE EMISIÓN: <strong>{{ dossier.generated_at }}</strong></div>
+                <div>VERSIÓN ALGORITMO: <strong>SIFMA-CV v2.4 (Otsu + LAB + HSV)</strong></div>
+            </div>
+        </header>
+
+        <!-- METADATOS TÉCNICOS DE LA JORNADA -->
+        <table class="meta-grid-table">
+            <tr>
+                <td class="meta-label">CANASTILLA / NODO:</td>
+                <td class="meta-val">Canastilla #{{ dossier.plant_id }} ({{ dossier.level_name }})</td>
+                <td class="meta-label">ESPECIE EVALUADA:</td>
+                <td class="meta-val">{{ dossier.display_name }} ({{ dossier.crop_key | capitalize }})</td>
+            </tr>
+            <tr>
+                <td class="meta-label">FECHA DE MUESTREO:</td>
+                <td class="meta-val"><strong>{{ dossier.target_date }}</strong></td>
+                <td class="meta-label">SESIONES REGISTRADAS:</td>
+                <td class="meta-val">{{ dossier.detailed_sessions | length }} Lotes fotográficos</td>
+            </tr>
+            <tr>
+                <td class="meta-label">INVESTIGADOR PRINCIPAL:</td>
+                <td class="meta-val"><span id="meta-evaluator-name" class="editable-field" contenteditable="true">{{ current_user.name if current_user else 'Ing. Andrés Luna' }}</span></td>
+                <td class="meta-label">ESTRUCTURA DE CULTIVO:</td>
+                <td class="meta-val">Torre Aeropónica Vertical - Módulo Central</td>
+            </tr>
+        </table>
+
+        <!-- SECCIÓN 1: RESUMEN EJECUTIVO & ALERTAS AGRONÓMICAS -->
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">1</span>
+                <span>Diagnóstico Agronómico Automatizado de la Jornada</span>
+            </div>
+
+            {% if dossier.automated_insights %}
+                {% for insight in dossier.automated_insights %}
+                    <div class="insight-box {{ insight.type }}">
+                        <strong>{{ insight.title }}:</strong> {{ insight.detail }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="insight-box positive">
+                    <strong>Condiciones Normales:</strong> Los parámetros ambientales y biométricos se mantuvieron estables dentro de los rangos fisiológicos previstos para la jornada.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- SECCIÓN 2: MATRIZ ESTADÍSTICA DE TELEMETRÍA AMBIENTAL -->
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">2</span>
+                <span>Matriz Estadística Descriptiva de Microclima (Sensores Ambientales)</span>
+            </div>
+
+            <table class="scientific-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro Físico</th>
+                        <th class="text-center">Símbolo</th>
+                        <th class="text-center">Unidad</th>
+                        <th class="text-center">Rango Óptimo</th>
+                        <th class="text-right">Media (&mu;)</th>
+                        <th class="text-right">Desv. Est (&sigma;)</th>
+                        <th class="text-right">Mínimo</th>
+                        <th class="text-right">Máximo</th>
+                        <th class="text-right">Mediana</th>
+                        <th class="text-right">IQR</th>
+                        <th class="text-right">CV (%)</th>
+                        <th class="text-right">Muestras (N)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in dossier.sensor_stats_table %}
+                        <tr>
+                            <td><strong>{{ row.param }}</strong></td>
+                            <td class="text-center font-mono">{{ row.symbol }}</td>
+                            <td class="text-center">{{ row.unit }}</td>
+                            <td class="text-center" style="font-size: 9.5px; color: var(--text-muted);">{{ row.optimal }}</td>
+                            <td class="text-right font-mono"><strong>{{ row.stats.mean }}</strong></td>
+                            <td class="text-right font-mono">{{ row.stats.std }}</td>
+                            <td class="text-right font-mono">{{ row.stats.min }}</td>
+                            <td class="text-right font-mono">{{ row.stats.max }}</td>
+                            <td class="text-right font-mono">{{ row.stats.median }}</td>
+                            <td class="text-right font-mono">{{ row.stats.iqr }}</td>
+                            <td class="text-right font-mono">{{ row.stats.cv_pct }}%</td>
+                            <td class="text-right font-mono">{{ row.stats.count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="font-size: 9px; color: var(--text-muted); text-align: right; margin-top: -6px;">
+                &mu; = Media Aritmética | &sigma; = Desviación Estándar Muestral | IQR = Rango Intercuartílico | CV = Coeficiente de Variación de Pearson
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: MATRIZ ESTADÍSTICA BIOMÉTRICA FENOTÍPICA -->
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">3</span>
+                <span>Matriz Estadística Descriptiva de Biometría Foliar (Visión Artificial)</span>
+            </div>
+
+            <table class="scientific-table">
+                <thead>
+                    <tr>
+                        <th>Biomarcador Morfométrico</th>
+                        <th class="text-center">Símbolo</th>
+                        <th class="text-center">Unidad</th>
+                        <th class="text-right">Media Diaria (&mu;)</th>
+                        <th class="text-right">Desv. Est (&sigma;)</th>
+                        <th class="text-right">Mínimo</th>
+                        <th class="text-right">Máximo</th>
+                        <th class="text-right">Mediana</th>
+                        <th class="text-right">CV (%)</th>
+                        <th class="text-right">Lotes (N)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in dossier.biometric_stats_table %}
+                        <tr>
+                            <td><strong>{{ row.param }}</strong></td>
+                            <td class="text-center font-mono">{{ row.symbol }}</td>
+                            <td class="text-center">{{ row.unit }}</td>
+                            <td class="text-right font-mono"><strong>{{ row.stats.mean }}</strong></td>
+                            <td class="text-right font-mono">{{ row.stats.std }}</td>
+                            <td class="text-right font-mono">{{ row.stats.min }}</td>
+                            <td class="text-right font-mono">{{ row.stats.max }}</td>
+                            <td class="text-right font-mono">{{ row.stats.median }}</td>
+                            <td class="text-right font-mono">{{ row.stats.cv_pct }}%</td>
+                            <td class="text-right font-mono">{{ row.stats.count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECCIÓN 4: MATRIZ DE CORRELACIÓN DE PEARSON MULTIVARIABLE -->
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">4</span>
+                <span>Matriz de Correlación Lineal de Pearson (Cruce Sensor vs Planta)</span>
+            </div>
+
+            <table class="scientific-table">
+                <thead>
+                    <tr>
+                        <th>Par de Variables Cruzadas (Microclima vs Biometría)</th>
+                        <th class="text-center">Coeficiente de Pearson (r)</th>
+                        <th>Interpretación Fisiológica / Agronómica</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in dossier.correlation_matrix %}
+                        <tr>
+                            <td><strong>{{ c.pair }}</strong></td>
+                            <td class="text-center font-mono">
+                                <strong style="color: {% if c.r >= 0.3 %}var(--accent-emerald){% elif c.r <= -0.3 %}#dc2626{% else %}var(--text-muted){% endif %};">
+                                    {{ c.r }}
+                                </strong>
+                            </td>
+                            <td>{{ c.desc }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECCIÓN 5: DESGLOSE MUESTRA A MUESTRA DE LA JORNADA -->
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">5</span>
+                <span>Desglose Sincronizado Lote a Lote (Período por Período)</span>
+            </div>
+
+            <table class="scientific-table">
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th class="text-center">Hora</th>
+                        <th class="text-right">Temp (°C)</th>
+                        <th class="text-right">HR (%)</th>
+                        <th class="text-right">UV (lux)</th>
+                        <th class="text-right">Bomba (A)</th>
+                        <th class="text-right">Área Foliar (cm²)</th>
+                        <th class="text-right">Altura (cm)</th>
+                        <th class="text-right">Tallo (mm)</th>
+                        <th class="text-right">Salud (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in dossier.detailed_sessions %}
+                        <tr>
+                            <td><strong>{{ s.period }}</strong></td>
+                            <td class="text-center font-mono">{{ s.timestamp }}</td>
+                            <td class="text-right font-mono">{{ s.temperature }}</td>
+                            <td class="text-right font-mono">{{ s.humidity }}%</td>
+                            <td class="text-right font-mono">{{ s.uv_solar }}</td>
+                            <td class="text-right font-mono">{{ s.motor_current }}</td>
+                            <td class="text-right font-mono"><strong>{{ s.foliar_area_cm2 }}</strong></td>
+                            <td class="text-right font-mono">{{ s.plant_height_cm }}</td>
+                            <td class="text-right font-mono">{{ s.stem_diameter_mm }}</td>
+                            <td class="text-right font-mono">{{ s.health_index }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECCIÓN 6: REGISTRO FOTOGRÁFICO COMPARATIVO (ORIGINAL VS PROCESADA) -->
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">6</span>
+                <span>Registro Fotográfico Comparativo (Original Sin Procesar vs Procesada con Contorno)</span>
+            </div>
+
+            {% for photo in dossier.photo_comparisons %}
+                <div class="photo-comp-card">
+                    <div class="photo-comp-header">
+                        <div>
+                            <span style="font-weight: 800; text-transform: uppercase;">Muestreo: {{ photo.period }}</span>
+                            <span style="color: var(--text-muted); margin-left: 6px; font-family: 'JetBrains Mono', monospace;">({{ photo.time }})</span>
+                        </div>
+                        <div>
+                            <span>Área: <strong>{{ photo.area_cm2 }} cm²</strong></span>
+                            <span style="margin: 0 6px; color: var(--border-color);">|</span>
+                            <span>Altura: <strong>{{ photo.height_cm }} cm</strong></span>
+                            <span style="margin: 0 6px; color: var(--border-color);">|</span>
+                            <span>Salud: <strong>{{ photo.health_index }}%</strong></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Par Cenital -->
+                    <div style="margin-bottom: 14px;">
+                        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">
+                            1. Vista Cenital (Segmentación de Área Foliar & Clorofila)
+                        </div>
+                        <div class="photo-duo-container">
+                            <!-- Cenital Original -->
+                            <div class="photo-box">
+                                <div class="photo-frame">
+                                    <img src="{{ photo.cenital_orig }}" alt="Cenital Original">
+                                </div>
+                                <div class="photo-box-caption">Original RAW (Sin Procesar)</div>
+                            </div>
+
+                            <!-- Cenital Procesada -->
+                            <div class="photo-box">
+                                <div class="photo-frame">
+                                    <img src="{{ photo.cenital_proc }}" alt="Cenital Procesada">
+                                </div>
+                                <div class="photo-box-caption proc">Segmentada (Contorno Rojo OpenCV + Máscara)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Par Lateral -->
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">
+                            2. Vista Lateral (Estimación de Altura de Planta & Tallo)
+                        </div>
+                        <div class="photo-duo-container">
+                            <!-- Lateral Original -->
+                            <div class="photo-box">
+                                <div class="photo-frame">
+                                    <img src="{{ photo.lateral_orig }}" alt="Lateral Original">
+                                </div>
+                                <div class="photo-box-caption">Original RAW (Sin Procesar)</div>
+                            </div>
+
+                            <!-- Lateral Procesada -->
+                            <div class="photo-box">
+                                <div class="photo-frame">
+                                    <img src="{{ photo.lateral_proc }}" alt="Lateral Procesada">
+                                </div>
+                                <div class="photo-box-caption proc">Calibrada (Perfil Rojo OpenCV & Eje de Altura)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- SECCIÓN 7: ANOTACIONES DE LA BITÁCORA DEL INVESTIGADOR -->
+        {% if dossier.conclusions %}
+        <div class="section-block">
+            <div class="section-title">
+                <span class="section-num">7</span>
+                <span>Anotaciones y Observaciones del Investigador en Bitácora</span>
+            </div>
+
+            {% for c in dossier.conclusions %}
+                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px;">
+                        <span>Evaluador: {{ c.author }}</span>
+                        <span style="color: var(--text-muted);">{{ c.created_at }}</span>
+                    </div>
+                    {% if c.growth_obs %}
+                        <div style="margin-bottom: 4px;"><strong>Crecimiento y Vigor:</strong> {{ c.growth_obs }}</div>
+                    {% endif %}
+                    {% if c.climate_obs %}
+                        <div style="margin-bottom: 4px;"><strong>Respuesta Ambiental:</strong> {{ c.climate_obs }}</div>
+                    {% endif %}
+                    {% if c.nutrition_obs %}
+                        <div style="margin-bottom: 4px;"><strong>Riego y Nutrición:</strong> {{ c.nutrition_obs }}</div>
+                    {% endif %}
+                    {% if c.general_conclusion %}
+                        <div style="margin-bottom: 4px;"><strong>Conclusión General:</strong> {{ c.general_conclusion }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- SECCIÓN 8: BLOQUE DE FIRMAS DE VALIDACIÓN CIENTÍFICA -->
+        <div class="signatures-row">
+            <!-- FIRMA 1: INVESTIGADOR -->
+            <div class="signature-line" id="sig-col-1">
+                <div class="signature-box-area" id="sig-area-1">
+                    <div id="sig-slot-empty-1" class="signature-placeholder-btn" onclick="openSignatureModal(1)">
+                        <span class="material-icons-round" style="font-size: 18px;">draw</span>
+                        <span>Clic para Estampar Firma del Investigador</span>
+                    </div>
+                    <div id="sig-slot-filled-1" style="display: none; width: 100%;">
+                        <img id="sig-img-preview-1" class="signature-stamp-img" src="" alt="Firma Investigador">
+                        <div class="signature-actions-hover">
+                            <button type="button" class="sig-mini-btn" onclick="openSignatureModal(1)">
+                                <span class="material-icons-round" style="font-size: 12px;">edit</span>
+                                <span>Cambiar</span>
+                            </button>
+                            <button type="button" class="sig-mini-btn" onclick="removeSignature(1)">
+                                <span class="material-icons-round" style="font-size: 12px;">delete</span>
+                                <span>Quitar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="signature-rule">
+                    <strong id="sig-name-1" class="editable-field" contenteditable="true">{{ current_user.name if current_user else 'Ing. Andrés Luna' }}</strong>
+                    <span id="sig-role-1" class="editable-field" contenteditable="true">Investigador Responsable / Adquisición Fenotípica</span>
+                </div>
+            </div>
+
+            <!-- FIRMA 2: PROFESOR / VALIDADOR -->
+            <div class="signature-line" id="sig-col-2">
+                <div class="signature-box-area" id="sig-area-2">
+                    <div id="sig-slot-empty-2" class="signature-placeholder-btn" onclick="openSignatureModal(2)">
+                        <span class="material-icons-round" style="font-size: 18px;">draw</span>
+                        <span>Clic para Estampar Firma del Evaluador</span>
+                    </div>
+                    <div id="sig-slot-filled-2" style="display: none; width: 100%;">
+                        <img id="sig-img-preview-2" class="signature-stamp-img" src="" alt="Firma Validador">
+                        <div class="signature-actions-hover">
+                            <button type="button" class="sig-mini-btn" onclick="openSignatureModal(2)">
+                                <span class="material-icons-round" style="font-size: 12px;">edit</span>
+                                <span>Cambiar</span>
+                            </button>
+                            <button type="button" class="sig-mini-btn" onclick="removeSignature(2)">
+                                <span class="material-icons-round" style="font-size: 12px;">delete</span>
+                                <span>Quitar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="signature-rule">
+                    <strong id="sig-name-2" class="editable-field" contenteditable="true">Comité de Validación SIFMA</strong>
+                    <span id="sig-role-2" class="editable-field" contenteditable="true">Investigador/Profesor</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DEL FIRMADOR DIGITAL DE DOCUMENTOS -->
+    <div id="signature-modal" class="sig-modal-backdrop" onclick="handleBackdropClick(event)">
+        <div class="sig-modal-card">
+            <div class="sig-modal-header">
+                <h3>
+                    <span class="material-icons-round">edit_document</span>
+                    <span>Firmador Digital de Reporte Científico</span>
+                </h3>
+                <button type="button" style="background: transparent; border: none; color: #ffffff; cursor: pointer;" onclick="closeSignatureModal()">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+
+            <div class="sig-modal-body">
+                <!-- Selector de Destinatario de la Firma -->
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 4px;">
+                        Estampar firma en:
+                    </label>
+                    <select id="modal-target-signee" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12px; font-weight: 600;">
+                        <option value="1">Firmante 1: Investigador Responsable</option>
+                        <option value="2">Firmante 2: Investigador / Profesor / Validador</option>
+                    </select>
+                </div>
+
+                <!-- Pestañas de modo -->
+                <div class="sig-tabs-nav">
+                    <button type="button" class="sig-tab-btn active" id="tab-btn-upload" onclick="switchSigTab('upload')">
+                        <span class="material-icons-round" style="font-size: 16px;">upload_file</span>
+                        <span>Subir Imagen de Firma</span>
+                    </button>
+                    <button type="button" class="sig-tab-btn" id="tab-btn-draw" onclick="switchSigTab('draw')">
+                        <span class="material-icons-round" style="font-size: 16px;">gesture</span>
+                        <span>Dibujar Firma Digital</span>
+                    </button>
+                </div>
+
+                <!-- CONTENIDO PESTAÑA 1: SUBIR IMAGEN DE FIRMA -->
+                <div id="sig-tab-upload" class="sig-tab-content active">
+                    <input type="file" id="sig-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleSignatureFile(event)">
+                    <div class="sig-dropzone" onclick="document.getElementById('sig-file-input').click()">
+                        <span class="material-icons-round" style="font-size: 36px; color: #2563eb; margin-bottom: 6px;">cloud_upload</span>
+                        <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">
+                            Haz clic o arrastra aquí la imagen de tu firma
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                            Formatos: PNG transparente, JPG o WEBP
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="chk-remove-white-bg" checked style="accent-color: #2563eb; width: 14px; height: 14px; cursor: pointer;">
+                        <label for="chk-remove-white-bg" style="font-size: 11.5px; color: var(--text-main); cursor: pointer;">
+                            <strong>Remover fondo blanco automáticamente</strong> (ideal para fotos de firmas en papel)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- CONTENIDO PESTAÑA 2: DIBUJAR FIRMA EN PANTALLA -->
+                <div id="sig-tab-draw" class="sig-tab-content">
+                    <div class="sig-canvas-wrapper">
+                        <canvas id="signature-pad"></canvas>
+                    </div>
+                    <div class="sig-canvas-tools">
+                        <div class="sig-color-picker">
+                            <span style="color: var(--text-muted); font-size: 11px; margin-right: 4px;">Tinta:</span>
+                            <div class="sig-color-dot active" style="background: #0f172a;" onclick="setPenColor('#0f172a', this)" title="Negro Tinta"></div>
+                            <div class="sig-color-dot" style="background: #1e3a8a;" onclick="setPenColor('#1e3a8a', this)" title="Azul Marino"></div>
+                        </div>
+                        <button type="button" onclick="clearSignatureCanvas()" style="background: transparent; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; color: #64748b;">
+                            <span class="material-icons-round" style="font-size: 12px; vertical-align: middle;">refresh</span>
+                            <span>Limpiar Lienzo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PREVIEW DE LA FIRMA A APLICAR -->
+                <div id="sig-crop-preview-box" style="display: none; margin-top: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; text-align: center;">
+                    <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+                        VISTA PREVIA DEL SELLO DIGITAL
+                    </div>
+                    <img id="sig-modal-preview-img" src="" style="max-height: 70px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));">
+                </div>
+
+                <!-- RECUERDO LOCAL -->
+                <div style="margin-top: 14px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="chk-remember-sig" checked style="accent-color: #2563eb; width: 14px; height: 14px; cursor: pointer;">
+                    <label for="chk-remember-sig" style="font-size: 11px; color: var(--text-muted); cursor: pointer;">
+                        Recordar esta firma digital en este navegador para futuros reportes
+                    </label>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN DEL MODAL -->
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn-action btn-outline-action" style="color: var(--text-main); border-color: var(--border-color);" onclick="closeSignatureModal()">
+                        <span>Cancelar</span>
+                    </button>
+                    <button type="button" class="btn-action btn-primary-action" onclick="applySignatureFromModal()">
+                        <span class="material-icons-round" style="font-size: 15px;">check_circle</span>
+                        <span>Estampar Firma en el Documento</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS DEL FIRMADOR DIGITAL -->
+    <script>
+        let currentTargetSignee = 1;
+        let activeTab = 'upload';
+        let isDrawing = false;
+        let penColor = '#0f172a';
+        let canvas, ctx;
+        let stagedSignatureDataUrl = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSignatureCanvas();
+            loadSavedSignatures();
+
+            // Sincronizar nombre de evaluador editable con la firma 1
+            const metaName = document.getElementById('meta-evaluator-name');
+            const sigName1 = document.getElementById('sig-name-1');
+            if (metaName && sigName1) {
+                metaName.addEventListener('input', () => {
+                    sigName1.innerText = metaName.innerText;
+                });
+                sigName1.addEventListener('input', () => {
+                    metaName.innerText = sigName1.innerText;
+                });
+            }
+        });
+
+        function initSignatureCanvas() {
+            canvas = document.getElementById('signature-pad');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * 2;
+                canvas.height = rect.height * 2;
+                ctx.scale(2, 2);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = penColor;
+            }
+            resizeCanvas();
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+
+            function startDraw(e) {
+                isDrawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                e.preventDefault();
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                e.preventDefault();
+            }
+
+            function stopDraw() {
+                if (isDrawing) {
+                    isDrawing = false;
+                    stagedSignatureDataUrl = canvas.toDataURL('image/png');
+                }
+            }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDraw);
+
+            canvas.addEventListener('touchstart', startDraw, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function setPenColor(color, dotElem) {
+            penColor = color;
+            if (ctx) ctx.strokeStyle = color;
+            document.querySelectorAll('.sig-color-dot').forEach(d => d.classList.remove('active'));
+            if (dotElem) dotElem.classList.add('active');
+        }
+
+        function clearSignatureCanvas() {
+            if (!canvas || !ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stagedSignatureDataUrl = null;
+            document.getElementById('sig-crop-preview-box').style.display = 'none';
+        }
+
+        function switchSigTab(tab) {
+            activeTab = tab;
+            document.getElementById('tab-btn-upload').classList.toggle('active', tab === 'upload');
+            document.getElementById('tab-btn-draw').classList.toggle('active', tab === 'draw');
+            document.getElementById('sig-tab-upload').classList.toggle('active', tab === 'upload');
+            document.getElementById('sig-tab-draw').classList.toggle('active', tab === 'draw');
+
+            if (tab === 'draw') {
+                setTimeout(() => {
+                    initSignatureCanvas();
+                }, 50);
+            }
+        }
+
+        function openSignatureModal(targetIndex = 1) {
+            currentTargetSignee = targetIndex;
+            document.getElementById('modal-target-signee').value = String(targetIndex);
+            document.getElementById('signature-modal').style.display = 'flex';
+            document.getElementById('sig-crop-preview-box').style.display = 'none';
+            stagedSignatureDataUrl = null;
+        }
+
+        function closeSignatureModal() {
+            document.getElementById('signature-modal').style.display = 'none';
+            clearSignatureCanvas();
+        }
+
+        function handleBackdropClick(e) {
+            if (e.target.id === 'signature-modal') {
+                closeSignatureModal();
+            }
+        }
+
+        function handleSignatureFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const removeWhite = document.getElementById('chk-remove-white-bg').checked;
+                    
+                    if (removeWhite) {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = img.width;
+                        tempCanvas.height = img.height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(img, 0, 0);
+                        
+                        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        const data = imgData.data;
+
+                        for (let i = 0; i < data.length; i += 4) {
+                            const r = data[i];
+                            const g = data[i+1];
+                            const b = data[i+2];
+                            if (r > 215 && g > 215 && b > 215) {
+                                data[i+3] = 0;
+                            }
+                        }
+                        tempCtx.putImageData(imgData, 0, 0);
+                        stagedSignatureDataUrl = tempCanvas.toDataURL('image/png');
+                    } else {
+                        stagedSignatureDataUrl = event.target.result;
+                    }
+
+                    const pImg = document.getElementById('sig-modal-preview-img');
+                    pImg.src = stagedSignatureDataUrl;
+                    document.getElementById('sig-crop-preview-box').style.display = 'block';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function applySignatureFromModal() {
+            const targetId = document.getElementById('modal-target-signee').value;
+            let finalDataUrl = stagedSignatureDataUrl;
+
+            if (activeTab === 'draw' && (!finalDataUrl || finalDataUrl.length < 100)) {
+                finalDataUrl = canvas.toDataURL('image/png');
+            }
+
+            if (!finalDataUrl) {
+                alert('Por favor dibuja o sube una imagen de tu firma antes de estampar.');
+                return;
+            }
+
+            renderSignatureSlot(targetId, finalDataUrl);
+
+            if (document.getElementById('chk-remember-sig').checked) {
+                localStorage.setItem(`sifma_saved_signature_${targetId}`, finalDataUrl);
+            }
+
+            closeSignatureModal();
+        }
+
+        function renderSignatureSlot(targetId, dataUrl) {
+            const emptySlot = document.getElementById(`sig-slot-empty-${targetId}`);
+            const filledSlot = document.getElementById(`sig-slot-filled-${targetId}`);
+            const previewImg = document.getElementById(`sig-img-preview-${targetId}`);
+
+            if (emptySlot && filledSlot && previewImg) {
+                previewImg.src = dataUrl;
+                emptySlot.style.display = 'none';
+                filledSlot.style.display = 'block';
+            }
+        }
+
+        function removeSignature(targetId) {
+            const emptySlot = document.getElementById(`sig-slot-empty-${targetId}`);
+            const filledSlot = document.getElementById(`sig-slot-filled-${targetId}`);
+            const previewImg = document.getElementById(`sig-img-preview-${targetId}`);
+
+            if (emptySlot && filledSlot && previewImg) {
+                previewImg.src = '';
+                filledSlot.style.display = 'none';
+                emptySlot.style.display = 'flex';
+                localStorage.removeItem(`sifma_saved_signature_${targetId}`);
+            }
+        }
+
+        function loadSavedSignatures() {
+            const sig1 = localStorage.getItem('sifma_saved_signature_1');
+            const sig2 = localStorage.getItem('sifma_saved_signature_2');
+
+            if (sig1) renderSignatureSlot(1, sig1);
+            if (sig2) renderSignatureSlot(2, sig2);
+        }
+    </script>
+
+</body>
+</html>

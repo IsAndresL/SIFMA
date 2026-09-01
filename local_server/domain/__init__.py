@@ -4,7 +4,8 @@ from .models import (
     SensorReading,
     CaptureSession,
     BiometricMetric,
-    AgronomicConclusion
+    AgronomicConclusion,
+    User
 )
 from .interfaces import (
     IConfigRepository,
@@ -12,6 +13,7 @@ from .interfaces import (
     ISensorRepository,
     ICaptureSessionRepository,
     IConclusionRepository,
+    IUserRepository,
     ISegmentationStrategy,
     IBiometricCalculator,
     IVisionPipeline,
@@ -26,14 +28,21 @@ __all__ = [
     "CaptureSession",
     "BiometricMetric",
     "AgronomicConclusion",
+    "User",
     "IConfigRepository",
     "ICropProfileRepository",
     "ISensorRepository",
     "ICaptureSessionRepository",
     "IConclusionRepository",
+    "IUserRepository",
     "ISegmentationStrategy",
     "IBiometricCalculator",
     "IVisionPipeline",
     "ITelemetryAdapter",
     "ICsvTelemetryParser"
 ]
+
+
+
+
+

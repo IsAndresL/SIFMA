@@ -1,0 +1,593 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendario de Muestreos y Telemetría{% endblock %}
+{% block heading %}Calendario de Muestreos y Telemetría{% endblock %}
+{% block subheading %}Bitácora interactiva de fenotipado fotográfico y telemetría ambiental para Canastilla #{{ active_plant_id }}{% endblock %}
+
+{% block header_controls %}
+<!-- Navegador de Mes / Año -->
+<div class="date-navigator-box">
+    <button class="date-nav-btn" onclick="navigateMonth({{ cal_data.prev_year }}, {{ cal_data.prev_month }})" title="Mes Anterior">
+        <span class="material-icons-round">chevron_left</span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13.5px; color: var(--text-heading); padding: 0 4px;">
+        <span class="material-icons-round text-muted" style="font-size: 17px;">calendar_month</span>
+        <span>{{ cal_data.month_name }} {{ cal_data.year }}</span>
+    </div>
+    <button class="date-nav-btn" onclick="navigateMonth({{ cal_data.next_year }}, {{ cal_data.next_month }})" title="Mes Siguiente">
+        <span class="material-icons-round">chevron_right</span>
+    </button>
+</div>
+
+<!-- Selector de Canastilla / Torre -->
+<div style="display: flex; align-items: center; gap: 6px;">
+    <select id="header-plant-selector" class="form-input-control" style="padding: 6px 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: auto;" onchange="switchActivePlant(this.value)">
+        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1</option>
+        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2</option>
+        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3</option>
+        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- SECCIÓN 1: TARJETAS DE COBERTURA MENSUAL -->
+<div class="kpi-row-grid" style="margin-bottom: 24px;">
+    <!-- Card 1: Días con Fotos -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Días con Fenotipado (Fotos)</span>
+            <div class="kpi-icon-badge emerald">
+                <span class="material-icons-round">camera</span>
+            </div>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ cal_data.summary.total_photo_days }}</span>
+            <span class="kpi-unit">/ {{ cal_data.summary.days_in_month }} días</span>
+        </div>
+        <div class="kpi-footer-badge positive">
+            <span class="material-icons-round" style="font-size: 14px;">spa</span>
+            <span>{{ cal_data.summary.total_sessions }} Muestreos en Canastilla #{{ active_plant_id }}</span>
+        </div>
+    </div>
+
+    <!-- Card 2: Días con Telemetría -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Días con Telemetría (Sensores)</span>
+            <div class="kpi-icon-badge blue">
+                <span class="material-icons-round">sensors</span>
+            </div>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ cal_data.summary.total_telemetry_days }}</span>
+            <span class="kpi-unit">/ {{ cal_data.summary.days_in_month }} días</span>
+        </div>
+        <div class="kpi-footer-badge {% if cal_data.summary.total_telemetry_days > 0 %}positive{% else %}neutral{% endif %}">
+            <span class="material-icons-round" style="font-size: 14px;">thermostat</span>
+            <span>{{ cal_data.summary.total_readings }} Lecturas registradas</span>
+        </div>
+    </div>
+
+    <!-- Card 3: Jornadas Completas Sincronizadas -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Jornadas Sincronizadas (Fotos + Sensores)</span>
+            <div class="kpi-icon-badge cyan">
+                <span class="material-icons-round">sync_alt</span>
+            </div>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ cal_data.summary.total_combined_days }}</span>
+            <span class="kpi-unit">días</span>
+        </div>
+        <div class="kpi-footer-badge positive">
+            <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
+            <span>Aptos para Cruce Multivariable</span>
+        </div>
+    </div>
+
+    <!-- Card 4: Cobertura Mensual -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Tasa de Cobertura del Mes</span>
+            <div class="kpi-icon-badge purple">
+                <span class="material-icons-round">pie_chart</span>
+            </div>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ cal_data.summary.coverage_pct }}</span>
+            <span class="kpi-unit">%</span>
+        </div>
+        <div class="kpi-footer-badge neutral">
+            <span class="material-icons-round" style="font-size: 14px;">date_range</span>
+            <span>{{ cal_data.month_name }} {{ cal_data.year }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 2: CALENDARIO PRINCIPAL -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <!-- Barra Superior del Calendario y Leyenda -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-heading);">
+                {{ cal_data.month_name }} {{ cal_data.year }}
+            </span>
+            <span class="badge badge-success" style="font-size: 11px;">
+                Canastilla #{{ active_plant_id }} ({{ selected_profile.display_name if selected_profile else 'Cultivo' }})
+            </span>
+        </div>
+
+        <!-- Convención y Leyenda de Colores -->
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 12px; font-weight: 600;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: var(--accent-success);"></span>
+                <span style="color: var(--text-heading);">Fotos de Fenotipado</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: #0284c7;"></span>
+                <span style="color: var(--text-heading);">Telemetría de Sensores</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--accent-success) 50%, #0284c7 50%);"></span>
+                <span style="color: var(--text-heading);">Jornada Completa Sincronizada</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encabezado de Días de la Semana -->
+    <div class="calendar-weekdays-grid">
+        <div class="calendar-weekday">LUNES</div>
+        <div class="calendar-weekday">MARTES</div>
+        <div class="calendar-weekday">MIÉRCOLES</div>
+        <div class="calendar-weekday">JUEVES</div>
+        <div class="calendar-weekday">VIERNES</div>
+        <div class="calendar-weekday">SÁBADO</div>
+        <div class="calendar-weekday">DOMINGO</div>
+    </div>
+
+    <!-- Cuadrícula de Días del Mes -->
+    <div class="calendar-month-grid">
+        {% for week in cal_data.weeks %}
+            {% for day in week %}
+                <div class="calendar-day-cell {% if not day.is_current_month %}out-of-month{% endif %} {% if day.is_today %}is-today{% endif %} {% if day.has_photos or day.has_telemetry %}has-records{% endif %}"
+                     onclick="openDayDetail('{{ day.date_str }}')"
+                     title="Clic para ver desglose de la jornada {{ day.date_str }}">
+                    
+                    <!-- Cabecera de la celda: Número de día y tag Hoy -->
+                    <div class="calendar-day-header">
+                        <span class="calendar-day-number {% if day.is_today %}today-number{% endif %}">
+                            {{ day.day_number }}
+                        </span>
+                        {% if day.is_today %}
+                            <span class="badge badge-primary" style="font-size: 9px; padding: 2px 4px;">HOY</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Indicadores de Datos del Día -->
+                    <div class="calendar-day-badges">
+                        <!-- Indicador Verde: Fenotipado / Fotos -->
+                        {% if day.has_photos %}
+                            <div class="cal-badge green" title="{{ day.photo_count }} Sesiones de Fenotipado">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span style="display: flex; align-items: center; gap: 3px; font-weight: 700;">
+                                        <span class="material-icons-round" style="font-size: 13px;">spa</span>
+                                        <span>{{ day.photo_count }} Fotos</span>
+                                    </span>
+                                    {% if day.avg_foliar_area > 0 %}
+                                        <span style="font-size: 10px; opacity: 0.9;">{{ day.avg_foliar_area }} cm²</span>
+                                    {% endif %}
+                                </div>
+                                {% if day.periods %}
+                                    <div style="font-size: 9.5px; opacity: 0.85; margin-top: 2px;">
+                                        {{ day.periods | join(', ') }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Indicador Azul: Telemetría / Sensores -->
+                        {% if day.has_telemetry %}
+                            <div class="cal-badge blue" title="{{ day.telemetry_count }} Lecturas de Sensores">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span style="display: flex; align-items: center; gap: 3px; font-weight: 700;">
+                                        <span class="material-icons-round" style="font-size: 13px;">sensors</span>
+                                        <span>{{ day.telemetry_count }} Sensores</span>
+                                    </span>
+                                    {% if day.avg_temp > 0 %}
+                                        <span style="font-size: 10px; opacity: 0.9;">{{ day.avg_temp }}°C</span>
+                                    {% endif %}
+                                </div>
+                                {% if day.avg_hum > 0 %}
+                                    <div style="font-size: 9.5px; opacity: 0.85; margin-top: 2px;">
+                                        HR: {{ day.avg_hum }}% | UV: {{ day.avg_uv }} lux
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Si no tiene datos en este mes -->
+                        {% if day.is_current_month and not day.has_photos and not day.has_telemetry %}
+                            <div class="cal-empty-label">
+                                Sin registros
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- MODAL / DRAWER INTERACTIVO: DESGLOSE COMPLETO DE LA JORNADA -->
+<div id="day-detail-modal" class="modal-backdrop" style="display: none;" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-card" style="max-width: 780px; width: 95%;">
+        
+        <!-- Cabecera del Modal -->
+        <div class="modal-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="kpi-icon-badge emerald" style="width: 36px; height: 36px;">
+                    <span class="material-icons-round" style="font-size: 20px;">event_available</span>
+                </div>
+                <div>
+                    <h3 id="modal-day-title" style="margin: 0; font-size: 16px; color: var(--text-heading);">
+                        Detalle de la Jornada
+                    </h3>
+                    <p id="modal-day-subtitle" style="margin: 0; font-size: 12px; color: var(--text-muted);">
+                        Canastilla #{{ active_plant_id }} ({{ selected_profile.display_name }})
+                    </p>
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeDayModal()" style="padding: 4px 8px;">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+            
+            <!-- CONTENEDOR DE ESTADO DE CARGA -->
+            <div id="modal-loading-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0;">
+                <span class="material-icons-round spinner" style="font-size: 32px; color: var(--accent-success);">sync</span>
+                <p style="margin-top: 10px; color: var(--text-muted); font-size: 13px;">Cargando datos de la jornada...</p>
+            </div>
+
+            <div id="modal-content-state" style="display: none;">
+                
+                <!-- SECTOR A: RESUMEN DE TELEMETRÍA AMBIENTAL -->
+                <div style="margin-bottom: 22px;">
+                    <h4 style="font-size: 13.5px; font-weight: 700; color: #0284c7; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round" style="font-size: 18px;">sensors</span>
+                        <span>Microclima Ambiental de la Jornada</span>
+                    </h4>
+
+                    <div id="modal-env-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                        <!-- Inyectado dinámicamente con JS -->
+                    </div>
+                </div>
+
+                <!-- SECTOR B: LOTES FOTOGRÁFICOS Y FENOTIPADO -->
+                <div style="margin-bottom: 22px;">
+                    <h4 style="font-size: 13.5px; font-weight: 700; color: var(--accent-success); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round" style="font-size: 18px;">spa</span>
+                        <span>Muestreos de Fenotipado Digital</span>
+                    </h4>
+
+                    <div id="modal-sessions-container">
+                        <!-- Inyectado dinámicamente con JS -->
+                    </div>
+                </div>
+
+                <!-- SECTOR C: ACCIONES DIRECTAS A OTRAS SECCIONES -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">
+                        Explorar esta jornada en:
+                    </span>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="#" id="modal-btn-dashboard" class="btn btn-primary btn-sm">
+                            <span class="material-icons-round">dashboard</span>
+                            <span>Ver en Dashboard</span>
+                        </a>
+                        <a href="#" id="modal-btn-sensors" class="btn btn-outline btn-sm">
+                            <span class="material-icons-round">sensors</span>
+                            <span>Ver en Sensores</span>
+                        </a>
+                        <a href="#" id="modal-btn-gallery" class="btn btn-outline btn-sm">
+                            <span class="material-icons-round">photo_library</span>
+                            <span>Galería de Fotos</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* ESTILOS DEL CALENDARIO SIFMA */
+.calendar-weekdays-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.calendar-weekday {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    padding: 8px 4px;
+    background: var(--bg-card-subtle);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.calendar-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day-cell {
+    min-height: 115px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.calendar-day-cell:hover {
+    border-color: var(--accent-success);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    z-index: 2;
+}
+
+.calendar-day-cell.out-of-month {
+    background: #fafafa;
+    opacity: 0.45;
+}
+
+.calendar-day-cell.is-today {
+    border: 2px solid var(--accent-success);
+    background: rgba(16, 185, 129, 0.03);
+}
+
+.calendar-day-cell.has-records {
+    border-left: 3px solid var(--accent-success);
+}
+
+.calendar-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.calendar-day-number {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+.calendar-day-number.today-number {
+    color: var(--accent-success);
+    font-size: 14px;
+}
+
+.calendar-day-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cal-badge {
+    padding: 5px 7px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.2;
+    transition: transform 0.15s ease;
+}
+
+.cal-badge:hover {
+    transform: scale(1.02);
+}
+
+.cal-badge.green {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #065f46;
+}
+
+.cal-badge.blue {
+    background: rgba(2, 132, 199, 0.12);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    color: #0369a1;
+}
+
+.cal-empty-label {
+    font-size: 10px;
+    color: #cbd5e1;
+    text-align: center;
+    padding-top: 15px;
+}
+
+/* MODAL / DRAWER */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-header {
+    padding: 16px 20px;
+    background: var(--bg-card-subtle);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 900px) {
+    .calendar-weekdays-grid, .calendar-month-grid {
+        grid-template-columns: repeat(7, minmax(80px, 1fr));
+        overflow-x: auto;
+    }
+}
+</style>
+
+<script>
+    const activePlantId = {{ active_plant_id }};
+
+    function navigateMonth(year, month) {
+        window.location.href = `/calendar?year=${year}&month=${month}&plant_id=${activePlantId}`;
+    }
+
+    function closeModalOnBackdrop(e) {
+        if (e.target.id === 'day-detail-modal') {
+            closeDayModal();
+        }
+    }
+
+    function closeDayModal() {
+        document.getElementById('day-detail-modal').style.display = 'none';
+    }
+
+    async function openDayDetail(dateStr) {
+        const modal = document.getElementById('day-detail-modal');
+        const loading = document.getElementById('modal-loading-state');
+        const content = document.getElementById('modal-content-state');
+        
+        modal.style.display = 'flex';
+        loading.style.display = 'flex';
+        content.style.display = 'none';
+
+        document.getElementById('modal-day-title').innerText = `Jornada del ${dateStr}`;
+        document.getElementById('modal-btn-dashboard').href = `/?date=${dateStr}&plant_id=${activePlantId}`;
+        document.getElementById('modal-btn-sensors').href = `/sensors?date=${dateStr}&plant_id=${activePlantId}`;
+        document.getElementById('modal-btn-gallery').href = `/gallery?plant_id=${activePlantId}`;
+
+        try {
+            const resp = await fetch(`/api/calendar/day_detail?date=${dateStr}&plant_id=${activePlantId}`);
+            const data = await resp.json();
+
+            loading.style.display = 'none';
+            content.style.display = 'block';
+
+            // 1. Renderizar Bloque Ambiental
+            const envGrid = document.getElementById('modal-env-grid');
+            const env = data.environment;
+            if (env && env.has_readings) {
+                envGrid.innerHTML = `
+                    <div style="background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.2); padding: 10px; border-radius: 8px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block;">Temperatura</span>
+                        <strong style="font-size: 16px; color: #0369a1;">${env.avg_temp} °C</strong>
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Mín: ${env.min_temp}°C | Máx: ${env.max_temp}°C</div>
+                    </div>
+                    <div style="background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.2); padding: 10px; border-radius: 8px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block;">Humedad Relativa</span>
+                        <strong style="font-size: 16px; color: #0369a1;">${env.avg_hum} %</strong>
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Mín: ${env.min_hum}% | Máx: ${env.max_hum}%</div>
+                    </div>
+                    <div style="background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.2); padding: 10px; border-radius: 8px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block;">Radiación Solar</span>
+                        <strong style="font-size: 16px; color: #0369a1;">${env.avg_uv} lux</strong>
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Total: ${env.readings_count} lecturas</div>
+                    </div>
+                    <div style="background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.2); padding: 10px; border-radius: 8px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block;">Corriente Bomba</span>
+                        <strong style="font-size: 16px; color: #0369a1;">${env.avg_current} A</strong>
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${env.avg_current >= 0.3 ? 'Flujo Continuo' : 'Bomba en Reposo'}</div>
+                    </div>
+                `;
+            } else {
+                envGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; background: var(--bg-card-subtle); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color); color: var(--text-muted); font-size: 12.5px;">
+                        No se registraron lecturas ambientales de sensores para esta fecha.
+                    </div>
+                `;
+            }
+
+            // 2. Renderizar Bloque de Sesiones Fotográficas
+            const sessContainer = document.getElementById('modal-sessions-container');
+            if (data.sessions && data.sessions.length > 0) {
+                let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">';
+                data.sessions.forEach(s => {
+                    html += `
+                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; box-shadow: var(--shadow-sm);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span class="badge badge-success" style="font-size: 11px; font-weight: 700;">${s.period}</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">${s.timestamp}</span>
+                            </div>
+                            ${s.thumbnail_url ? `
+                                <div style="height: 100px; border-radius: 6px; overflow: hidden; background: #000; margin-bottom: 8px;">
+                                    <img src="${s.thumbnail_url}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            ` : ''}
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11.5px;">
+                                <div><span style="color: var(--text-muted);">Área Foliar:</span> <strong>${s.foliar_area_cm2} cm²</strong></div>
+                                <div><span style="color: var(--text-muted);">Altura:</span> <strong>${s.plant_height_cm} cm</strong></div>
+                                <div><span style="color: var(--text-muted);">Tallo:</span> <strong>${s.stem_diameter_mm} mm</strong></div>
+                                <div><span style="color: var(--text-muted);">Salud:</span> <strong>${s.health_index}%</strong></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                sessContainer.innerHTML = html;
+            } else {
+                sessContainer.innerHTML = `
+                    <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-color); color: var(--text-muted); font-size: 12.5px;">
+                        No se registraron capturas de fenotipado para esta fecha en la Canastilla #${activePlantId}.
+                    </div>
+                `;
+            }
+
+        } catch (err) {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            document.getElementById('modal-sessions-container').innerHTML = `<p style="color: #dc2626;">Error al cargar datos de la jornada: ${err.message}</p>`;
+        }
+    }
+</script>
+{% endblock %}

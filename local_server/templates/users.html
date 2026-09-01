@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios y Roles{% endblock %}
+{% block heading %}Usuarios y Roles del Sistema{% endblock %}
+{% block subheading %}Administración de cuentas, perfiles de acceso y permisos RBAC{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary btn-sm" onclick="openCreateUserModal()">
+    <span class="material-icons-round">person_add</span>
+    <span>Nuevo Usuario</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="users-table-container">
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Rol Asignado</th>
+                <th>Correo Electrónico</th>
+                <th>Estado</th>
+                <th>Último Acceso</th>
+                <th style="text-align: right;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="users-table-body">
+            {% for u in users %}
+            <tr id="user-row-{{ u.id }}">
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="user-avatar-circle" style="width: 34px; height: 34px; font-size: 11px;">
+                            {{ u.avatar_initials }}
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: var(--text-heading);">{{ u.full_name }}</div>
+                            <div style="font-size: 11.5px; color: var(--text-muted);">@{{ u.username }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge {% if u.role == 'admin' %}badge-primary{% elif u.role == 'investigador' %}badge-success{% else %}badge-warning{% endif %}" style="font-size: 12px;">
+                        {{ u.role_display }}
+                    </span>
+                </td>
+                <td style="font-size: 13px; color: var(--text-heading);">{{ u.email or 'Sin registrar' }}</td>
+                <td>
+                    <span class="badge {% if u.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if u.is_active %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </td>
+                <td style="font-size: 12.5px; color: var(--text-muted);">
+                    {{ u.last_login.strftime('%d/%m/%Y %H:%M') if u.last_login else 'Sin ingresos' }}
+                </td>
+                <td style="text-align: right;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                        <button class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 12px;" onclick="openEditUserModal({{ u.id }}, '{{ u.full_name }}', '{{ u.email or '' }}', '{{ u.role }}')" title="Editar Rol y Datos">
+                            <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                        </button>
+                        {% if u.username != 'admin' %}
+                        <button class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 12px; color: {% if u.is_active %}#d97706{% else %}#059669{% endif %};" onclick="toggleUserStatus({{ u.id }})" title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %} Cuenta">
+                            <span class="material-icons-round" style="font-size: 16px;">{% if u.is_active %}block{% else %}check_circle{% endif %}</span>
+                        </button>
+                        <button class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 12px;" onclick="deleteUser({{ u.id }}, '{{ u.username }}')" title="Eliminar Usuario">
+                            <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL 1: CREAR NUEVO USUARIO -->
+<div class="modal-backdrop" id="modal-create-user" onclick="handleBackdropClick(event, 'modal-create-user')">
+    <div class="modal-dialog-box" onclick="event.stopPropagation()">
+        <div class="modal-header-box">
+            <h3>Registrar Nuevo Usuario</h3>
+            <button class="btn btn-outline btn-sm" style="padding: 2px 6px; border: none;" onclick="closeModal('modal-create-user')">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+        <form id="form-create-user" onsubmit="handleCreateUser(event)">
+            <div class="modal-body-box">
+                <div class="form-group-field">
+                    <label>Nombre de Usuario (Login)</label>
+                    <input type="text" id="create-username" class="form-input-control" required placeholder="ej. cperez">
+                </div>
+                <div class="form-group-field">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="create-fullname" class="form-input-control" required placeholder="ej. Cristian Pérez">
+                </div>
+                <div class="form-group-field">
+                    <label>Correo Electrónico (Opcional)</label>
+                    <input type="email" id="create-email" class="form-input-control" placeholder="ej. cperez@sifma.local">
+                </div>
+                <div class="form-group-field">
+                    <label>Rol y Nivel de Acceso</label>
+                    <select id="create-role" class="form-input-control" required>
+                        <option value="investigador" selected>Investigador / Agrónomo (Análisis, Bitácora y Gráficas)</option>
+                        <option value="operador">Técnico de Campo (Capturas USB y Sensores)</option>
+                        <option value="admin">Administrador Principal (Control Total)</option>
+                    </select>
+                </div>
+                <div class="form-group-field">
+                    <label>Contraseña Inicial</label>
+                    <input type="password" id="create-password" class="form-input-control" required placeholder="Mínimo 4 caracteres">
+                </div>
+            </div>
+            <div class="modal-footer-box">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-create-user')">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm">Guardar Usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL 2: EDITAR USUARIO -->
+<div class="modal-backdrop" id="modal-edit-user" onclick="handleBackdropClick(event, 'modal-edit-user')">
+    <div class="modal-dialog-box" onclick="event.stopPropagation()">
+        <div class="modal-header-box">
+            <h3>Editar Usuario</h3>
+            <button class="btn btn-outline btn-sm" style="padding: 2px 6px; border: none;" onclick="closeModal('modal-edit-user')">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+        <form id="form-edit-user" onsubmit="handleEditUser(event)">
+            <input type="hidden" id="edit-user-id">
+            <div class="modal-body-box">
+                <div class="form-group-field">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="edit-fullname" class="form-input-control" required>
+                </div>
+                <div class="form-group-field">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="edit-email" class="form-input-control">
+                </div>
+                <div class="form-group-field">
+                    <label>Rol y Nivel de Acceso</label>
+                    <select id="edit-role" class="form-input-control" required>
+                        <option value="investigador">Investigador / Agrónomo</option>
+                        <option value="operador">Técnico de Campo</option>
+                        <option value="admin">Administrador Principal</option>
+                    </select>
+                </div>
+                <div class="form-group-field" style="border-top: 1px solid var(--border-light); padding-top: 12px;">
+                    <label>Restablecer Contraseña (Dejar en blanco para mantener actual)</label>
+                    <input type="password" id="edit-password" class="form-input-control" placeholder="Nueva contraseña opcional">
+                </div>
+            </div>
+            <div class="modal-footer-box">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-edit-user')">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm">Actualizar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openCreateUserModal() {
+    document.getElementById('form-create-user').reset();
+    document.getElementById('modal-create-user').classList.add('show');
+}
+
+function openEditUserModal(id, fullName, email, role) {
+    document.getElementById('edit-user-id').value = id;
+    document.getElementById('edit-fullname').value = fullName;
+    document.getElementById('edit-email').value = email;
+    document.getElementById('edit-role').value = role;
+    document.getElementById('edit-password').value = '';
+    document.getElementById('modal-edit-user').classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+function handleBackdropClick(e, modalId) {
+    if (e.target.id === modalId) {
+        closeModal(modalId);
+    }
+}
+
+async function handleCreateUser(e) {
+    e.preventDefault();
+    const payload = {
+        username: document.getElementById('create-username').value.trim(),
+        full_name: document.getElementById('create-fullname').value.trim(),
+        email: document.getElementById('create-email').value.trim(),
+        role: document.getElementById('create-role').value,
+        password: document.getElementById('create-password').value
+    };
+
+    try {
+        const res = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Error al crear usuario.');
+    }
+}
+
+async function handleEditUser(e) {
+    e.preventDefault();
+    const userId = document.getElementById('edit-user-id').value;
+    const payload = {
+        full_name: document.getElementById('edit-fullname').value.trim(),
+        email: document.getElementById('edit-email').value.trim(),
+        role: document.getElementById('edit-role').value
+    };
+    const newPass = document.getElementById('edit-password').value;
+
+    try {
+        const res = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (newPass && newPass.length >= 4) {
+            await fetch(`/api/users/${userId}/reset_password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPass })
+            });
+        }
+
+        if (data.status === 'success') {
+            alert('Usuario actualizado con éxito.');
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Error al actualizar usuario.');
+    }
+}
+
+async function toggleUserStatus(userId) {
+    try {
+        const res = await fetch(`/api/users/${userId}/toggle_active`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Error de conexión.');
+    }
+}
+
+async function deleteUser(userId, username) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente la cuenta '@${username}'?`)) return;
+    try {
+        const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Error al eliminar usuario.');
+    }
+}
+</script>
+{% endblock %}

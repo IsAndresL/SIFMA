@@ -2,80 +2,102 @@
 
 {% block title %}Detalle de Sensores{% endblock %}
 {% block heading %}Análisis y Telemetría Detallada de Sensores{% endblock %}
+{% block subheading %}Monitoreo ambiental en vivo, recepción inalámbrica XBee y registro continuo{% endblock %}
+
+{% block header_actions %}
+<a href="/api/telemetry/download_csv?date={{ sensor_data.target_date }}" class="btn btn-outline btn-sm" title="Descargar archivo CSV de esta jornada">
+    <span class="material-icons-round">download</span>
+    <span>Descargar CSV ({{ sensor_data.target_date }})</span>
+</a>
+{% endblock %}
 
 {% block content %}
 
-<!-- SECCION 1: PANEL DE CONTROL DE LA ANTENA USB Y SUBIDA DE CSV -->
-<div class="glass-card" style="margin-bottom: 25px;">
-    <div class="glass-card-title">
-        <span class="material-icons-round">settings_input_antenna</span>
-        <h3>Control de la Antena Receptora de Telemetría (Conexión USB / Red Local)</h3>
+<!-- SECCIÓN 1: PANEL DE CONTROL DE LA ANTENA USB Y SUBIDA DE CSV -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title" style="display: flex; align-items: center; gap: 12px;">
+            <div class="kpi-icon-badge blue" style="width: 38px; height: 38px;">
+                <span class="material-icons-round" style="font-size: 22px;">settings_input_antenna</span>
+            </div>
+            <div>
+                <h3>Control de la Antena Receptora de Telemetría (XBee PRO S2B / USB)</h3>
+                <p>Recepción de señales RF e importación de registros CSV de la torre</p>
+            </div>
+        </div>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
         
-        <!-- Bloque 1: Captacion Directa desde Antena USB -->
-        <div style="background: rgba(15, 23, 42, 0.02); padding: 18px; border-radius: 12px; border: 1px solid var(--glass-border);">
-            <h4 style="font-size: 14px; font-family: var(--font-heading); margin-bottom: 12px; color: var(--text-heading);">
+        <!-- Bloque 1: Captación Directa desde Antena USB -->
+        <div style="background: var(--bg-card-subtle); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text-heading);">
                 Recepción Inalámbrica por Antena USB
             </h4>
             
             <div style="margin-bottom: 14px;">
-                <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
+                <label style="font-size: 12.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
                     Puerto o Interfaz de la Antena:
                 </label>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 8px;">
                     <select id="antenna-port-select" class="form-control" style="flex-grow: 1;">
                         {% for p in available_ports %}
                             <option value="{{ p }}" {% if p == telemetry_status.port %}selected{% endif %}>{{ p }}</option>
                         {% endfor %}
                     </select>
-                    <button type="button" class="btn-period" onclick="refreshAntennaPorts()" title="Escanear puertos USB">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="refreshAntennaPorts()" title="Escanear puertos USB">
                         <span class="material-icons-round">refresh</span>
                     </button>
                 </div>
             </div>
 
             <div style="margin-bottom: 14px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div id="antenna-status-dot" class="status-indicator {% if telemetry_status.is_recording %}online{% else %}offline{% endif %}"></div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="status-dot {% if telemetry_status.is_recording %}active{% else %}inactive{% endif %}" id="antenna-status-dot"></span>
                     <span id="antenna-status-text" style="font-weight: 700; font-size: 13px; color: {% if telemetry_status.is_recording %}var(--accent-success){% else %}var(--text-muted){% endif %};">
-                        {% if telemetry_status.is_recording %}Transmitiendo y Guardando en CSV{% else %}Inactivo (Listo para captar){% endif %}
+                        {% if telemetry_status.is_recording %}Transmitiendo y Guardando en Vivo{% else %}Inactivo (Listo para captar){% endif %}
                     </span>
                 </div>
-                <div style="font-size: 11px; color: var(--text-inactive); margin-top: 4px;">
-                    Archivo CSV activo: <code id="antenna-csv-file" style="color: var(--text-main);">{{ telemetry_status.file }}</code>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted);">
+                        Archivo CSV activo: <code id="antenna-csv-file" style="color: var(--text-heading); font-weight: 600;">{{ telemetry_status.file }}</code>
+                    </div>
+                    <a href="/api/telemetry/download_active_csv" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;" title="Descargar archivo CSV de telemetría (formato columnas para Excel)">
+                        <span class="material-icons-round" style="font-size: 15px;">download</span>
+                        <span>Descargar CSV (Columnas Excel)</span>
+                    </a>
                 </div>
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button type="button" id="btn-start-telemetry" class="btn-primary" onclick="toggleTelemetry(true)" {% if telemetry_status.is_recording %}style="display:none;"{% endif %}>
-                    <span class="material-icons-round" style="vertical-align: middle; font-size: 18px; margin-right: 6px;">play_arrow</span>
-                    Iniciar Captación
+                <button type="button" id="btn-start-telemetry" class="btn btn-primary" onclick="toggleTelemetry(true)" {% if telemetry_status.is_recording %}style="display:none;"{% endif %}>
+                    <span class="material-icons-round">play_arrow</span>
+                    <span>Iniciar Captación</span>
                 </button>
-                <button type="button" id="btn-stop-telemetry" class="btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); {% if not telemetry_status.is_recording %}display:none;{% endif %}" onclick="toggleTelemetry(false)">
-                    <span class="material-icons-round" style="vertical-align: middle; font-size: 18px; margin-right: 6px;">stop</span>
-                    Detener Captación
+                <button type="button" id="btn-stop-telemetry" class="btn btn-danger" {% if not telemetry_status.is_recording %}style="display:none;"{% endif %} onclick="toggleTelemetry(false)">
+                    <span class="material-icons-round">stop</span>
+                    <span>Detener Captación</span>
                 </button>
             </div>
         </div>
 
-        <!-- Bloque 2: Importacion Manual de Archivo CSV de la Torre -->
-        <div style="background: rgba(15, 23, 42, 0.02); padding: 18px; border-radius: 12px; border: 1px solid var(--glass-border);">
-            <h4 style="font-size: 14px; font-family: var(--font-heading); margin-bottom: 12px; color: var(--text-heading);">
+        <!-- Bloque 2: Importación Manual de Archivo CSV de la Torre -->
+        <div style="background: var(--bg-card-subtle); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text-heading);">
                 Importar Archivo CSV de la Torre Hidropónica
             </h4>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
-                Sube el archivo CSV exportado por la torre (formato Fecha;Hora;ID;CO2;Temp;HR;AMP) para incorporarlo a la base de datos y cruzarlo automáticamente con las fotos.
+                Sube el archivo CSV exportado por la torre (formato Fecha;Hora;ID;CO2;Temp;HR;AMP) para sincronizarlo con las fotos.
             </p>
 
             <form id="csv-upload-form" onsubmit="handleCsvUpload(event)">
-                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
-                    <input type="file" id="telemetry-csv-input" accept=".csv,text/csv" class="form-control" style="flex-grow: 1;" required>
+                <div style="margin-bottom: 12px;">
+                    <input type="file" id="telemetry-csv-input" accept=".csv,text/csv" class="form-control" required>
                 </div>
-                <button type="submit" id="btn-upload-csv" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span class="material-icons-round" style="font-size: 18px;">upload_file</span>
-                    Cargar y Procesar CSV de Sensores
+                <button type="submit" id="btn-upload-csv" class="btn btn-primary" style="width: 100%;">
+                    <span class="material-icons-round">upload_file</span>
+                    <span>Cargar y Procesar CSV de Sensores</span>
                 </button>
             </form>
 
@@ -84,475 +106,493 @@
     </div>
 </div>
 
-<!-- SECCION 2: FILTRO DE TELEMETRIA POR FECHA -->
-<div class="glass-card" style="margin-bottom: 25px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
-        <div class="glass-card-title" style="margin-bottom: 0;">
-            <span class="material-icons-round">calendar_today</span>
-            <h3>Filtro de Telemetría por Fecha y Jornada de Muestreo</h3>
+<!-- SECCIÓN 2: FILTRO DE TELEMETRÍA POR FECHA -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <h3>Filtro de Telemetría por Jornada de Muestreo</h3>
+            <p>Selección de rango temporal para las lecturas ambientales</p>
         </div>
-        <div id="filter-info-badge" class="badge badge-primary" style="font-size: 12px; padding: 6px 12px;">
-            Mostrando {{ sensor_data.total_records }} lecturas registradas ({{ sensor_data.target_date }})
-        </div>
+        <span class="badge badge-primary" id="timeline-count-badge">MOSTRANDO {{ sensor_data.get('records_count', 0) }} LECTURAS ({{ sensor_data.target_date }})</span>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <button class="btn-period {% if sensor_data.target_date == 'todos' %}active{% endif %}" onclick="filterByDate('todos', this)">
-            <span class="material-icons-round">view_timeline</span>
-            Todos los Días
-        </button>
-
-        {% for d in sensor_data.available_dates %}
-            <button class="btn-period {% if sensor_data.target_date == d %}active{% endif %}" onclick="filterByDate('{{ d }}', this)">
-                <span class="material-icons-round">event</span>
-                {{ d }}
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div class="filter-group">
+            <button type="button" class="filter-btn {% if sensor_data.target_date == 'todos' %}active{% endif %}" onclick="filterByDate('todos', this)">
+                <span class="material-icons-round" style="font-size: 15px;">calendar_month</span>
+                <span>Todos los Días</span>
             </button>
-        {% endfor %}
+            {% for d in available_dates %}
+                <button type="button" class="filter-btn {% if sensor_data.target_date == d %}active{% endif %}" onclick="filterByDate('{{ d }}', this)">
+                    <span class="material-icons-round" style="font-size: 15px;">event</span>
+                    <span>{{ d }}</span>
+                </button>
+            {% endfor %}
+        </div>
 
-        <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap;">
-            <label style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Fecha específica:</label>
-            <input type="date" id="custom-date-filter" class="form-control" style="padding: 6px 10px; font-size: 12px;" value="{% if sensor_data.target_date != 'todos' %}{{ sensor_data.target_date }}{% endif %}" onchange="filterByDate(this.value, null)">
-            <button type="button" class="btn-period" onclick="deleteTelemetryForActiveDate()" style="color: var(--accent-danger); padding: 6px 12px; font-size: 12px;" title="Eliminar lecturas de la fecha activa">
-                <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                Eliminar Datos de Fecha
-            </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; color: var(--text-muted);">Fecha específica:</label>
+            <input type="date" id="custom-date-filter" class="form-control" style="width: auto; padding: 5px 8px; font-size: 12.5px;" value="{{ sensor_data.target_date if sensor_data.target_date != 'todos' else '' }}" onchange="filterByDate(this.value, null)">
+            {% if sensor_data.get('records_count', 0) > 0 %}
+                <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: rgba(220,38,38,0.3);" onclick="deleteTelemetryForActiveDate()" title="Eliminar telemetría de esta fecha">
+                    <span class="material-icons-round" style="font-size: 15px;">delete</span>
+                    <span>Eliminar Datos de Fecha</span>
+                </button>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- SECCION 3: TARJETAS KPI DE TELEMETRIA (DATOS REALES DEL DIA SELECCIONADO) -->
-<div class="metric-grid" style="margin-bottom: 25px;">
-    
-    <!-- Tarjeta 1: Temperatura Ambiente -->
+<!-- AVISO DE CANASTILLA SIN TELEMETRÍA EN MODO AISLADO -->
+{% if sensor_data.get('records_count', 0) == 0 %}
+<div class="zero-data-banner" style="margin-bottom: 24px;">
+    <div class="zero-data-icon">
+        <span class="material-icons-round">sensors_off</span>
+    </div>
+    <div class="zero-data-text">
+        <h4>Canastilla #{{ active_plant_id }} - Sin Telemetría Registrada</h4>
+        <p>No se encontraron lecturas de sensores ambientales asociadas a la <strong>Canastilla #{{ active_plant_id }}</strong> para la fecha {{ sensor_data.target_date }}. En modo aislado, cada canastilla requiere sus propias lecturas o turnos de muestreo.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- SECCIÓN 3: KPI CARDS DE TELEMETRÍA AMBIENTAL -->
+<div class="kpi-row-grid" style="margin-bottom: 24px;">
+    <!-- Tarjeta 1: Temperatura -->
     {% set t_stat = sensor_data.summary.temperature %}
-    <div class="glass-card metric-card {% if t_stat.last > 35.0 %}alert-critical{% elif t_stat.last > 30.0 %}alert-warning{% endif %}">
-        <div class="metric-header">
-            <span class="metric-label">Temperatura Ambiente</span>
-            <div class="icon-container danger">
-                <span class="material-icons-round">device_thermostat</span>
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Temperatura Ambiente</span>
+            <div class="kpi-icon-badge blue">
+                <span class="material-icons-round">thermostat</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="kpi-temp-val">{{ t_stat.last }}</span>
-            <span class="metric-unit">°C</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number" id="kpi-temp-val">{{ t_stat.last }}</span>
+            <span class="kpi-unit">°C</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin: 6px 0;" id="kpi-temp-sub">
-            Mín: <strong>{{ t_stat.min }}°C</strong> | Máx: <strong>{{ t_stat.max }}°C</strong> | Prom: <strong>{{ t_stat.avg }}°C</strong>
+        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-temp-sub">
+            Mín: <strong id="kpi-temp-min">{{ t_stat.min }}°C</strong> | Máx: <strong id="kpi-temp-max">{{ t_stat.max }}°C</strong> | Prom: <strong id="kpi-temp-avg">{{ t_stat.avg }}°C</strong>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">info</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in t_stat.status %}positive{% else %}warning{% endif %}" id="kpi-temp-badge">
+            <span class="material-icons-round" style="font-size: 14px;">{% if 'Óptimo' in t_stat.status %}check_circle{% else %}warning{% endif %}</span>
             <span id="kpi-temp-status">{{ t_stat.status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 2: Humedad Relativa -->
+    <!-- Tarjeta 2: Humedad -->
     {% set h_stat = sensor_data.summary.humidity %}
-    <div class="glass-card metric-card {% if h_stat.last < 30.0 and h_stat.last > 0 %}alert-warning{% endif %}">
-        <div class="metric-header">
-            <span class="metric-label">Humedad Relativa</span>
-            <div class="icon-container primary">
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Humedad Relativa</span>
+            <div class="kpi-icon-badge cyan">
                 <span class="material-icons-round">water_drop</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="kpi-hum-val">{{ "%.0f" | format(h_stat.last) }}</span>
-            <span class="metric-unit">%</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number" id="kpi-hum-val">{{ h_stat.last }}</span>
+            <span class="kpi-unit">% HR</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin: 6px 0;" id="kpi-hum-sub">
-            Mín: <strong>{{ h_stat.min }}%</strong> | Máx: <strong>{{ h_stat.max }}%</strong> | Prom: <strong>{{ h_stat.avg }}%</strong>
+        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-hum-sub">
+            Mín: <strong id="kpi-hum-min">{{ h_stat.min }}%</strong> | Máx: <strong id="kpi-hum-max">{{ h_stat.max }}%</strong> | Prom: <strong id="kpi-hum-avg">{{ h_stat.avg }}%</strong>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">info</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in h_stat.status %}positive{% else %}warning{% endif %}" id="kpi-hum-badge">
+            <span class="material-icons-round" style="font-size: 14px;">{% if 'Óptimo' in h_stat.status %}check_circle{% else %}warning{% endif %}</span>
             <span id="kpi-hum-status">{{ h_stat.status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 3: Radiacion Solar UV / CO2 -->
+    <!-- Tarjeta 3: Radiación UV -->
     {% set u_stat = sensor_data.summary.uv_solar %}
-    <div class="glass-card metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Radiación Solar / CO2</span>
-            <div class="icon-container warning">
-                <span class="material-icons-round">wb_sunny</span>
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Radiación Solar</span>
+            <div class="kpi-icon-badge orange">
+                <span class="material-icons-round">light_mode</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="kpi-uv-val">{{ "%.0f" | format(u_stat.last) }}</span>
-            <span class="metric-unit">lux</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number" id="kpi-uv-val">{{ u_stat.last }}</span>
+            <span class="kpi-unit">lux</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin: 6px 0;" id="kpi-uv-sub">
-            Mín: <strong>{{ u_stat.min }}</strong> | Máx: <strong>{{ u_stat.max }}</strong> | Prom: <strong>{{ u_stat.avg }}</strong>
+        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-uv-sub">
+            Mín: <strong id="kpi-uv-min">{{ u_stat.min }} lux</strong> | Máx: <strong id="kpi-uv-max">{{ u_stat.max }} lux</strong>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">info</span>
+        <div class="kpi-footer-badge positive" id="kpi-uv-badge">
+            <span class="material-icons-round" style="font-size: 14px;">wb_sunny</span>
             <span id="kpi-uv-status">{{ u_stat.status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 4: Consumo Electrico de Bomba -->
+    <!-- Tarjeta 4: Corriente Bomba -->
     {% set c_stat = sensor_data.summary.motor_current %}
-    <div class="glass-card metric-card {% if c_stat.last > 1.8 %}alert-overload{% endif %}">
-        <div class="metric-header">
-            <span class="metric-label">Consumo de Bomba</span>
-            <div class="icon-container success">
-                <span class="material-icons-round">electrical_services</span>
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Corriente de Bomba</span>
+            <div class="kpi-icon-badge emerald">
+                <span class="material-icons-round">electric_bolt</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="kpi-curr-val">{{ "%.2f" | format(c_stat.last) }}</span>
-            <span class="metric-unit">A</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number" id="kpi-curr-val">{{ c_stat.last }}</span>
+            <span class="kpi-unit">A</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin: 6px 0;" id="kpi-curr-sub">
-            Mín: <strong>{{ c_stat.min }}A</strong> | Máx: <strong>{{ c_stat.max }}A</strong> | Prom: <strong>{{ c_stat.avg }}A</strong>
+        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-curr-sub">
+            Prom: <strong id="kpi-curr-avg">{{ c_stat.avg }} A</strong> | Máx: <strong id="kpi-curr-max">{{ c_stat.max }} A</strong>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">info</span>
+        <div class="kpi-footer-badge positive" id="kpi-curr-badge">
+            <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
             <span id="kpi-curr-status">{{ c_stat.status }}</span>
         </div>
     </div>
-
 </div>
 
-<!-- SECCION 4: GRAFICAS DE LA JORNADA SELECCIONADA -->
-<div class="chart-grid-2">
-    <!-- Grafica 1: Temperatura -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #ef4444;">device_thermostat</span>
-            <h3>Temperatura Ambiente (°C)</h3>
+<!-- SECCIÓN 4: BARRA DE CONTROL DE VENTANA DESLIZANTE EN VIVO -->
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; background: #ffffff; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="material-icons-round text-muted" style="font-size: 20px;">timeline</span>
+        <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">Ventana de Visualización en Tiempo Real:</span>
+    </div>
+    
+    <div class="filter-group">
+        <button type="button" class="filter-btn active" id="btn-win-30" onclick="setWindowSize(30, this)">
+            <span>Últimas 30 lecturas (En vivo)</span>
+        </button>
+        <button type="button" class="filter-btn" id="btn-win-60" onclick="setWindowSize(60, this)">
+            <span>Últimas 60 lecturas</span>
+        </button>
+        <button type="button" class="filter-btn" id="btn-win-120" onclick="setWindowSize(120, this)">
+            <span>Últimas 120 lecturas</span>
+        </button>
+        <button type="button" class="filter-btn" id="btn-win-all" onclick="setWindowSize('all', this)">
+            <span>Ver Todo el Histórico</span>
+        </button>
+    </div>
+</div>
+
+<!-- SECCIÓN 5: GRÁFICAS TEMPORALES AMPLIADAS -->
+<div class="analytics-grid-2x2">
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Serie Temporal de Temperatura (°C)</h3>
+                <p>Curva ambiental continua en tiempo real</p>
+            </div>
+            <span class="badge badge-primary">Termometría</span>
         </div>
-        <div class="chart-container" style="height: 280px;">
-            <canvas id="tempChart"></canvas>
+        <div class="chart-stage-container">
+            <canvas id="tempTimelineChart"></canvas>
         </div>
     </div>
 
-    <!-- Grafica 2: Humedad -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #60a5fa;">water_drop</span>
-            <h3>Humedad Relativa (%)</h3>
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Serie Temporal de Humedad Relativa (%)</h3>
+                <p>Higrometría en la torre</p>
+            </div>
+            <span class="badge badge-primary">Higrometría</span>
         </div>
-        <div class="chart-container" style="height: 280px;">
-            <canvas id="humidityChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Grafica 3: Radiacion UV -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #fbbf24;">wb_sunny</span>
-            <h3>Radiación Solar UV / CO2 (lux)</h3>
-        </div>
-        <div class="chart-container" style="height: 280px;">
-            <canvas id="uvChart"></canvas>
+        <div class="chart-stage-container">
+            <canvas id="humTimelineChart"></canvas>
         </div>
     </div>
 
-    <!-- Grafica 4: Corriente de Bomba -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #34d399;">electrical_services</span>
-            <h3>Consumo Eléctrico de Bomba (A)</h3>
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Serie Temporal de Radiación Solar (lux)</h3>
+                <p>Fotoperíodo e irradiancia</p>
+            </div>
+            <span class="badge badge-warning">Luximetría</span>
         </div>
-        <div class="chart-container" style="height: 280px;">
-            <canvas id="currentChart"></canvas>
+        <div class="chart-stage-container">
+            <canvas id="uvTimelineChart"></canvas>
+        </div>
+    </div>
+
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Consumo y Corriente de Bomba (Amperios)</h3>
+                <p>Estabilidad eléctrica del sistema hidráulico</p>
+            </div>
+            <span class="badge badge-success">Amperaje</span>
+        </div>
+        <div class="chart-stage-container">
+            <canvas id="currTimelineChart"></canvas>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Inyectar datos iniciales
-    let currentSensorData = {{ sensor_data | tojson | safe }};
-    let chartInstances = {};
+    let rawTimelineData = {{ sensor_data.timeline | tojson | safe }};
+    const activeDate = "{{ sensor_data.target_date }}";
+    let activeWindowSize = 30; // Por defecto: ventana deslizante de 30 puntos
+    let charts = {};
 
-    // INICIALIZAR GRAFICAS CON CHART.JS
-    function renderSensorCharts(timeline) {
-        if (!timeline || timeline.length === 0) return;
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
 
-        const labels = timeline.map(s => s.time);
-        const tempData = timeline.map(s => s.temp);
-        const humData = timeline.map(s => s.hum);
-        const uvData = timeline.map(s => s.uv);
-        const currData = timeline.map(s => s.curr);
+    function getSlicedData(dataArray) {
+        if (!dataArray || !dataArray.length) return [];
+        if (activeWindowSize === 'all') return dataArray;
+        return dataArray.slice(-activeWindowSize);
+    }
 
-        const initOrUpdateChart = (canvasId, label, data, color, glowColor, suffix) => {
-            const ctx = document.getElementById(canvasId);
+    function initSensorCharts() {
+        const sliced = getSlicedData(rawTimelineData);
+        const labels = sliced.map(d => d.time);
+        const temps = sliced.map(d => d.temperature);
+        const hums = sliced.map(d => d.humidity);
+        const uvs = sliced.map(d => d.uv_solar);
+        const currs = sliced.map(d => d.motor_current);
+
+        function createChart(ctxId, label, data, color, yUnit) {
+            const ctx = document.getElementById(ctxId);
             if (!ctx) return;
+            if (charts[ctxId]) charts[ctxId].destroy();
 
-            if (chartInstances[canvasId]) {
-                chartInstances[canvasId].destroy();
-            }
-
-            const canvasContext = ctx.getContext('2d');
-            const grad = canvasContext.createLinearGradient(0, 0, 0, 260);
-            grad.addColorStop(0, glowColor);
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-            chartInstances[canvasId] = new Chart(ctx, {
+            charts[ctxId] = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: labels.length ? labels : ['Sin datos'],
                     datasets: [{
                         label: label,
-                        data: data,
+                        data: data.length ? data : [0],
                         borderColor: color,
-                        borderWidth: 2,
-                        backgroundColor: grad,
+                        backgroundColor: color + '15',
+                        borderWidth: 2.4,
                         fill: true,
-                        tension: 0.25,
-                        pointRadius: labels.length > 50 ? 0 : 3,
+                        tension: 0.28,
+                        pointRadius: 0, // Sin puntos apilados, curva limpia
                         pointHoverRadius: 6,
-                        pointBackgroundColor: color,
-                        pointBorderColor: '#ffffff'
+                        pointHitRadius: 10
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
+                    animation: { duration: 300 },
+                    plugins: { 
                         legend: { display: false },
                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
                             callbacks: {
-                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}${suffix}`
+                                label: (context) => ` ${label}: ${context.parsed.y} ${yUnit}`
                             }
                         }
                     },
                     scales: {
-                        x: {
-                            grid: { color: 'rgba(15, 23, 42, 0.04)' },
-                            ticks: { maxTicksLimit: 12, color: '#64748b', font: { size: 11 } }
+                        x: { 
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 10 }
                         },
-                        y: {
-                            grid: { color: 'rgba(15, 23, 42, 0.04)' },
-                            ticks: { color: '#64748b', callback: val => `${val}${suffix}` }
+                        y: { 
+                            grid: { color: '#f1f5f9' },
+                            ticks: { callback: (v) => `${v} ${yUnit}` }
                         }
                     }
                 }
             });
-        };
+        }
 
-        initOrUpdateChart('tempChart', 'Temperatura', tempData, '#ef4444', 'rgba(239, 68, 68, 0.15)', '°C');
-        initOrUpdateChart('humidityChart', 'Humedad Relativa', humData, '#3b82f6', 'rgba(59, 130, 246, 0.15)', '%');
-        initOrUpdateChart('uvChart', 'Radiación UV', uvData, '#f59e0b', 'rgba(245, 158, 11, 0.15)', ' lux');
-        initOrUpdateChart('currentChart', 'Corriente Bomba', currData, '#10b981', 'rgba(16, 185, 129, 0.15)', ' A');
+        createChart('tempTimelineChart', 'Temperatura', temps, '#2563eb', '°C');
+        createChart('humTimelineChart', 'Humedad', hums, '#0284c7', '%');
+        createChart('uvTimelineChart', 'Radiación', uvs, '#d97706', 'lux');
+        createChart('currTimelineChart', 'Corriente', currs, '#059669', 'A');
     }
 
-    // FILTRADO DINAMICO POR FECHA SIN RECARGA
-    async function filterByDate(dateStr, btnEl) {
-        if (btnEl) {
-            document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
-            btnEl.classList.add('active');
+    function setWindowSize(size, btnElement) {
+        activeWindowSize = size;
+        document.querySelectorAll('.filter-group button').forEach(b => {
+            if (b.id && b.id.startsWith('btn-win-')) b.classList.remove('active');
+        });
+        if (btnElement) btnElement.classList.add('active');
+        updateChartsWithNewData(rawTimelineData);
+    }
+
+    function updateChartsWithNewData(newTimeline) {
+        if (!newTimeline || !newTimeline.length) return;
+        rawTimelineData = newTimeline;
+
+        const sliced = getSlicedData(rawTimelineData);
+        const labels = sliced.map(d => d.time);
+        const temps = sliced.map(d => d.temperature);
+        const hums = sliced.map(d => d.humidity);
+        const uvs = sliced.map(d => d.uv_solar);
+        const currs = sliced.map(d => d.motor_current);
+
+        if (charts['tempTimelineChart']) {
+            charts['tempTimelineChart'].data.labels = labels;
+            charts['tempTimelineChart'].data.datasets[0].data = temps;
+            charts['tempTimelineChart'].update('none');
         }
+        if (charts['humTimelineChart']) {
+            charts['humTimelineChart'].data.labels = labels;
+            charts['humTimelineChart'].data.datasets[0].data = hums;
+            charts['humTimelineChart'].update('none');
+        }
+        if (charts['uvTimelineChart']) {
+            charts['uvTimelineChart'].data.labels = labels;
+            charts['uvTimelineChart'].data.datasets[0].data = uvs;
+            charts['uvTimelineChart'].update('none');
+        }
+        if (charts['currTimelineChart']) {
+            charts['currTimelineChart'].data.labels = labels;
+            charts['currTimelineChart'].data.datasets[0].data = currs;
+            charts['currTimelineChart'].update('none');
+        }
+
+        // Actualizar tarjetas KPI con el último punto registrado
+        const lastP = rawTimelineData[rawTimelineData.length - 1];
+        if (lastP) {
+            document.getElementById('kpi-temp-val').innerText = lastP.temperature;
+            document.getElementById('kpi-hum-val').innerText = lastP.humidity;
+            document.getElementById('kpi-uv-val').innerText = lastP.uv_solar;
+            document.getElementById('kpi-curr-val').innerText = lastP.motor_current;
+
+            const badge = document.getElementById('timeline-count-badge');
+            if (badge) badge.innerText = `MOSTRANDO ${rawTimelineData.length} LECTURAS (${activeDate})`;
+        }
+    }
+
+    const activePlantId = {{ active_plant_id }};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initSensorCharts();
+    });
+
+    function filterByDate(dateStr, btnElement) {
+        if (!dateStr) return;
+        window.location.href = `/sensors?date=${dateStr}&plant_id=${activePlantId}`;
+    }
+
+    async function handleCsvUpload(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('telemetry-csv-input');
+        if (!fileInput.files.length) return;
+
+        const formData = new FormData();
+        formData.append('csv_file', fileInput.files[0]);
+
+        const feedback = document.getElementById('csv-upload-feedback');
+        feedback.style.display = 'block';
+        feedback.style.background = 'rgba(5, 150, 105, 0.1)';
+        feedback.style.color = '#047857';
+        feedback.innerText = 'Procesando archivo CSV...';
 
         try {
-            const resp = await fetch(`/api/telemetry/timeline?date=${encodeURIComponent(dateStr)}`);
-            const data = await resp.json();
-
-            if (data.status === 'success') {
-                currentSensorData = data;
-                updateKpisAndCharts(data);
-            }
-        } catch (e) {
-            console.error('Error fetching date data:', e);
-        }
-    }
-
-    function updateKpisAndCharts(data) {
-        const sum = data.summary;
-        const badge = document.getElementById('filter-info-badge');
-        if (badge) {
-            badge.innerText = `Mostrando ${data.total_records} lecturas registradas (${data.target_date})`;
-        }
-
-        // Temperatura
-        document.getElementById('kpi-temp-val').innerText = sum.temperature.last;
-        document.getElementById('kpi-temp-sub').innerHTML = `Mín: <strong>${sum.temperature.min}°C</strong> | Máx: <strong>${sum.temperature.max}°C</strong> | Prom: <strong>${sum.temperature.avg}°C</strong>`;
-        document.getElementById('kpi-temp-status').innerText = sum.temperature.status;
-
-        // Humedad
-        document.getElementById('kpi-hum-val').innerText = sum.humidity.last;
-        document.getElementById('kpi-hum-sub').innerHTML = `Mín: <strong>${sum.humidity.min}%</strong> | Máx: <strong>${sum.humidity.max}%</strong> | Prom: <strong>${sum.humidity.avg}%</strong>`;
-        document.getElementById('kpi-hum-status').innerText = sum.humidity.status;
-
-        // Radiación
-        document.getElementById('kpi-uv-val').innerText = sum.uv_solar.last;
-        document.getElementById('kpi-uv-sub').innerHTML = `Mín: <strong>${sum.uv_solar.min}</strong> | Máx: <strong>${sum.uv_solar.max}</strong> | Prom: <strong>${sum.uv_solar.avg}</strong>`;
-        document.getElementById('kpi-uv-status').innerText = sum.uv_solar.status;
-
-        // Corriente
-        document.getElementById('kpi-curr-val').innerText = sum.motor_current.last;
-        document.getElementById('kpi-curr-sub').innerHTML = `Mín: <strong>${sum.motor_current.min}A</strong> | Máx: <strong>${sum.motor_current.max}A</strong> | Prom: <strong>${sum.motor_current.avg}A</strong>`;
-        document.getElementById('kpi-curr-status').innerText = sum.motor_current.status;
-
-        // Redibujar graficas
-        renderSensorCharts(data.timeline);
-    }
-
-    // CONTROL DE ANTENA USB
-    let telemetryPollTimer = null;
-
-    async function toggleTelemetry(start) {
-        const port = document.getElementById('antenna-port-select').value;
-        const endpoint = start ? '/api/telemetry/start' : '/api/telemetry/stop';
-        
-        try {
-            const resp = await fetch(endpoint, {
+            const res = await fetch('/api/import_tower_csv', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ port: port })
+                body: formData
             });
-            const data = await resp.json();
-            
+            const data = await res.json();
             if (data.status === 'success') {
-                updateTelemetryUI(start, data.data);
+                feedback.innerText = `CSV importado exitosamente (${data.imported_records} registros agregados).`;
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                feedback.style.background = 'rgba(220, 38, 38, 0.1)';
+                feedback.style.color = '#b91c1c';
+                feedback.innerText = 'Error: ' + data.message;
             }
-        } catch (e) {
-            alert('Error al controlar la antena: ' + e.message);
+        } catch (err) {
+            feedback.style.background = 'rgba(220, 38, 38, 0.1)';
+            feedback.style.color = '#b91c1c';
+            feedback.innerText = 'Error al subir archivo CSV.';
         }
-    }
-
-    function updateTelemetryUI(isRecording, info) {
-        const btnStart = document.getElementById('btn-start-telemetry');
-        const btnStop = document.getElementById('btn-stop-telemetry');
-        const statusDot = document.getElementById('antenna-status-dot');
-        const statusText = document.getElementById('antenna-status-text');
-        const csvFile = document.getElementById('antenna-csv-file');
-
-        if (isRecording) {
-            btnStart.style.display = 'none';
-            btnStop.style.display = 'inline-flex';
-            statusDot.className = 'status-indicator online';
-            statusText.innerText = 'Transmitiendo y Guardando en CSV';
-            statusText.style.color = 'var(--accent-success)';
-            if (info && info.file) csvFile.innerText = info.file.split(/[\\/]/).pop();
-            
-            if (!telemetryPollTimer) telemetryPollTimer = setInterval(pollTelemetryLive, 2000);
-        } else {
-            btnStart.style.display = 'inline-flex';
-            btnStop.style.display = 'none';
-            statusDot.className = 'status-indicator offline';
-            statusText.innerText = 'Inactivo (Listo para captar)';
-            statusText.style.color = 'var(--text-muted)';
-            
-            if (telemetryPollTimer) {
-                clearInterval(telemetryPollTimer);
-                telemetryPollTimer = null;
-            }
-        }
-    }
-
-    async function pollTelemetryLive() {
-        try {
-            const resp = await fetch('/api/telemetry/status');
-            const data = await resp.json();
-            if (data.status === 'success' && data.telemetry) {
-                const tel = data.telemetry;
-                if (tel.latest_reading) {
-                    document.getElementById('kpi-temp-val').innerText = tel.latest_reading.temperature.toFixed(1);
-                    document.getElementById('kpi-hum-val').innerText = tel.latest_reading.humidity.toFixed(0);
-                    document.getElementById('kpi-uv-val').innerText = tel.latest_reading.uv_solar.toFixed(0);
-                    document.getElementById('kpi-curr-val').innerText = tel.latest_reading.motor_current.toFixed(2);
-                }
-            }
-        } catch (e) {}
     }
 
     async function refreshAntennaPorts() {
         try {
-            const resp = await fetch('/api/telemetry/ports');
-            const data = await resp.json();
-            if (data.status === 'success') {
+            const res = await fetch('/api/telemetry/ports');
+            const data = await res.json();
+            if (data.status === 'success' && data.ports) {
                 const select = document.getElementById('antenna-port-select');
+                const currentVal = select.value;
                 select.innerHTML = '';
                 data.ports.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p;
-                    opt.innerText = p;
+                    opt.textContent = p;
+                    if (p === currentVal || (currentVal === 'USB_ANTENNA_AUTO' && p.startsWith('COM'))) {
+                        opt.selected = true;
+                    }
                     select.appendChild(opt);
                 });
             }
-        } catch (e) {}
-    }
-
-    // CARGA DE CSV MANUAL
-    async function handleCsvUpload(event) {
-        event.preventDefault();
-        const input = document.getElementById('telemetry-csv-input');
-        const feedback = document.getElementById('csv-upload-feedback');
-        const btn = document.getElementById('btn-upload-csv');
-
-        if (!input.files || input.files.length === 0) {
-            alert('Por favor selecciona un archivo CSV.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', input.files[0]);
-
-        btn.disabled = true;
-        btn.innerText = 'Importando datos de la torre...';
-        feedback.style.display = 'none';
-
-        try {
-            const resp = await fetch('/api/telemetry/upload_csv', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await resp.json();
-
-            if (data.status === 'success') {
-                feedback.style.display = 'block';
-                feedback.style.background = 'rgba(16, 185, 129, 0.1)';
-                feedback.style.border = '1px solid var(--accent-success)';
-                feedback.style.color = 'var(--accent-success)';
-                feedback.innerText = `${data.message} Recargando gráficas...`;
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                feedback.style.display = 'block';
-                feedback.style.background = 'rgba(239, 68, 68, 0.1)';
-                feedback.style.border = '1px solid var(--accent-danger)';
-                feedback.style.color = 'var(--accent-danger)';
-                feedback.innerText = `Error: ${data.message}`;
-                btn.disabled = false;
-                btn.innerText = 'Cargar y Procesar CSV de Sensores';
-            }
         } catch (e) {
-            feedback.style.display = 'block';
-            feedback.style.background = 'rgba(239, 68, 68, 0.1)';
-            feedback.style.border = '1px solid var(--accent-danger)';
-            feedback.style.color = 'var(--accent-danger)';
-            feedback.innerText = `Error de conexión: ${e.message}`;
-            btn.disabled = false;
-            btn.innerText = 'Cargar y Procesar CSV de Sensores';
+            console.error('Error al actualizar puertos:', e);
         }
     }
 
-    // ELIMINAR TELEMETRIA DE LA FECHA SELECCIONADA
-    async function deleteTelemetryForActiveDate() {
-        const targetDate = currentSensorData ? currentSensorData.target_date : 'todos';
-        const label = targetDate === 'todos' ? 'TODAS las lecturas históricas de sensores' : `las lecturas de sensores del día ${targetDate}`;
-        if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente ${label}?`)) return;
-
+    async function toggleTelemetry(start) {
+        const port = document.getElementById('antenna-port-select').value;
+        const endpoint = start ? '/api/start_telemetry_recording' : '/api/stop_telemetry_recording';
         try {
-            const resp = await fetch(`/api/telemetry/by_date?date=${encodeURIComponent(targetDate)}`, { method: 'DELETE' });
-            const data = await resp.json();
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ port: port })
+            });
+            const data = await res.json();
             if (data.status === 'success') {
-                alert(data.message);
                 window.location.reload();
             } else {
                 alert('Error: ' + data.message);
             }
         } catch (e) {
-            alert('Error al eliminar lecturas: ' + e.message);
+            alert('Error de comunicación con la antena.');
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (currentSensorData && currentSensorData.timeline) {
-            renderSensorCharts(currentSensorData.timeline);
+    async function deleteTelemetryForActiveDate() {
+        const dateStr = document.getElementById('custom-date-filter').value || '{{ sensor_data.target_date }}';
+        if (!confirm(`¿Eliminar los registros de telemetría de la fecha '${dateStr}'?`)) return;
+
+        try {
+            const res = await fetch('/api/delete_telemetry_by_date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date_str: dateStr })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                window.location.href = `/sensors?date=todos&plant_id=${activePlantId}`;
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (e) {
+            alert('Error al eliminar datos.');
         }
-    });
+    }
+
+    // Monitoreo en tiempo real: actualiza ventana deslizante sin apilar puntos
+    setInterval(async () => {
+        try {
+            const res = await fetch(`/api/telemetry/timeline?date=${activeDate}&plant_id=${activePlantId}`);
+            const data = await res.json();
+            if (data && data.timeline && data.timeline.length !== rawTimelineData.length) {
+                updateChartsWithNewData(data.timeline);
+            }
+
+            const sRes = await fetch('/api/telemetry/status');
+            const sData = await sRes.json();
+            if (sData.status === 'success' && sData.telemetry) {
+                const tel = sData.telemetry;
+                const reading = tel.latest_reading;
+                if (reading && tel.is_recording) {
+                    const statusTxt = document.getElementById('antenna-status-text');
+                    if (statusTxt) {
+                        statusTxt.innerText = `Transmitiendo (${tel.readings_count} lecturas guardadas) | Temp: ${reading.temperature}°C, HR: ${reading.humidity}%, UV: ${reading.uv_solar} lux`;
+                    }
+                }
+            }
+        } catch (e) {}
+    }, 2000);
 </script>
 {% endblock %}

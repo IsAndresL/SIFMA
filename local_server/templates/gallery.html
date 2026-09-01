@@ -2,386 +2,300 @@
 
 {% block title %}Galería de Capturas{% endblock %}
 {% block heading %}Comparador de Procesamiento Digital{% endblock %}
+{% block subheading %}Inspección visual antes/después y segmentación para Canastilla #{{ active_plant_id }}{% endblock %}
 
 {% block content %}
-<div class="content-viewport">
-    
-    <!-- Filtros de Periodos y Seleccion de Capturas -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round">filter_list</span>
-            <h3>Filtros por Periodo de Muestreo (Canastilla #{{ active_plant_id }})</h3>
-        </div>
-        
-        <!-- Botones de Periodo -->
-        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-            <button class="btn-period active" data-target-period="todos" onclick="filterPeriod('todos')">
-                <span class="material-icons-round">apps</span>
-                Todos los Periodos
-            </button>
-            <button class="btn-period" data-target-period="mañana" onclick="filterPeriod('mañana')">
-                <span class="material-icons-round">light_mode</span>
-                Mañana (07:00)
-            </button>
-            <button class="btn-period" data-target-period="mediodía" onclick="filterPeriod('mediodía')">
-                <span class="material-icons-round">wb_sunny</span>
-                Mediodía (12:00)
-            </button>
-            <button class="btn-period" data-target-period="tarde" onclick="filterPeriod('tarde')">
-                <span class="material-icons-round">nights_stay</span>
-                Tarde (17:00)
-            </button>
-        </div>
 
-        <!-- Lista Horizontal de Capturas Disponibles para el Periodo Activo -->
-        <div class="captures-list-container" style="border-top: 1px solid var(--glass-border); padding-top: 20px;">
-            <h4 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 12px; color: var(--text-muted);">
-                Muestreos Registrados para esta Canastilla:
-            </h4>
-            
-            <div id="captures-grid" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px;">
-                {% if gallery_sessions %}
-                    {% for g in gallery_sessions %}
-                        {% set s = g.session %}
-                        {% set m = g.avg_metric %}
-                        <div class="capture-thumb-card" data-period="{{ s.period }}" data-session-id="{{ s.id }}" onclick="selectSession({{ s.id }})">
-                            <div class="thumb-images">
-                                <img src="{{ url_for('static', filename=m.image_path_cenital_orig) }}" class="thumb-img">
-                                <img src="{{ url_for('static', filename=m.image_path_lateral_orig) }}" class="thumb-img">
-                            </div>
-                            <div class="thumb-info">
-                                <span class="thumb-date">{{ s.timestamp.strftime('%d/%m %H:%M') }}</span>
-                                <span class="thumb-crop">{{ s.period.upper() }}</span>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p style="color: var(--text-muted); font-size: 13px;">No hay capturas registradas para la Canastilla #{{ active_plant_id }}.</p>
-                {% endif %}
-            </div>
-            
-            <div id="no-captures-message" style="display: none; color: var(--text-muted); font-size: 13px; padding: 10px 0;">
-                No se encontraron capturas registradas en este periodo para la canastilla activa.
-            </div>
+<!-- Filtros de Períodos y Selección de Capturas -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <h3>Filtros por Período de Muestreo (Canastilla #{{ active_plant_id }} - {{ active_crop_profile.display_name }})</h3>
+            <p>Selecciona el turno de captura para explorar los lotes fotográficos</p>
         </div>
     </div>
+    
+    <!-- Botones de Período -->
+    <div class="filter-group" style="margin-bottom: 20px;">
+        <button class="filter-pill active" data-target-period="todos" onclick="filterPeriod('todos', this)">
+            <span class="material-icons-round">apps</span>
+            <span>Todos los Períodos</span>
+        </button>
+        <button class="filter-pill" data-target-period="mañana" onclick="filterPeriod('mañana', this)">
+            <span class="material-icons-round">light_mode</span>
+            <span>Mañana (07:00)</span>
+        </button>
+        <button class="filter-pill" data-target-period="mediodía" onclick="filterPeriod('mediodía', this)">
+            <span class="material-icons-round">wb_sunny</span>
+            <span>Mediodía (12:00)</span>
+        </button>
+        <button class="filter-pill" data-target-period="tarde" onclick="filterPeriod('tarde', this)">
+            <span class="material-icons-round">nights_stay</span>
+            <span>Tarde (17:00)</span>
+        </button>
+    </div>
 
-    <!-- SECCION DETALLADA DEL COMPARADOR COMPARATIVO DE LA SESION SELECCIONADA -->
-    <div id="comparators-container">
-        {% if gallery_sessions %}
-            {% for g in gallery_sessions %}
-                {% set s = g.session %}
-                {% set avg = g.avg_metric %}
-                <div class="session-comparator-card" id="comparator-{{ s.id }}" data-session-json="{{ g.all_metrics_json | tojson | safe }}" style="display: none;">
-                    <div class="glass-card" style="margin-bottom: 10px;">
-                        
-                        <!-- Cabecera de la sesion -->
-                        <div class="gallery-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
-                            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                                <span class="badge badge-success" style="font-size: 12px; padding: 6px 12px;">
-                                    {{ s.period.upper() }}
-                                </span>
-                                <span class="gallery-title" style="font-size: 18px; font-family: var(--font-heading);">
-                                    Comparador de Fenotipado - Captura del {{ s.timestamp.strftime('%d/%m/%Y a las %H:%M') }}
-                                </span>
+    <!-- Lista Horizontal de Capturas Disponibles para el Período Activo -->
+    <div style="border-top: 1px solid var(--border-light); padding-top: 18px;">
+        <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 14px; color: var(--text-heading);">
+            Muestreos Registrados para esta Canastilla:
+        </h4>
+        
+        <div id="captures-grid" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px;">
+            {% if gallery_sessions %}
+                {% for g in gallery_sessions %}
+                    {% set s = g.session %}
+                    {% set m = g.avg_metric %}
+                    <div class="capture-thumb-card" data-period="{{ s.period }}" data-session-id="{{ s.id }}" onclick="selectSession({{ s.id }})" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; cursor: pointer; min-width: 170px; box-shadow: var(--shadow-sm); transition: var(--transition-fast);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-radius: 8px; overflow: hidden; height: 75px; background: #000; margin-bottom: 8px;">
+                            <img src="{{ url_for('static', filename=m.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ url_for('static', filename=m.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-size: 11.5px; font-weight: 700; color: var(--text-heading);">{{ s.timestamp.strftime('%d/%m %H:%M') }}</span>
+                            <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">{{ s.period.upper() }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 13px;">No hay capturas registradas para la Canastilla #{{ active_plant_id }}.</p>
+            {% endif %}
+        </div>
+        
+        <div id="no-captures-message" style="display: none; color: var(--text-muted); font-size: 13px; padding: 12px 0;">
+            No se encontraron capturas registradas en este período para la canastilla activa.
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN DETALLADA DEL COMPARADOR COMPARATIVO DE LA SESIÓN SELECCIONADA -->
+<div id="comparators-container">
+    {% if gallery_sessions %}
+        {% for g in gallery_sessions %}
+            {% set s = g.session %}
+            {% set avg = g.avg_metric %}
+            <div class="session-comparator-card" id="comparator-{{ s.id }}" data-session-json="{{ g.all_metrics_json | tojson | safe }}" style="display: none;">
+                <div class="widget-card" style="margin-bottom: 24px;">
+                    
+                    <!-- Cabecera de la sesión -->
+                    <div class="widget-header">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <span class="badge badge-success" style="font-size: 12px; padding: 6px 12px;">
+                                {{ s.period.upper() }}
+                            </span>
+                            <div class="widget-header-title">
+                                <h3>Comparador de Fenotipado - Captura del {{ s.timestamp.strftime('%d/%m/%Y a las %H:%M') }}</h3>
                             </div>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <a href="{{ url_for('dashboard.cross_analysis') }}" class="btn-primary" style="display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 8px 14px; text-decoration: none; border-radius: 8px;">
-                                    <span class="material-icons-round" style="font-size: 16px;">sync_alt</span>
-                                    Cruzar con Telemetría
-                                </a>
-                                <button type="button" class="btn-period" onclick="deleteSession({{ s.id }})" style="color: var(--accent-danger); padding: 8px 14px; font-size: 12px;" title="Eliminar este período de fotos">
-                                    <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                                    Eliminar Período
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <a href="{{ url_for('dashboard.cross_analysis') }}" class="btn btn-primary btn-sm">
+                                <span class="material-icons-round">sync_alt</span>
+                                <span>Cruzar con Telemetría</span>
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteSession({{ s.id }})" title="Eliminar este período de fotos">
+                                <span class="material-icons-round">delete</span>
+                                <span>Eliminar Período</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Tomas Individuales (Promedio vs Foto 1 a 5) -->
+                    <div style="background: var(--bg-card-subtle); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <span style="font-size: 13px; font-weight: 700; color: var(--text-heading);">
+                                Seleccionar Toma Específica del Lote:
+                            </span>
+                            <div class="photo-selector-group" id="photo-pills-{{ s.id }}" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="switchSessionPhoto({{ s.id }}, 0, this)">
+                                    Promedio Consolidado (5 tomas)
                                 </button>
-                            </div>
-                        </div>
-
-                        <!-- Selector de Tomas Individuales (Promedio vs Foto 1 a 5) -->
-                        <div style="background: rgba(15, 23, 42, 0.02); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--glass-border); margin-bottom: 20px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                                <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">
-                                    Seleccionar Toma Específica del Lote:
-                                </span>
-                                <div class="photo-selector-group" id="photo-pills-{{ s.id }}" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <button type="button" class="btn-period active" onclick="switchSessionPhoto({{ s.id }}, 0, this)" style="padding: 6px 14px; font-size: 12px;">
-                                        Promedio Consolidado (5 tomas)
+                                {% for p in g.individual_photos %}
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="switchSessionPhoto({{ s.id }}, {{ p.photo_index }}, this)">
+                                        Foto #{{ p.photo_index }}
                                     </button>
-                                    {% for p in g.individual_photos %}
-                                        <button type="button" class="btn-period" onclick="switchSessionPhoto({{ s.id }}, {{ p.photo_index }}, this)" style="padding: 6px 14px; font-size: 12px;">
-                                            Foto #{{ p.photo_index }}
-                                        </button>
-                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos Consolidados / Individuales de la sesión -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; background: var(--bg-card-subtle); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 24px; text-align: center;">
+                        <div>
+                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Área Foliar</p>
+                            <p id="metric-area-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-success); margin-top: 4px;">
+                                {{ avg.foliar_area_cm2 }} cm²
+                            </p>
+                        </div>
+                        <div>
+                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Altura de Planta</p>
+                            <p id="metric-height-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary); margin-top: 4px;">
+                                {{ avg.plant_height_cm }} cm
+                            </p>
+                        </div>
+                        <div>
+                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Diámetro del Tallo</p>
+                            <p id="metric-diameter-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-warning); margin-top: 4px;">
+                                {{ avg.stem_diameter_mm }} mm
+                            </p>
+                        </div>
+                        <div>
+                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Índice de Salud</p>
+                            <p id="metric-health-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: {% if avg.health_index >= 90 %}var(--accent-success){% else %}var(--accent-danger){% endif %}; margin-top: 4px;">
+                                {{ avg.health_index }}%
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- TARJETAS DE COMPARACIÓN DE IMÁGENES -->
+                    <div class="analytics-grid-2x2">
+                        
+                        <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR) -->
+                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="material-icons-round" style="color: var(--accent-success);">camera</span>
+                                    <strong style="font-size: 14px; color: var(--text-heading);">Cámara Cenital (Vista Superior)</strong>
                                 </div>
+                                <span class="badge badge-success">Área Foliar</span>
                             </div>
-                        </div>
-
-                        <!-- Datos Consolidados / Individuales de la sesion -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: rgba(255,255,255,0.01); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 25px; text-align: center; font-size: 13px;">
-                            <div>
-                                <p style="color: var(--text-muted);">Área Foliar</p>
-                                <p id="metric-area-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-success); margin-top: 3px;">
-                                    {{ avg.foliar_area_cm2 }} cm²
-                                </p>
-                            </div>
-                            <div>
-                                <p style="color: var(--text-muted);">Altura de Planta</p>
-                                <p id="metric-height-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary); margin-top: 3px;">
-                                    {{ avg.plant_height_cm }} cm
-                                </p>
-                            </div>
-                            <div>
-                                <p style="color: var(--text-muted);">Diámetro del Tallo</p>
-                                <p id="metric-diameter-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-warning); margin-top: 3px;">
-                                    {{ avg.stem_diameter_mm }} mm
-                                </p>
-                            </div>
-                            <div>
-                                <p style="color: var(--text-muted);">Índice de Salud</p>
-                                <p id="metric-health-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: {% if avg.health_index >= 90 %}var(--accent-success){% else %}var(--accent-danger){% endif %}; margin-top: 3px;">
-                                    {{ avg.health_index }}%
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- TARJETAS DE COMPARACION DE IMAGENES (DESLIZADOR ANTES/DESPUES) -->
-                        <div class="gallery-grid">
                             
-                            <!-- COMPARADOR 1: CAMARA CENITAL (VISTA SUPERIOR) -->
-                            <div class="image-card">
-                                <div class="image-card-header">
-                                    <span class="material-icons-round">center_focus_strong</span>
-                                    <h4>Vista Cenital (Segmentación HSV)</h4>
-                                </div>
-                                <div class="img-slider-container" id="slider-cenital-{{ s.id }}">
-                                    <img id="img-cen-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_orig) }}" class="img-slider-image img-slider-before" alt="Original Cenital">
-                                    <img id="img-cen-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" class="img-slider-image img-slider-after" alt="Procesada Cenital">
-                                    
-                                    <div class="img-slider-bar"></div>
-                                    <div class="img-slider-button">
-                                        <span class="material-icons-round">code</span>
+                            <div style="position: relative; height: 260px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #000;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;">
+                                    <div style="position: relative; border-right: 1px solid #333;">
+                                        <img id="img-cenital-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">ORIGINAL</div>
                                     </div>
-                                    <input type="range" min="0" max="100" value="50" class="img-slider-range" oninput="slideImages(this)">
-                                </div>
-                                <div class="image-card-footer">
-                                    <span class="badge badge-primary">Desliza para comparar Máscara vs Original</span>
+                                    <div style="position: relative;">
+                                        <img id="img-cenital-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.85); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">MÁSCARA ExG</div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- COMPARADOR 2: CAMARA LATERAL (PERFIL Y CANASTILLA) -->
-                            <div class="image-card">
-                                <div class="image-card-header">
-                                    <span class="material-icons-round">straighten</span>
-                                    <h4>Vista Lateral (Calibración Física)</h4>
+                        <!-- COMPARADOR 2: CÁMARA LATERAL (ALTURA Y TALLO) -->
+                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="material-icons-round" style="color: var(--accent-primary);">photo_camera_front</span>
+                                    <strong style="font-size: 14px; color: var(--text-heading);">Cámara Lateral (Perfil Vertical)</strong>
                                 </div>
-                                <div class="img-slider-container" id="slider-lateral-{{ s.id }}">
-                                    <img id="img-lat-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_orig) }}" class="img-slider-image img-slider-before" alt="Original Lateral">
-                                    <img id="img-lat-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_proc) }}" class="img-slider-image img-slider-after" alt="Procesada Lateral">
-                                    
-                                    <div class="img-slider-bar"></div>
-                                    <div class="img-slider-button">
-                                        <span class="material-icons-round">code</span>
+                                <span class="badge badge-primary">Altura & Tallo</span>
+                            </div>
+                            
+                            <div style="position: relative; height: 260px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #000;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;">
+                                    <div style="position: relative; border-right: 1px solid #333;">
+                                        <img id="img-lateral-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">ORIGINAL</div>
                                     </div>
-                                    <input type="range" min="0" max="100" value="50" class="img-slider-range" oninput="slideImages(this)">
-                                </div>
-                                <div class="image-card-footer">
-                                    <span class="badge badge-success">Desliza para comparar Calibración de Tallo</span>
+                                    <div style="position: relative;">
+                                        <img id="img-lateral-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(37,99,235,0.85); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">CALIBRACIÓN</div>
+                                    </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="glass-card" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-                <span class="material-icons-round" style="font-size: 48px; color: var(--text-inactive); margin-bottom: 10px;">photo_library</span>
-                <p>No hay capturas disponibles para la Canastilla #{{ active_plant_id }}.</p>
             </div>
-        {% endif %}
-    </div>
-
+        {% endfor %}
+    {% endif %}
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function slideImages(slider) {
-        const val = slider.value;
-        const container = slider.parentElement;
-        
-        const afterImg = container.querySelector('.img-slider-after');
-        const bar = container.querySelector('.img-slider-bar');
-        const button = container.querySelector('.img-slider-button');
-        
-        if (afterImg) afterImg.style.clipPath = `polygon(0 0, ${val}% 0, ${val}% 100%, 0 100%)`;
-        if (bar) bar.style.left = `${val}%`;
-        if (button) button.style.left = `${val}%`;
-    }
+    function filterPeriod(period, btnElement) {
+        document.querySelectorAll('.filter-group .filter-pill').forEach(b => b.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
 
-    function normalizePeriodStr(str) {
-        if (!str) return "";
-        return str.toLowerCase()
-                  .replace(/ñ/g, "n")
-                  .replace(/á/g, "a")
-                  .replace(/é/g, "e")
-                  .replace(/í/g, "i")
-                  .replace(/ó/g, "o")
-                  .replace(/ú/g, "u")
-                  .replace(/_/g, "")
-                  .replace(/\s+/g, "");
-    }
-
-    function filterPeriod(targetPeriod) {
-        document.querySelectorAll('.btn-period').forEach(btn => {
-            if (btn.getAttribute('data-target-period') === targetPeriod) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-
-        const targetNorm = normalizePeriodStr(targetPeriod);
+        const cards = document.querySelectorAll('.capture-thumb-card');
         let visibleCount = 0;
-        let firstSessionId = null;
 
-        document.querySelectorAll('.capture-thumb-card').forEach(card => {
-            const rawPeriod = card.getAttribute('data-period') || "";
-            const cardNorm = normalizePeriodStr(rawPeriod);
-
-            const isMatch = (targetPeriod === 'todos') || 
-                            (cardNorm.includes(targetNorm)) || 
-                            (targetNorm === 'mediodia' && (cardNorm.includes('medio') || cardNorm.includes('mediodia')));
-
-            if (isMatch) {
+        cards.forEach(card => {
+            const cardPeriod = card.getAttribute('data-period').toLowerCase();
+            if (period === 'todos' || cardPeriod.includes(period)) {
                 card.style.display = 'block';
                 visibleCount++;
-                if (firstSessionId === null) {
-                    firstSessionId = card.getAttribute('data-session-id');
-                }
             } else {
                 card.style.display = 'none';
             }
         });
 
         const noMsg = document.getElementById('no-captures-message');
-        if (visibleCount === 0) {
-            if (noMsg) noMsg.style.display = 'block';
-            hideAllComparators();
-        } else {
-            if (noMsg) noMsg.style.display = 'none';
-            if (firstSessionId) {
-                selectSession(firstSessionId);
-            }
-        }
-    }
-
-    function hideAllComparators() {
-        document.querySelectorAll('.session-comparator-card').forEach(card => {
-            card.style.display = 'none';
-        });
+        if (noMsg) noMsg.style.display = visibleCount === 0 ? 'block' : 'none';
     }
 
     function selectSession(sessionId) {
-        document.querySelectorAll('.capture-thumb-card').forEach(card => {
-            if (card.getAttribute('data-session-id') == sessionId) {
-                card.classList.add('active');
-            } else {
-                card.classList.remove('active');
-            }
-        });
+        document.querySelectorAll('.session-comparator-card').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.capture-thumb-card').forEach(c => c.style.borderColor = 'var(--border-color)');
 
-        document.querySelectorAll('.session-comparator-card').forEach(card => {
-            if (card.id === `comparator-${sessionId}`) {
-                card.style.display = 'block';
-                const rangeInputs = card.querySelectorAll('.img-slider-range');
-                rangeInputs.forEach(rangeInput => {
-                    rangeInput.value = 50;
-                    slideImages(rangeInput);
-                });
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
-    /**
-     * Permite conmutar la vista entre el promedio consolidado (photoIndex = 0)
-     * y cualquiera de las 5 fotos individuales del lote.
-     */
-    function switchSessionPhoto(sessionId, photoIndex, btnEl) {
-        const card = document.getElementById(`comparator-${sessionId}`);
-        if (!card) return;
-
-        // Actualizar píldoras activas
-        const group = document.getElementById(`photo-pills-${sessionId}`);
-        if (group) {
-            group.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
-            if (btnEl) btnEl.classList.add('active');
+        const target = document.getElementById('comparator-' + sessionId);
+        if (target) {
+            target.style.display = 'block';
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        const metricsDataStr = card.getAttribute('data-session-json');
-        if (!metricsDataStr) return;
+        const thumb = document.querySelector(`.capture-thumb-card[data-session-id="${sessionId}"]`);
+        if (thumb) thumb.style.borderColor = 'var(--accent-success)';
+    }
 
-        try {
-            const metricsList = JSON.parse(metricsDataStr);
-            let selectedMetric = null;
+    function switchSessionPhoto(sessionId, photoIndex, btnElement) {
+        const card = document.getElementById('comparator-' + sessionId);
+        if (!card) return;
 
-            if (photoIndex === 0) {
-                selectedMetric = metricsList.find(m => m.is_average || m.photo_index === 0) || metricsList[0];
-            } else {
-                selectedMetric = metricsList.find(m => m.photo_index === photoIndex) || metricsList[0];
-            }
+        const group = document.getElementById('photo-pills-' + sessionId);
+        if (group) {
+            group.querySelectorAll('button').forEach(b => {
+                b.className = 'btn btn-outline btn-sm';
+            });
+            if (btnElement) btnElement.className = 'btn btn-primary btn-sm';
+        }
 
-            if (selectedMetric) {
-                // Actualizar números de métricas
-                document.getElementById(`metric-area-${sessionId}`).innerText = `${selectedMetric.foliar_area_cm2} cm²`;
-                document.getElementById(`metric-height-${sessionId}`).innerText = `${selectedMetric.plant_height_cm} cm`;
-                document.getElementById(`metric-diameter-${sessionId}`).innerText = `${selectedMetric.stem_diameter_mm} mm`;
-                document.getElementById(`metric-health-${sessionId}`).innerText = `${selectedMetric.health_index}%`;
+        const allMetrics = JSON.parse(card.getAttribute('data-session-json') || '[]');
+        let selected = null;
+        if (photoIndex === 0) {
+            selected = allMetrics.find(m => m.is_average) || allMetrics[0];
+        } else {
+            selected = allMetrics.find(m => m.photo_index === photoIndex);
+        }
 
-                // Actualizar rutas de imágenes cenital y lateral
-                const imgCenOrig = document.getElementById(`img-cen-orig-${sessionId}`);
-                const imgCenProc = document.getElementById(`img-cen-proc-${sessionId}`);
-                const imgLatOrig = document.getElementById(`img-lat-orig-${sessionId}`);
-                const imgLatProc = document.getElementById(`img-lat-proc-${sessionId}`);
+        if (selected) {
+            document.getElementById(`img-cenital-orig-${sessionId}`).src = '/static/' + selected.image_path_cenital_orig;
+            document.getElementById(`img-cenital-proc-${sessionId}`).src = '/static/' + selected.image_path_cenital_proc;
+            document.getElementById(`img-lateral-orig-${sessionId}`).src = '/static/' + selected.image_path_lateral_orig;
+            document.getElementById(`img-lateral-proc-${sessionId}`).src = '/static/' + selected.image_path_lateral_proc;
 
-                if (imgCenOrig && selectedMetric.image_path_cenital_orig) {
-                    imgCenOrig.src = `/static/${selectedMetric.image_path_cenital_orig}`;
-                }
-                if (imgCenProc && selectedMetric.image_path_cenital_proc) {
-                    imgCenProc.src = `/static/${selectedMetric.image_path_cenital_proc}`;
-                }
-                if (imgLatOrig && selectedMetric.image_path_lateral_orig) {
-                    imgLatOrig.src = `/static/${selectedMetric.image_path_lateral_orig}`;
-                }
-                if (imgLatProc && selectedMetric.image_path_lateral_proc) {
-                    imgLatProc.src = `/static/${selectedMetric.image_path_lateral_proc}`;
-                }
-            }
-        } catch (e) {
-            console.error("Error switching photo:", e);
+            document.getElementById(`metric-area-${sessionId}`).innerText = `${selected.foliar_area_cm2} cm²`;
+            document.getElementById(`metric-height-${sessionId}`).innerText = `${selected.plant_height_cm} cm`;
+            document.getElementById(`metric-diameter-${sessionId}`).innerText = `${selected.stem_diameter_mm} mm`;
+            document.getElementById(`metric-health-${sessionId}`).innerText = `${selected.health_index}%`;
         }
     }
 
     async function deleteSession(sessionId) {
-        if (!confirm('¿Estás seguro de que deseas eliminar este período de fotos y sus métricas calculadas?')) return;
+        if (!confirm('¿Estás seguro de que deseas eliminar permanentemente este período de fotos?')) return;
         try {
-            const resp = await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
-            const data = await resp.json();
+            const res = await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+            const data = await res.json();
             if (data.status === 'success') {
-                alert(data.message);
                 window.location.reload();
             } else {
                 alert('Error: ' + data.message);
             }
         } catch (e) {
-            alert('Error al eliminar sesión: ' + e.message);
+            alert('Error al eliminar período.');
         }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        filterPeriod('todos');
+        const firstThumb = document.querySelector('.capture-thumb-card');
+        if (firstThumb) {
+            const firstId = firstThumb.getAttribute('data-session-id');
+            selectSession(firstId);
+        }
     });
 </script>
 {% endblock %}

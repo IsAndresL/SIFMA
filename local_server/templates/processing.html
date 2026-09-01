@@ -1,235 +1,267 @@
 {% extends 'base.html' %}
 
-{% block title %}Procesamiento de Imagen{% endblock %}
-{% block heading %}Análisis y Procesamiento Digital de Imágenes{% endblock %}
+{% block title %}Procesamiento de Imágenes{% endblock %}
+{% block heading %}Pipeline de Visión Artificial y Segmentación{% endblock %}
+{% block subheading %}Procesamiento de capturas USB / archivos ZIP por fecha y canastilla hidropónica{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 8px; align-items: center;">
+    <button class="btn btn-outline btn-sm" id="btn-mode-usb" onclick="switchImportMode('usb')">
+        <span class="material-icons-round">usb</span>
+        <span>Importación USB</span>
+    </button>
+    <button class="btn btn-outline btn-sm" id="btn-mode-drag" onclick="switchImportMode('drag')">
+        <span class="material-icons-round">cloud_upload</span>
+        <span>Subir ZIP o Fotos</span>
+    </button>
+</div>
+{% endblock %}
 
 {% block content %}
 
-<!-- PANEL DE CARGA E IMPORTACIÓN DESDE MEMORIA USB (MODO OFFLINE) -->
-<div class="glass-card" style="margin-bottom: 25px;">
-    <div class="glass-card-title" style="justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="material-icons-round" style="color: #10b981; font-size: 28px;">usb</span>
-            <div>
-                <h3 style="font-size: 18px;">Importar Lotes de USB por Calendario</h3>
-                <p style="font-size: 12px; color: var(--text-muted);">Procesamiento offline para <strong>Canastilla #{{ active_plant_id }} (Nodo RPi {{ active_plant_id }})</strong></p>
-            </div>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <button class="btn btn-outline" id="btn-mode-usb" onclick="switchImportMode('usb')" style="padding: 6px 14px; font-size: 12px; border-color: var(--accent-success); color: var(--accent-success);">
-                <span class="material-icons-round" style="font-size: 16px;">usb_drive</span> Detección Automática USB
-            </button>
-            <button class="btn btn-outline" id="btn-mode-drag" onclick="switchImportMode('drag')" style="padding: 6px 14px; font-size: 12px;">
-                <span class="material-icons-round" style="font-size: 16px;">file_upload</span> Arrastrar Archivos / ZIP
-            </button>
-        </div>
-    </div>
-
-    <!-- CALENDARIO ÚNICO DE SELECCIÓN DE FECHA -->
-    <div style="background: var(--bg-card-subtle); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--glass-border); margin-top: 15px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span class="material-icons-round" style="color: var(--accent-success); font-size: 28px;">calendar_month</span>
+<!-- CARD PRINCIPAL: IMPORTACIÓN DE LOTE FOTOGRÁFICO Y CALENDARIO -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="kpi-icon-badge emerald" style="width: 36px; height: 36px;">
+                    <span class="material-icons-round" style="font-size: 20px;">camera</span>
+                </div>
                 <div>
-                    <label style="font-weight: 700; font-size: 15px; color: var(--text-heading);">
-                        Calendario de Muestreo - Seleccionar Fecha del Lote
-                    </label>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                        Selecciona la fecha para procesar y asignar las fotos de la <strong>Canastilla #{{ active_plant_id }}</strong>
-                    </p>
+                    <h3>Gestión de Lotes y Fechas de Muestreo</h3>
+                    <p>Canastilla Activa: <strong>#{{ active_plant_id }}</strong> | Especie Asignada: <strong>{{ active_crop_profile.display_name }}</strong></p>
                 </div>
             </div>
+        </div>
+        <span class="badge badge-success" style="font-size: 12.5px;">
+            <span class="material-icons-round" style="font-size: 14px; vertical-align: middle;">schedule</span>
+            {{ sessions | length }} Muestreos en Canastilla #{{ active_plant_id }}
+        </span>
+    </div>
+
+    <!-- CALENDARIO SELECTOR DE FECHA -->
+    <div style="background: var(--bg-card-subtle); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <label for="calendar-date-picker" style="font-weight: 700; font-size: 13.5px; color: var(--text-heading); display: block; margin-bottom: 2px;">
+                    Fecha de la Jornada a Procesar:
+                </label>
+                <span style="font-size: 11.5px; color: var(--text-muted);">
+                    Selecciona la fecha para asociar los lotes fotográficos a su respectiva jornada
+                </span>
+            </div>
             
-            <!-- SELECTOR DE FECHA DE CALENDARIO -->
-            <div style="display: flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 14px; border-radius: 10px; border: 1px solid var(--glass-border); box-shadow: var(--shadow-premium);">
-                <span class="material-icons-round" style="font-size: 20px; color: var(--accent-success);">edit_calendar</span>
-                <input type="date" id="calendar-date-picker" class="form-control" style="background: transparent; border: none; font-weight: 700; font-size: 14px; color: var(--text-heading); cursor: pointer; padding: 0;" onchange="onCalendarDateChange(this.value)">
+            <div style="display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <span class="material-icons-round" style="font-size: 18px; color: var(--accent-success);">edit_calendar</span>
+                <input type="date" id="calendar-date-picker" class="form-control" style="background: transparent; border: none; font-weight: 700; font-size: 13.5px; color: var(--text-heading); cursor: pointer; padding: 0;" onchange="onCalendarDateChange(this.value)">
             </div>
         </div>
 
         <!-- LISTADO DE FECHAS YA REGISTRADAS Y PROCESADAS -->
-        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--glass-border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-color); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 11.5px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
                 <span class="material-icons-round" style="font-size: 14px;">check_circle</span> Fechas ya Registradas:
             </span>
             {% if processed_periods %}
                 {% for p in processed_periods %}
-                    <span class="badge badge-success" style="font-size: 11px; cursor: pointer;" title="Haz clic para seleccionar esta fecha" onclick="selectProcessedDate('{{ p }}')">
+                    <span class="badge badge-success" style="font-size: 11.5px; cursor: pointer;" title="Haz clic para seleccionar esta fecha" onclick="selectProcessedDate('{{ p }}')">
                         {{ p }}
                     </span>
                 {% endfor %}
             {% else %}
-                <span style="font-size: 11px; color: var(--text-muted);">Ninguna fecha registrada aún para esta canastilla</span>
+                <span style="font-size: 12px; color: var(--text-muted);">Ninguna fecha registrada aún para esta canastilla</span>
             {% endif %}
         </div>
 
         <!-- ADVERTENCIA DE SOBREESCRITURA SI LA FECHA YA FUE PROCESADA -->
-        <div id="overwrite-warning-box" style="display: none; margin-top: 12px; background: rgba(245, 158, 11, 0.12); border: 1px solid var(--accent-warning); padding: 10px 14px; border-radius: 8px; color: var(--accent-warning); font-size: 12px; font-weight: 600; align-items: center; gap: 8px;">
+        <div id="overwrite-warning-box" style="display: none; margin-top: 12px; background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.3); padding: 10px 14px; border-radius: 8px; color: var(--accent-warning); font-size: 12.5px; font-weight: 600; align-items: center; gap: 8px;">
             <span class="material-icons-round" style="font-size: 20px;">warning</span>
-            <span id="overwrite-warning-text">Advertencia: Esta fecha ya tiene un muestreo registrado. Si procesas de nuevo se actualizarán y reemplazarán los datos.</span>
+            <span id="overwrite-warning-text">Advertencia: Esta fecha ya tiene un muestreo registrado. Si procesas de nuevo se actualizarán los datos.</span>
         </div>
     </div>
 
     <!-- MODO 1: DETECCIÓN AUTOMÁTICA DE MEMORIAS USB CONECTADAS -->
-    <div id="import-mode-usb-container" style="margin-top: 15px; background: rgba(255,255,255,0.02); padding: 18px; border-radius: 12px; border: 1px dashed var(--glass-border);">
+    <div id="import-mode-usb-container" style="margin-top: 16px; background: #ffffff; padding: 18px; border-radius: 12px; border: 1px dashed var(--border-color);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-size: 14px; font-weight: 600; color: var(--text-heading);">Carpetas y Lotes USB Detectados:</span>
-            <button class="btn btn-primary" onclick="scanUSBDrives()" style="padding: 6px 14px; font-size: 12px;">
-                <span class="material-icons-round" style="font-size: 16px;">search</span> Escanear Memorias USB
+            <span style="font-size: 13.5px; font-weight: 700; color: var(--text-heading);">Carpetas y Lotes USB Detectados:</span>
+            <button class="btn btn-primary btn-sm" onclick="scanUSBDrives()">
+                <span class="material-icons-round">search</span>
+                <span>Escanear Memorias USB</span>
             </button>
         </div>
         
         <div id="usb-scan-results" style="display: flex; flex-direction: column; gap: 10px; min-height: 50px;">
-            <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 10px;">
+            <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 12px;">
                 Haz clic en <strong>"Escanear Memorias USB"</strong> para buscar las carpetas guardadas en la memoria.
             </p>
         </div>
     </div>
 
     <!-- MODO 2: ARRASTRAR Y SOLTAR ARCHIVOS / ZIP (DRAG & DROP) -->
-    <div id="import-mode-drag-container" style="margin-top: 15px; display: none;">
+    <div id="import-mode-drag-container" style="margin-top: 16px; display: none;">
         <form id="upload-form" enctype="multipart/form-data">
-            <div id="drop-zone" style="border: 2px dashed var(--accent-success); border-radius: 12px; padding: 30px; text-align: center; background: rgba(16, 185, 129, 0.03); cursor: pointer; transition: all 0.2s ease;">
+            <div id="drop-zone" style="border: 2px dashed var(--accent-success); border-radius: 12px; padding: 36px 20px; text-align: center; background: rgba(5, 150, 105, 0.03); cursor: pointer; transition: var(--transition-fast);">
                 <span class="material-icons-round" style="font-size: 48px; color: var(--accent-success); margin-bottom: 8px;">cloud_upload</span>
-                <h4 style="margin-bottom: 4px; font-size: 15px;">Arrastra aquí la carpeta de imágenes de la fecha seleccionada</h4>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">O haz clic para seleccionar las fotos cenitales y laterales del día</p>
+                <h4 style="margin-bottom: 4px; font-size: 15px; font-weight: 700; color: var(--text-heading);">Arrastra aquí el archivo .ZIP o las imágenes de la fecha seleccionada</h4>
+                <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">Soporta archivos .ZIP con subcarpetas de turnos (mañana, mediodía, tarde) o fotos directas</p>
                 <input type="file" id="file-input" name="images" multiple accept="image/*,.zip" style="display: none;">
                 <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click();">
-                    Seleccionar Archivos de la USB
+                    <span class="material-icons-round">folder_open</span>
+                    <span>Seleccionar Archivo .ZIP o Imágenes</span>
                 </button>
             </div>
             
-            <div id="selected-files-summary" style="margin-top: 12px; font-size: 13px; color: var(--accent-success); display: none;">
-                <span class="material-icons-round" style="vertical-align: middle; font-size: 18px;">check_circle</span>
-                <span id="files-count-text">0 archivos seleccionados</span>
-                <button type="button" class="btn btn-primary" id="btn-submit-manual" onclick="submitManualBatch()" style="margin-left: 15px; padding: 8px 18px; font-weight: 700;">
-                    Subir y Procesar Lote para Canastilla #{{ active_plant_id }}
+            <div id="selected-files-summary" style="margin-top: 14px; font-size: 13px; color: var(--accent-success); display: none; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons-round" style="font-size: 20px;">check_circle</span>
+                    <span id="files-count-text" style="font-weight: 600;">0 archivos seleccionados</span>
+                </div>
+                <button type="button" class="btn btn-primary" id="btn-submit-manual" onclick="submitManualBatch()">
+                    <span>Subir y Procesar Lote para Canastilla #{{ active_plant_id }}</span>
                 </button>
             </div>
         </form>
     </div>
 
     <!-- BARRA DE PROGRESO DE PROCESAMIENTO (0% A 100%) -->
-    <div id="processing-status-bar" style="margin-top: 15px; display: none; background: rgba(0,0,0,0.4); padding: 16px 20px; border-radius: 10px; border: 1px solid var(--accent-success);">
-        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
-            <span id="status-message" style="font-weight: 600; color: var(--accent-success);">Iniciando algoritmos de visión artificial OpenCV/PlantCV...</span>
-            <span id="status-percent" style="font-weight: 700; color: var(--accent-success); font-size: 16px;">0%</span>
+    <div id="processing-status-bar" style="margin-top: 16px; display: none; background: #09211a; padding: 16px 20px; border-radius: 12px; border: 1px solid #134e3d; color: #ffffff;">
+        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px;">
+            <span id="status-message" style="font-weight: 600; color: #10b981;">Iniciando algoritmos de visión artificial OpenCV/PlantCV...</span>
+            <span id="status-percent" style="font-weight: 700; color: #10b981; font-size: 15px;">0%</span>
         </div>
-        <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden;">
             <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.3s ease;"></div>
         </div>
     </div>
 </div>
 
 <!-- GRID DE GRÁFICAS BIOMÉTRICAS DETALLADAS (ANÁLISIS DE IMAGEN) -->
-<div class="chart-grid-2" style="margin-bottom: 25px;">
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #10b981;">spa</span>
-            <h3>Área Foliar Estimada (cm²) - Canastilla #{{ active_plant_id }}</h3>
+<div class="analytics-grid-2x2">
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Área Foliar Estimada (cm²)</h3>
+                <p>Evolución morfológica en Canastilla #{{ active_plant_id }}</p>
+            </div>
+            <span class="badge badge-success">ExG + Otsu</span>
         </div>
-        <div class="chart-container">
+        <div class="chart-stage-container">
             <canvas id="foliarAreaChart"></canvas>
         </div>
     </div>
 
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #3b82f6;">straighten</span>
-            <h3>Altura Estimada de la Planta (cm) - Canastilla #{{ active_plant_id }}</h3>
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Altura Estimada de la Planta (cm)</h3>
+                <p>Calibración lateral vertical en Canastilla #{{ active_plant_id }}</p>
+            </div>
+            <span class="badge badge-primary">Cámara Lateral</span>
         </div>
-        <div class="chart-container">
+        <div class="chart-stage-container">
             <canvas id="plantHeightChart"></canvas>
         </div>
     </div>
 
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #f59e0b;">adjust</span>
-            <h3>Diámetro del Tallo Basal (mm) - Canastilla #{{ active_plant_id }}</h3>
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Diámetro del Tallo Basal (mm)</h3>
+                <p>Espesor promedio en Canastilla #{{ active_plant_id }}</p>
+            </div>
+            <span class="badge badge-warning">Calibración Basal</span>
         </div>
-        <div class="chart-container">
+        <div class="chart-stage-container">
             <canvas id="stemDiameterChart"></canvas>
         </div>
     </div>
 
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round" style="color: #dc2626;">health_and_safety</span>
-            <h3>Índice de Salud Foliar (%) - Canastilla #{{ active_plant_id }}</h3>
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Índice de Salud Foliar (%)</h3>
+                <p>Proporción de clorofila activa en Canastilla #{{ active_plant_id }}</p>
+            </div>
+            <span class="badge badge-danger">Vigor Vegetal</span>
         </div>
-        <div class="chart-container">
+        <div class="chart-stage-container">
             <canvas id="healthIndexChart"></canvas>
         </div>
     </div>
 </div>
 
-<div class="config-grid">
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round">camera_enhance</span>
-            <h3>Última Sesión Procesada (Canastilla #{{ active_plant_id }})</h3>
+<!-- COMPARADOR DE MÁSCARA Y DETALLE DE LA ÚLTIMA SESIÓN -->
+<div class="dashboard-grid-2col" style="margin-top: 24px;">
+    <!-- Vista Previa de Segmentación -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Última Segmentación Biométrica</h3>
+                <p>Máscaras generadas por OpenCV</p>
+            </div>
+            <span class="badge badge-success">Procesada</span>
         </div>
         
         {% if latest_session and latest_metric %}
-        <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
             <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);">
-                <span>Fecha/Muestreo: <strong class="text-success">{{ latest_session.period.upper() }}</strong></span>
+                <span>Muestreo: <strong style="color: var(--accent-success);">{{ latest_session.period.upper() }}</strong></span>
                 <span>Especie: <strong>{{ selected_profile.display_name if selected_profile else latest_session.crop_type }}</strong></span>
-                <span>Registrado: <strong>{{ latest_session.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong></span>
+                <span>Hora: <strong>{{ latest_session.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong></span>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; height: 210px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); position: relative; height: 180px; background: #000;">
                     <img src="{{ url_for('static', filename=latest_metric.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--accent-success); color: var(--accent-success);">
+                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 700; color: #10b981;">
                         CENITAL (Máscara)
                     </div>
                 </div>
-                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; height: 210px;">
+                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); position: relative; height: 180px; background: #000;">
                     <img src="{{ url_for('static', filename=latest_metric.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--accent-primary); color: var(--accent-primary);">
+                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 700; color: #3b82f6;">
                         LATERAL (Calibración)
                     </div>
                 </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; margin-top: 5px; text-align: center;">
-                <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border);">
-                    <p style="color: var(--text-muted);">Índice de Compacidad</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; text-align: center;">
+                <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Índice de Compacidad</p>
                     <p style="font-weight: 700; font-size: 18px; margin-top: 4px; color: var(--accent-success);">{{ latest_metric.compacity_index }}</p>
                 </div>
-                <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border);">
-                    <p style="color: var(--text-muted);">Índice de Salud Foliar</p>
+                <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Índice de Salud Foliar</p>
                     <p style="font-weight: 700; font-size: 18px; margin-top: 4px; color: var(--accent-primary);">{{ latest_metric.health_index }}%</p>
                 </div>
             </div>
         </div>
         {% else %}
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 260px; color: var(--text-muted); text-align: center;">
-            <span class="material-icons-round" style="font-size: 56px; margin-bottom: 12px; color: var(--text-inactive);">photo_camera</span>
-            <p>No hay muestreos registrados para la <strong>Canastilla #{{ active_plant_id }}</strong>.</p>
-            <p style="font-size: 12px; margin-top: 4px;">Selecciona la fecha en el calendario arriba y procesa fotos desde la USB.</p>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 240px; color: var(--text-muted); text-align: center;">
+            <span class="material-icons-round" style="font-size: 48px; margin-bottom: 10px; color: var(--text-dim);">photo_camera</span>
+            <p style="font-weight: 600;">No hay muestreos registrados para la <strong>Canastilla #{{ active_plant_id }}</strong>.</p>
+            <p style="font-size: 12px; margin-top: 4px;">Selecciona la fecha en el calendario arriba y procesa fotos desde la USB o sube el ZIP.</p>
         </div>
         {% endif %}
     </div>
 
-    <!-- Registro de Capturas Recientes -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round">list_alt</span>
-            <h3>Historial de Muestreo (Canastilla #{{ active_plant_id }})</h3>
+    <!-- Historial de Muestreos -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Historial de Muestreo</h3>
+                <p>Canastilla #{{ active_plant_id }}</p>
+            </div>
         </div>
         
-        <div class="table-responsive">
-            <table class="premium-table">
+        <div class="table-responsive" style="max-height: 280px; margin-bottom: 0;">
+            <table class="table">
                 <thead>
                     <tr>
-                        <th>Fecha Muestreo</th>
-                        <th>Etiqueta</th>
+                        <th>Fecha / Hora</th>
+                        <th>Período</th>
                         <th>Área Foliar</th>
                         <th>Altura</th>
-                        <th>Tallo</th>
                         <th>Salud</th>
                     </tr>
                 </thead>
@@ -239,27 +271,22 @@
                             {% if session.metrics %}
                             {% set metric = session.metrics[0] %}
                             <tr>
-                                <td>{{ session.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td style="font-size: 12px;">{{ session.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td>
-                                    <span class="badge badge-success" style="font-weight: 700;">
+                                    <span class="badge badge-success">
                                         {{ session.period.upper() }}
                                     </span>
                                 </td>
-                                <td>{{ metric.foliar_area_cm2 }} cm²</td>
+                                <td style="font-weight: 600;">{{ metric.foliar_area_cm2 }} cm²</td>
                                 <td>{{ metric.plant_height_cm }} cm</td>
-                                <td>{{ metric.stem_diameter_mm }} mm</td>
-                                <td>
-                                    <span style="color: {% if metric.health_index >= 90 %}var(--accent-success){% elif metric.health_index >= 75 %}var(--accent-warning){% else %}var(--accent-danger){% endif %}; font-weight: 600;">
-                                        {{ metric.health_index }}%
-                                    </span>
-                                </td>
+                                <td>{{ metric.health_index }}%</td>
                             </tr>
                             {% endif %}
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px 0;">
-                                Ningún muestreo registrado para esta canastilla.
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                Sin datos registrados aún.
                             </td>
                         </tr>
                     {% endif %}
@@ -268,393 +295,339 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+    const growthData = {{ growth_data | tojson | safe }};
     const activePlantId = {{ active_plant_id }};
-    const processedPeriods = {{ processed_periods | tojson | safe }};
-    let progressTimer = null;
-
-    // Inicializar picker con la fecha de hoy
-    document.addEventListener('DOMContentLoaded', () => {
-        const datePicker = document.getElementById('calendar-date-picker');
-        if (datePicker && !datePicker.value) {
-            const today = new Date().toISOString().split('T')[0];
-            datePicker.value = today;
-            onCalendarDateChange(today);
-        }
-    });
-
-    function getSelectedCultivationPeriod() {
-        const dateVal = document.getElementById('calendar-date-picker').value;
-        if (dateVal) {
-            const parts = dateVal.split('-');
-            return `Fecha: ${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        const todayStr = new Date().toLocaleDateString('es-ES');
-        return `Fecha: ${todayStr}`;
-    }
-
-    function checkOverwriteStatus() {
-        const periodStr = getSelectedCultivationPeriod();
-        const warningBox = document.getElementById('overwrite-warning-box');
-        const warningText = document.getElementById('overwrite-warning-text');
-        
-        const isProcessed = processedPeriods.includes(periodStr);
-        if (isProcessed) {
-            warningBox.style.display = 'flex';
-            warningText.innerHTML = `<strong>AVISO - Muestreo Ya Registrado:</strong> La ${periodStr} ya tiene datos en la <strong>Canastilla #${activePlantId}</strong>. Al procesar se <u>sobreescribirán</u> los datos y la gráfica se actualizará.`;
-        } else {
-            warningBox.style.display = 'none';
-        }
-    }
-
-    function onCalendarDateChange(dateStr) {
-        if (!dateStr) return;
-        checkOverwriteStatus();
-        if (document.getElementById('usb-scan-results').children.length > 1) {
-            scanUSBDrives();
-        }
-    }
-
-    function selectProcessedDate(periodStr) {
-        // Formato esperado: "Fecha: DD/MM/YYYY"
-        const match = periodStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-        if (match) {
-            const yyyyMmDd = `${match[3]}-${match[2]}-${match[1]}`;
-            const datePicker = document.getElementById('calendar-date-picker');
-            if (datePicker) {
-                datePicker.value = yyyyMmDd;
-                onCalendarDateChange(yyyyMmDd);
-            }
-        }
-    }
+    const processedDates = {{ processed_periods | tojson | safe }};
 
     function switchImportMode(mode) {
         if (mode === 'usb') {
             document.getElementById('import-mode-usb-container').style.display = 'block';
             document.getElementById('import-mode-drag-container').style.display = 'none';
-            document.getElementById('btn-mode-usb').style.borderColor = 'var(--accent-success)';
-            document.getElementById('btn-mode-usb').style.color = 'var(--accent-success)';
-            document.getElementById('btn-mode-drag').style.borderColor = 'var(--glass-border)';
-            document.getElementById('btn-mode-drag').style.color = 'inherit';
+            document.getElementById('btn-mode-usb').className = 'btn btn-primary btn-sm';
+            document.getElementById('btn-mode-drag').className = 'btn btn-outline btn-sm';
+            scanUSBDrives();
         } else {
             document.getElementById('import-mode-usb-container').style.display = 'none';
             document.getElementById('import-mode-drag-container').style.display = 'block';
-            document.getElementById('btn-mode-drag').style.borderColor = 'var(--accent-success)';
-            document.getElementById('btn-mode-drag').style.color = 'var(--accent-success)';
-            document.getElementById('btn-mode-usb').style.borderColor = 'var(--glass-border)';
-            document.getElementById('btn-mode-usb').style.color = 'inherit';
+            document.getElementById('btn-mode-usb').className = 'btn btn-outline btn-sm';
+            document.getElementById('btn-mode-drag').className = 'btn btn-primary btn-sm';
         }
     }
 
-    let detectedUSBBatches = [];
+    function onCalendarDateChange(selectedDate) {
+        checkDateOverwrite(selectedDate);
+    }
 
-    async function scanUSBDrives() {
-        const resultsDiv = document.getElementById('usb-scan-results');
-        resultsDiv.innerHTML = '<p style="color: var(--accent-primary); padding: 12px; font-weight: 600;">Escaneando unidades de almacenamiento USB conectadas...</p>';
-        
-        try {
-            const resp = await fetch('/api/scan_usb');
-            const data = await resp.json();
-            
-            if (data.status === 'success' && data.batches.length > 0) {
-                detectedUSBBatches = data.batches;
-                const calendarPeriod = getSelectedCultivationPeriod();
-                
-                let html = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--glass-border);">
-                        <span style="font-size: 13px; font-weight: 700; color: var(--text-heading);">Se detectaron ${data.batches.length} lote(s) de imágenes</span>
-                        ${data.batches.length > 1 ? `
-                            <button class="btn btn-primary" onclick="processAllUSBBatches()" style="padding: 6px 14px; font-size: 12px; font-weight: 700;">
-                                <span class="material-icons-round" style="font-size: 16px;">done_all</span>
-                                Procesar Todos los Lotes (${data.batches.length})
-                            </button>
-                        ` : ''}
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                `;
+    function selectProcessedDate(dateStr) {
+        const dPicker = document.getElementById('calendar-date-picker');
+        if (dPicker) {
+            dPicker.value = dateStr;
+            checkDateOverwrite(dateStr);
+        }
+    }
 
-                data.batches.forEach((b, idx) => {
-                    // Formatear período destino para este lote
-                    let batchDate = calendarPeriod;
-                    if (b.date_str) {
-                        const dParts = b.date_str.split('-');
-                        if (dParts.length === 3) {
-                            batchDate = `Fecha: ${dParts[2]}/${dParts[1]}/${dParts[0]}`;
+    function checkDateOverwrite(dateStr) {
+        const warnBox = document.getElementById('overwrite-warning-box');
+        if (processedDates.includes(dateStr)) {
+            warnBox.style.display = 'flex';
+        } else {
+            warnBox.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dPicker = document.getElementById('calendar-date-picker');
+        if (dPicker && !dPicker.value) {
+            dPicker.value = todayStr;
+            checkDateOverwrite(todayStr);
+        }
+
+        // Gráficas de procesamiento biométrico
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        const labels = (growthData && growthData.labels && growthData.labels.length) ? growthData.labels : ['Sin registros'];
+        const areas = (growthData && growthData.foliar_areas && growthData.foliar_areas.length) ? growthData.foliar_areas : [0];
+        const heights = (growthData && growthData.plant_heights && growthData.plant_heights.length) ? growthData.plant_heights : [0];
+        const diameters = (growthData && growthData.stem_diameters && growthData.stem_diameters.length) ? growthData.stem_diameters : [0];
+        const healths = (growthData && growthData.health_indices && growthData.health_indices.length) ? growthData.health_indices : [100];
+
+        function createSimpleLine(id, label, data, color) {
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '18',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: color,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleFont: { size: 12, weight: '700' },
+                            bodyFont: { size: 11.5 },
+                            padding: 10,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            beginAtZero: true,
+                            ticks: { font: { size: 11 } }
                         }
                     }
-                    
-                    let targetPeriod = batchDate;
-                    if (b.period_str && b.period_str !== 'General' && b.period_str !== 'Completo') {
-                        targetPeriod = `${batchDate} (${b.period_str})`;
-                    }
+                }
+            });
+        }
 
-                    const isOverwrite = processedPeriods.includes(targetPeriod) || processedPeriods.includes(batchDate);
-                    const btnStyle = isOverwrite ? "background: #f59e0b; border-color: #f59e0b; color: #000;" : "";
-                    const btnLabel = isOverwrite ? `Sobreescribir ${b.period_str || 'Lote'}` : `Procesar ${b.period_str || 'Lote'}`;
+        createSimpleLine('foliarAreaChart', 'Área (cm²)', areas, '#059669');
+        createSimpleLine('plantHeightChart', 'Altura (cm)', heights, '#2563eb');
+        createSimpleLine('stemDiameterChart', 'Diámetro (mm)', diameters, '#d97706');
+        createSimpleLine('healthIndexChart', 'Salud (%)', healths, '#dc2626');
 
+        // Escanear USB automáticamente al cargar la vista
+        scanUSBDrives();
+
+        // Configuración de Drag & Drop
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        if (dropZone && fileInput) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#10b981';
+                dropZone.style.background = 'rgba(16, 185, 129, 0.08)';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--accent-success)';
+                dropZone.style.background = 'rgba(5, 150, 105, 0.03)';
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--accent-success)';
+                dropZone.style.background = 'rgba(5, 150, 105, 0.03)';
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFilesSelected();
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                handleFilesSelected();
+            });
+        }
+    });
+
+    function handleFilesSelected() {
+        const fileInput = document.getElementById('file-input');
+        const summary = document.getElementById('selected-files-summary');
+        const countText = document.getElementById('files-count-text');
+
+        if (fileInput.files.length > 0) {
+            summary.style.display = 'flex';
+            countText.innerText = `${fileInput.files.length} archivo(s) preparado(s) para procesar`;
+        } else {
+            summary.style.display = 'none';
+        }
+    }
+
+    async function scanUSBDrives() {
+        const resBox = document.getElementById('usb-scan-results');
+        resBox.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 13px;">Buscando memorias USB conectadas...</p>';
+        try {
+            const res = await fetch('/api/scan_usb');
+            const data = await res.json();
+            const batches = data.batches || data.drives || [];
+
+            if (data.status === 'success' && batches.length > 0) {
+                let html = '';
+                
+                // Botón general para procesar todos los lotes encontrados
+                html += `
+                    <div style="background: #09211a; color: #ffffff; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 14px; color: #10b981;">Unidad USB Detectada (${batches.length} turnos listos)</div>
+                            <div style="font-size: 12px; color: #94a3b8;">Ubicación: ${batches[0].drive_root || 'USB'}</div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" style="background: #10b981; color: #09211a; font-weight: 700;" onclick="processAllUSBBatches()">
+                            <span class="material-icons-round">play_circle</span>
+                            <span>Procesar Toda la Memoria USB</span>
+                        </button>
+                    </div>
+                `;
+
+                batches.forEach((b, idx) => {
+                    const cleanPath = b.path.replace(/\\/g, '\\\\');
                     html += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-subtle); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--glass-border); gap: 12px; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 12px; min-width: 220px;">
-                                <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(5, 150, 105, 0.1); border: 1px solid var(--accent-success); display: flex; align-items: center; justify-content: center; color: var(--accent-success); flex-shrink: 0;">
-                                    <span class="material-icons-round" style="font-size: 20px;">folder</span>
+                        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 9px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">
+                                    <span class="material-icons-round" style="font-size: 16px; vertical-align: middle; color: var(--accent-success);">folder</span>
+                                    ${b.date_str ? b.date_str + ' - ' : ''}${b.period_str || 'Muestreo'}
                                 </div>
-                                <div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <strong style="color: var(--text-heading); font-size: 14px;">${b.batch_name}</strong>
-                                        <span style="background: rgba(15, 23, 42, 0.08); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted);">${b.images_count || '10'} fotos</span>
-                                    </div>
-                                    <p style="font-size: 11px; color: var(--text-muted); font-family: monospace; margin-top: 2px;">${b.path}</p>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                    ${b.images_count} imágenes detectadas | Ruta: <code style="font-size: 11px;">${b.path}</code>
                                 </div>
                             </div>
-                            <button class="btn btn-primary" onclick="processUSBPath('${b.path.replace(/\\/g, '\\\\')}', '${targetPeriod}')" style="padding: 8px 16px; font-size: 12px; font-weight: 700; ${btnStyle}">
-                                <span class="material-icons-round" style="font-size: 16px;">play_arrow</span>
-                                ${btnLabel} (Canastilla #${activePlantId})
+                            <button class="btn btn-primary btn-sm" onclick="processSingleBatch('${cleanPath}', '${b.period_str}')">
+                                <span class="material-icons-round">play_arrow</span>
+                                <span>Procesar Este Turno</span>
                             </button>
                         </div>
                     `;
                 });
-                html += '</div>';
-                resultsDiv.innerHTML = html;
+                resBox.innerHTML = html;
             } else {
-                resultsDiv.innerHTML = '<p style="color: var(--accent-warning); padding: 12px; font-weight: 500;">No se encontraron carpetas con fotos en las unidades USB conectadas. Conecta la memoria USB o utiliza el modo Arrastrar Archivos.</p>';
+                resBox.innerHTML = '<p style="text-align: center; color: var(--accent-warning); font-size: 13px; font-weight: 600;">No se detectaron memorias USB con datos de fenotipado. Inserta la USB y haz clic en "Escanear Memorias USB" o usa el modo "Subir ZIP o Fotos".</p>';
             }
         } catch (e) {
-            resultsDiv.innerHTML = `<p style="color: var(--accent-danger); padding: 12px;">Error al escanear USB: ${e.message}</p>`;
+            resBox.innerHTML = '<p style="text-align: center; color: var(--accent-danger); font-size: 13px;">Error al consultar memorias USB.</p>';
         }
     }
 
-    async function processUSBPath(folderPath, targetPeriod = null) {
-        const periodStr = targetPeriod || getSelectedCultivationPeriod();
-        const isOverwrite = processedPeriods.includes(periodStr);
-        if (isOverwrite) {
-            if (!confirm(`La ${periodStr} ya existe registrada en la Canastilla #${activePlantId}.\n\n¿Deseas sobreescribir y reemplazar los datos y fotos de este período?`)) {
-                return;
-            }
-        }
+    async function processSingleBatch(folderPath, periodStr) {
+        const calDate = document.getElementById('calendar-date-picker').value;
+        const pBar = document.getElementById('processing-status-bar');
+        const pFill = document.getElementById('progress-bar-fill');
+        const pText = document.getElementById('status-message');
+        const pPct = document.getElementById('status-percent');
 
-        startSimulatedProgressBar(`Procesando lote para ${periodStr} en Canastilla #${activePlantId}...`);
+        pBar.style.display = 'block';
+        pFill.style.width = '35%';
+        pPct.innerText = '35%';
+        pText.innerText = `Segmentando imágenes de ${periodStr}...`;
+
         try {
-            const resp = await fetch('/api/process_usb_path', {
+            const finalPeriod = calDate ? `${calDate} - ${periodStr}` : periodStr;
+            const res = await fetch('/api/process_usb_path', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    folder_path: folderPath,
-                    period: periodStr,
-                    plant_id: activePlantId
-                })
+                body: JSON.stringify({ folder_path: folderPath, period: finalPeriod, plant_id: activePlantId })
             });
-            const data = await resp.json();
+            const data = await res.json();
+            pFill.style.width = '100%';
+            pPct.innerText = '100%';
+
             if (data.status === 'success') {
-                completeProgressBar("Procesamiento de muestreo finalizado con éxito. Actualizando vistas...");
-                setTimeout(() => window.location.reload(), 1200);
+                pText.innerText = 'Procesamiento finalizado con éxito.';
+                setTimeout(() => window.location.reload(), 800);
             } else {
-                alert("Error procesando USB: " + data.message);
-                hideProgressBar();
+                pText.innerText = 'Error: ' + (data.message || 'Fallo en procesamiento');
             }
         } catch (e) {
-            alert("Error de procesamiento: " + e.message);
-            hideProgressBar();
+            pText.innerText = 'Error de comunicación con el servidor.';
         }
     }
 
     async function processAllUSBBatches() {
-        if (!detectedUSBBatches || detectedUSBBatches.length === 0) return;
-        if (!confirm(`Se procesarán ${detectedUSBBatches.length} lotes de la memoria USB consecutivamente para la Canastilla #${activePlantId}.\n\n¿Deseas iniciar el procesamiento en lote?`)) {
+        const calDate = document.getElementById('calendar-date-picker').value;
+        const pBar = document.getElementById('processing-status-bar');
+        const pFill = document.getElementById('progress-bar-fill');
+        const pText = document.getElementById('status-message');
+        const pPct = document.getElementById('status-percent');
+
+        pBar.style.display = 'block';
+        pFill.style.width = '30%';
+        pPct.innerText = '30%';
+        pText.innerText = 'Procesando todos los turnos de la memoria USB...';
+
+        try {
+            const res = await fetch('/api/process_usb_mount', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mountpoint: 'D:\\', target_date: calDate, plant_id: activePlantId })
+            });
+            const data = await res.json();
+            pFill.style.width = '100%';
+            pPct.innerText = '100%';
+
+            if (data.status === 'success') {
+                pText.innerText = data.message || 'Lotes USB procesados exitosamente.';
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                pText.innerText = 'Error: ' + (data.message || 'Fallo en procesamiento');
+            }
+        } catch (e) {
+            pText.innerText = 'Error de comunicación.';
+        }
+    }
+
+    async function submitManualBatch() {
+        const fileInput = document.getElementById('file-input');
+        const calDate = document.getElementById('calendar-date-picker').value;
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Por favor selecciona un archivo .ZIP o imágenes para procesar.');
             return;
         }
 
-        startSimulatedProgressBar(`Iniciando procesamiento secuencial de ${detectedUSBBatches.length} lotes USB...`);
-        const calendarPeriod = getSelectedCultivationPeriod();
+        const pBar = document.getElementById('processing-status-bar');
+        const pFill = document.getElementById('progress-bar-fill');
+        const pText = document.getElementById('status-message');
+        const pPct = document.getElementById('status-percent');
 
-        for (let i = 0; i < detectedUSBBatches.length; i++) {
-            const b = detectedUSBBatches[i];
-            let batchDate = calendarPeriod;
-            if (b.date_str) {
-                const dParts = b.date_str.split('-');
-                if (dParts.length === 3) batchDate = `Fecha: ${dParts[2]}/${dParts[1]}/${dParts[0]}`;
-            }
-            let targetPeriod = batchDate;
-            if (b.period_str && b.period_str !== 'General' && b.period_str !== 'Completo') {
-                targetPeriod = `${batchDate} (${b.period_str})`;
-            }
-
-            try {
-                const resp = await fetch('/api/process_usb_path', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        folder_path: b.path,
-                        period: targetPeriod,
-                        plant_id: activePlantId
-                    })
-                });
-                const data = await resp.json();
-                if (data.status !== 'success') {
-                    alert(`Error en el lote ${b.batch_name}: ` + data.message);
-                }
-            } catch (e) {
-                console.error(`Error procesando lote ${b.path}:`, e);
-            }
-        }
-
-        completeProgressBar("Todos los lotes fueron procesados exitosamente. Actualizando vistas...");
-        setTimeout(() => window.location.reload(), 1200);
-    }
-
-    const fileInput = document.getElementById('file-input');
-    fileInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
-            document.getElementById('selected-files-summary').style.display = 'block';
-            document.getElementById('files-count-text').innerText = `${this.files.length} archivo(s) listo(s) para procesar`;
-            
-            const periodStr = getSelectedCultivationPeriod();
-            const isOverwrite = processedPeriods.includes(periodStr);
-            const btn = document.getElementById('btn-submit-manual');
-            if (isOverwrite) {
-                btn.innerText = `Sobreescribir ${periodStr} (Canastilla #${activePlantId})`;
-                btn.style.background = "#f59e0b";
-                btn.style.borderColor = "#f59e0b";
-                btn.style.color = "#000";
-            } else {
-                btn.innerText = `Subir y Procesar Lote para Canastilla #${activePlantId}`;
-                btn.style.background = "";
-                btn.style.borderColor = "";
-                btn.style.color = "";
-            }
-        }
-    });
-
-    async function submitManualBatch() {
-        const files = fileInput.files;
-        if (!files.length) return;
-
-        const periodStr = getSelectedCultivationPeriod();
-        const isOverwrite = processedPeriods.includes(periodStr);
-        if (isOverwrite) {
-            if (!confirm(`La ${periodStr} ya existe registrada en la Canastilla #${activePlantId}.\n\n¿Deseas sobreescribir y reemplazar los datos y fotos de esta fecha?`)) {
-                return;
-            }
-        }
+        pBar.style.display = 'block';
+        pFill.style.width = '40%';
+        pPct.innerText = '40%';
+        pText.innerText = 'Subiendo y descomprimiendo archivo ZIP...';
 
         const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-            formData.append('images', files[i]);
+        for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append('images', fileInput.files[i]);
         }
-        formData.append('period', periodStr);
+        formData.append('period', calDate || 'Día 1');
         formData.append('plant_id', activePlantId);
 
-        startSimulatedProgressBar(`Subiendo y procesando lote para ${periodStr} en Canastilla #${activePlantId}...`);
         try {
-            const resp = await fetch('/api/upload_manual_batch', {
+            pFill.style.width = '70%';
+            pPct.innerText = '70%';
+            pText.innerText = 'Ejecutando segmentación OpenCV y extracción morfológica...';
+
+            const res = await fetch('/api/upload_manual_batch', {
                 method: 'POST',
                 body: formData
             });
-            const data = await resp.json();
+            const data = await res.json();
+            pFill.style.width = '100%';
+            pPct.innerText = '100%';
+
             if (data.status === 'success') {
-                completeProgressBar("¡Procesamiento de muestreo finalizado! Recargando vistas...");
-                setTimeout(() => window.location.reload(), 1200);
+                pText.innerText = data.message || 'Archivos procesados con éxito.';
+                setTimeout(() => window.location.reload(), 1000);
             } else {
-                alert("Error al procesar: " + data.message);
-                hideProgressBar();
+                pText.innerText = 'Error: ' + (data.message || 'Error al procesar lote.');
             }
         } catch (e) {
-            alert("Error al subir archivos: " + e.message);
-            hideProgressBar();
+            pText.innerText = 'Error de conexión durante la subida.';
         }
     }
-
-    function startSimulatedProgressBar(msg) {
-        document.getElementById('processing-status-bar').style.display = 'block';
-        document.getElementById('status-message').innerText = msg;
-        
-        let currentPercent = 5;
-        updateProgressBarUI(currentPercent);
-        
-        if (progressTimer) clearInterval(progressTimer);
-        progressTimer = setInterval(() => {
-            if (currentPercent < 90) {
-                currentPercent += Math.floor(Math.random() * 8) + 3;
-                if (currentPercent > 90) currentPercent = 90;
-                updateProgressBarUI(currentPercent);
-            }
-        }, 200);
-    }
-
-    function completeProgressBar(msg) {
-        if (progressTimer) clearInterval(progressTimer);
-        updateProgressBarUI(100);
-        if (msg) document.getElementById('status-message').innerText = msg;
-    }
-
-    function updateProgressBarUI(percent) {
-        document.getElementById('progress-bar-fill').style.width = percent + '%';
-        document.getElementById('status-percent').innerText = percent + '%';
-    }
-
-    function hideProgressBar() {
-        if (progressTimer) clearInterval(progressTimer);
-        document.getElementById('processing-status-bar').style.display = 'none';
-    }
-
-    // Inyectar e inicializar gráficas de análisis biométrico en processing.html
-    const growthData = {{ growth_data | tojson | safe }};
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof Chart !== 'undefined' && growthData && growthData.length > 0) {
-            const labels = growthData.map(d => d.date);
-            const areaData = growthData.map(d => d.area);
-            const heightData = growthData.map(d => d.height);
-            const diameterData = growthData.map(d => d.diameter);
-            const healthData = growthData.map(d => d.health);
-
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
-                }
-            };
-
-            const ctxArea = document.getElementById('foliarAreaChart');
-            if (ctxArea) {
-                new Chart(ctxArea, {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: 'Área (cm²)', data: areaData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#10b981' }] },
-                    options: commonOptions
-                });
-            }
-
-            const ctxHeight = document.getElementById('plantHeightChart');
-            if (ctxHeight) {
-                new Chart(ctxHeight, {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: 'Altura (cm)', data: heightData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#3b82f6' }] },
-                    options: commonOptions
-                });
-            }
-
-            const ctxStem = document.getElementById('stemDiameterChart');
-            if (ctxStem) {
-                new Chart(ctxStem, {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: 'Tallo (mm)', data: diameterData, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#f59e0b' }] },
-                    options: commonOptions
-                });
-            }
-
-            const ctxHealth = document.getElementById('healthIndexChart');
-            if (ctxHealth) {
-                new Chart(ctxHealth, {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: 'Salud (%)', data: healthData, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)', fill: true, tension: 0.3, pointBackgroundColor: '#ef4444' }] },
-                    options: commonOptions
-                });
-            }
-        }
-    });
 </script>
 {% endblock %}

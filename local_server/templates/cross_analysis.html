@@ -2,542 +2,1251 @@
 
 {% block title %}Cruce de Datos y Análisis Multivariable{% endblock %}
 {% block heading %}Cruce de Datos y Análisis Multivariable{% endblock %}
+{% block subheading %}Sincronización cronológica, matriz de correlación de Pearson y laboratorio gráfico para Canastilla #{{ active_plant_id }}{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{{ url_for('dashboard.detailed_sensors') }}" class="btn btn-outline btn-sm">
+        <span class="material-icons-round">settings_input_antenna</span>
+        <span>Gestionar Antena USB / Sensores</span>
+    </a>
+    <a href="{{ url_for('api.export_cross_analysis_csv', plant_id=active_plant_id) }}" class="btn btn-primary btn-sm">
+        <span class="material-icons-round">download</span>
+        <span>Descargar Dataset en CSV (Excel)</span>
+    </a>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="content-viewport">
 
-    <!-- SECCION 1: BARRA SUPERIOR DE ACCIONES Y ESTADO -->
-    <div class="glass-card" style="margin-bottom: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <div>
-                <div class="glass-card-title" style="margin-bottom: 4px;">
-                    <span class="material-icons-round">sync_alt</span>
-                    <h3>Sincronización de Fenotipado vs Telemetría Ambiental (Canastilla #{{ active_plant_id }})</h3>
-                </div>
-                <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
-                    Cruce cronológico exacto entre las capturas fotográficas y las variables climáticas de la torre hidropónica.
-                </p>
-            </div>
-
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a href="{{ url_for('dashboard.detailed_sensors') }}" class="btn-period" style="text-decoration: none; padding: 10px 16px; font-size: 13px;">
-                    <span class="material-icons-round">settings_input_antenna</span>
-                    Gestionar Antena USB / Subir CSV
-                </a>
-                <a href="{{ url_for('api.export_cross_analysis_csv', plant_id=active_plant_id) }}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 10px 18px; text-decoration: none;">
-                    <span class="material-icons-round" style="font-size: 18px;">download</span>
-                    Descargar Dataset para Excel (CSV)
-                </a>
-            </div>
+<!-- SECCIÓN 1: FILTROS GLOBALES Y TARJETAS DE RESUMEN -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <h3>Filtros por Período de Muestreo y Jornada</h3>
+            <p>Segmenta el cruce de datos por jornada horaria o fecha de evaluación</p>
+        </div>
+        <div id="cross-table-count-badge" class="badge badge-primary">
+            {{ cross_data | length }} sesiones sincronizadas
         </div>
     </div>
 
-    <!-- SECCION 2: FILTROS POR PERIODO Y DIA DE MUESTREO -->
-    <div class="glass-card" style="margin-bottom: 25px;">
-        <div class="glass-card-title" style="margin-bottom: 15px;">
-            <span class="material-icons-round">filter_alt</span>
-            <h3>Filtros por Período de Muestreo y Fecha</h3>
-        </div>
-
-        <!-- Filtro por Periodo de la Jornada -->
-        <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 8px;">
-                Período del Día:
-            </label>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn-period cross-period-btn active" data-period="todos" onclick="filterCrossPeriod('todos', this)">
-                    <span class="material-icons-round">apps</span>
-                    Todos los Períodos
-                </button>
-                <button class="btn-period cross-period-btn" data-period="mañana" onclick="filterCrossPeriod('mañana', this)">
-                    <span class="material-icons-round">light_mode</span>
-                    Mañana (07:00)
-                </button>
-                <button class="btn-period cross-period-btn" data-period="mediodía" onclick="filterCrossPeriod('mediodía', this)">
-                    <span class="material-icons-round">wb_sunny</span>
-                    Medio Día (12:00)
-                </button>
-                <button class="btn-period cross-period-btn" data-period="tarde" onclick="filterCrossPeriod('tarde', this)">
-                    <span class="material-icons-round">nights_stay</span>
-                    Tarde (17:00)
-                </button>
-            </div>
-        </div>
-
-        <!-- Filtro por Fecha de Muestreo -->
-        <div>
-            <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 8px;">
-                Fecha de Muestreo:
-            </label>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <button class="btn-period cross-date-btn active" data-date="todos" onclick="filterCrossDate('todos', this)">
-                    <span class="material-icons-round">view_timeline</span>
-                    Todas las Fechas
-                </button>
-
-                {% for d in available_dates %}
-                    <button class="btn-period cross-date-btn" data-date="{{ d }}" onclick="filterCrossDate('{{ d }}', this)">
-                        <span class="material-icons-round">event</span>
-                        {{ d }}
-                    </button>
-                {% endfor %}
-
-                <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-                    <label style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Fecha específica:</label>
-                    <input type="date" id="cross-custom-date" class="form-control" style="padding: 6px 10px; font-size: 12px;" onchange="filterCrossDate(this.value, null)">
-                </div>
-            </div>
+    <!-- Filtro por Período del Día -->
+    <div style="margin-bottom: 16px;">
+        <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 8px;">
+            Franja Horaria / Período:
+        </label>
+        <div class="filter-group">
+            <button class="filter-pill cross-period-btn active" data-period="todos" onclick="filterCrossPeriod('todos', this)">
+                <span class="material-icons-round" style="font-size: 15px;">apps</span>
+                <span>Todos los Períodos</span>
+            </button>
+            <button class="filter-pill cross-period-btn" data-period="mañana" onclick="filterCrossPeriod('mañana', this)">
+                <span class="material-icons-round" style="font-size: 15px;">light_mode</span>
+                <span>Mañana (07:00)</span>
+            </button>
+            <button class="filter-pill cross-period-btn" data-period="mediodía" onclick="filterCrossPeriod('mediodía', this)">
+                <span class="material-icons-round" style="font-size: 15px;">wb_sunny</span>
+                <span>Mediodía (12:00)</span>
+            </button>
+            <button class="filter-pill cross-period-btn" data-period="tarde" onclick="filterCrossPeriod('tarde', this)">
+                <span class="material-icons-round" style="font-size: 15px;">nights_stay</span>
+                <span>Tarde (17:00)</span>
+            </button>
         </div>
     </div>
 
-    <!-- SECCION 3: TABLA DE CRUCE SINCRONIZADO AL SEGUNDO EXACTO -->
-    <div class="glass-card" style="margin-bottom: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-            <div class="glass-card-title" style="margin-bottom: 0;">
-                <span class="material-icons-round">table_chart</span>
-                <h3>Matriz de Cruce Sincronizado por Período de Muestreo</h3>
-            </div>
-            <div id="cross-table-count-badge" class="badge badge-primary" style="font-size: 12px; padding: 6px 12px;">
-                {{ cross_data | length }} sesiones cruzadas
-            </div>
+    <!-- Filtro por Fecha de Muestreo -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div class="filter-group">
+            <button class="filter-pill cross-date-btn active" data-date="todos" onclick="filterCrossDate('todos', this)">
+                <span class="material-icons-round" style="font-size: 15px;">view_timeline</span>
+                <span>Todas las Fechas</span>
+            </button>
+
+            {% for d in available_dates %}
+                <button class="filter-pill cross-date-btn" data-date="{{ d }}" onclick="filterCrossDate('{{ d }}', this)">
+                    <span class="material-icons-round" style="font-size: 15px;">event</span>
+                    <span>{{ d }}</span>
+                </button>
+            {% endfor %}
         </div>
 
-        <div class="table-responsive">
-            <table class="premium-table" id="cross-matrix-table">
-                <thead>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Fecha específica:</label>
+            <input type="date" id="cross-custom-date" class="form-control" style="width: auto; padding: 5px 8px; font-size: 12.5px;" onchange="filterCrossDate(this.value, null)">
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 2: MATRIZ DE CORRELACIÓN DE PEARSON (HEATMAP) -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: var(--accent-success); font-size: 24px;">grid_on</span>
+                <div>
+                    <h3>Matriz de Correlación Multivariable (Heatmap de Pearson)</h3>
+                    <p>Coeficiente de correlación lineal (r) entre variables de sensores y métricas de fenotipado. Haz clic en cualquier celda para graficar ese par.</p>
+                </div>
+            </div>
+        </div>
+        <div class="badge badge-success" id="matrix-strongest-badge">
+            Par más significativo: {{ correlation_matrix.strongest_pair }}
+        </div>
+    </div>
+
+    <div class="heatmap-table-container">
+        <table class="heatmap-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left; width: 220px;">Variable Ambiental (Sensor) \ Fenotipo</th>
+                    {% for p in correlation_matrix.phenotypes %}
+                        <th>
+                            <div>{{ p.label }}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); font-weight: normal;">({{ p.unit }})</div>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in correlation_matrix.matrix_rows %}
                     <tr>
-                        <th>Período y Muestreo</th>
-                        <th>Segundo Exacto</th>
-                        <th>Área Foliar</th>
-                        <th>Altura</th>
-                        <th>Tallo</th>
-                        <th>Salud</th>
-                        <th>Temperatura</th>
-                        <th>Humedad</th>
-                        <th>Radiación UV / CO2</th>
-                        <th>Corriente</th>
-                        <th>Muestras</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="cross-table-body">
-                    {% if cross_data %}
-                        {% for row in cross_data %}
-                            <tr class="cross-table-row" data-period="{{ row.date_str }}" data-date="{{ row.timestamp.split(' ')[0] }}">
-                                <td>
-                                    <strong style="color: var(--text-heading);">{{ row.date_str }}</strong><br>
-                                    <span style="font-size: 11px; color: var(--text-inactive);">{{ row.crop_type.upper() }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-primary">{{ row.exact_time }}</span>
-                                </td>
-                                <td>
-                                    <span style="color: var(--accent-success); font-weight: 700;">{{ row.foliar_area_cm2 }} cm²</span>
-                                </td>
-                                <td>
-                                    <span style="color: var(--accent-primary); font-weight: 700;">{{ row.plant_height_cm }} cm</span>
-                                </td>
-                                <td>
-                                    <span style="color: var(--accent-warning); font-weight: 700;">{{ row.stem_diameter_mm }} mm</span>
-                                </td>
-                                <td>
-                                    <span class="badge {% if row.health_index >= 90 %}badge-success{% else %}badge-warning{% endif %}">
-                                        {{ row.health_index }}%
+                        <td style="text-align: left; font-weight: 700; color: var(--text-heading); background: #f8fafc;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="status-dot active" style="background-color: var(--accent-primary);"></span>
+                                <div>
+                                    <div>{{ row.sensor_label }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted); font-weight: normal;">({{ row.sensor_unit }})</div>
+                                </div>
+                            </div>
+                        </td>
+                        {% for cell in row.cells %}
+                            <td style="background-color: {{ cell.bg_color }}; color: {{ cell.text_color }};" 
+                                onclick="selectCustomPair('{{ cell.sensor_key }}', '{{ cell.pheno_key }}')"
+                                title="{{ row.sensor_label }} vs {{ cell.pheno_key }}: {{ cell.interpretation }} (r = {{ cell.r }}, R² = {{ cell.r2 }})">
+                                <div class="heatmap-cell-content">
+                                    <span class="heatmap-r-val">{% if cell.r > 0 %}+{% endif %}{{ cell.r }}</span>
+                                    <span class="heatmap-r2-val">R² = {{ cell.r2 }}</span>
+                                    <span class="heatmap-interp-badge" style="background: rgba(0,0,0,0.06);">
+                                        {{ cell.interpretation }}
                                     </span>
-                                </td>
-                                <td>{{ row.temperature_c }} °C</td>
-                                <td>{{ row.humidity_rh }} %</td>
-                                <td>{{ row.uv_solar_lux }} lux</td>
-                                <td>{{ row.motor_current_a }} A</td>
-                                <td>
-                                    <span class="badge" style="background: rgba(15, 23, 42, 0.05); color: var(--text-main);">
-                                        5 tomas (Promedio)
-                                    </span>
-                                </td>
-                                <td>
-                                    <button type="button" class="btn-period" onclick="deleteSessionFromCross({{ row.session_id }})" style="color: var(--accent-danger); padding: 4px 8px;" title="Eliminar este período">
-                                        <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                                    </button>
-                                </td>
-                            </tr>
+                                </div>
+                            </td>
                         {% endfor %}
-                    {% else %}
-                        <tr>
-                            <td colspan="12" style="text-align: center; padding: 35px; color: var(--text-muted);">
-                                No hay sesiones cruzadas registradas para la Canastilla #{{ active_plant_id }}.
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Leyenda explicativa de la matriz -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 14px; font-size: 11.5px; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 14px; height: 14px; border-radius: 3px; background: rgba(16, 185, 129, 0.4); border: 1px solid #10b981;"></span>
+                <span>Directa Fuerte (r &ge; 0.65)</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 14px; height: 14px; border-radius: 3px; background: rgba(52, 211, 153, 0.25); border: 1px solid #34d399;"></span>
+                <span>Directa Moderada (0.25 &le; r &lt; 0.65)</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 14px; height: 14px; border-radius: 3px; background: rgba(241, 245, 249, 0.9); border: 1px solid #cbd5e1;"></span>
+                <span>Sin Correlación Lineal (-0.25 &lt; r &lt; 0.25)</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 14px; height: 14px; border-radius: 3px; background: rgba(248, 113, 113, 0.25); border: 1px solid #f87171;"></span>
+                <span>Inversa Moderada (-0.65 &lt; r &le; -0.25)</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 14px; height: 14px; border-radius: 3px; background: rgba(239, 68, 68, 0.35); border: 1px solid #ef4444;"></span>
+                <span>Inversa Fuerte (r &le; -0.65)</span>
+            </span>
+        </div>
+        <span style="font-weight: 600; color: var(--text-heading);">* Haz clic en cualquier celda para graficarla automáticamente abajo.</span>
+    </div>
+</div>
+
+<!-- SECCIÓN 3: LABORATORIO DINÁMICO DE CRUCE A LA CARTA -->
+<div class="comparator-lab-card" style="margin-bottom: 24px;">
+    <div class="widget-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 18px;">
+        <div class="widget-header-title">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: var(--accent-primary); font-size: 24px;">tune</span>
+                <div>
+                    <h3 style="font-size: 16px;">Laboratorio Dinámico de Cruce y Selector de Métricas</h3>
+                    <p>Selecciona cualquier par de variables y explora su relación en múltiples tipos de gráficos interactivos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selector de Tipo de Gráfica -->
+        <div class="filter-group">
+            <button type="button" class="filter-btn active" id="btn-chart-scatter" onclick="setChartType('scatter', this)">
+                <span class="material-icons-round" style="font-size: 15px;">scatter_plot</span>
+                <span>Dispersión (Scatter + Tendencia)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-chart-dual" onclick="setChartType('dual', this)">
+                <span class="material-icons-round" style="font-size: 15px;">stacked_line_chart</span>
+                <span>Serie Temporal Doble Eje</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-chart-radar" onclick="setChartType('radar', this)">
+                <span class="material-icons-round" style="font-size: 15px;">radar</span>
+                <span>Radar de Inmersión</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-chart-polar" onclick="setChartType('polar', this)">
+                <span class="material-icons-round" style="font-size: 15px;">pie_chart</span>
+                <span>Distribución Polar / Dona</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-chart-bar" onclick="setChartType('bar', this)">
+                <span class="material-icons-round" style="font-size: 15px;">bar_chart</span>
+                <span>Barras Agrupadas</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Controles de Selección de Variables -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 18px; background: var(--bg-card-subtle); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border-color);">
+        <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">
+                Variable 1: Fenotipado / Planta (Eje Y)
+            </label>
+            <select id="select-pheno-var" class="form-control" onchange="renderCustomComparatorChart()">
+                <option value="foliar_area_cm2" selected>Área Foliar (cm²)</option>
+                <option value="plant_height_cm">Altura de la Planta (cm)</option>
+                <option value="stem_diameter_mm">Diámetro del Tallo (mm)</option>
+                <option value="health_index">Índice de Salud Foliar (%)</option>
+                <option value="compacity_index">Índice de Compacidad</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">
+                Variable 2: Telemetría / Sensor (Eje X o Eje 2)
+            </label>
+            <select id="select-sensor-var" class="form-control" onchange="renderCustomComparatorChart()">
+                <option value="temperature_c" selected>Temperatura Ambiente (°C)</option>
+                <option value="humidity_rh">Humedad Relativa (% HR)</option>
+                <option value="uv_solar_lux">Radiación Solar / UV (lux)</option>
+                <option value="motor_current_a">Corriente de Bomba (A)</option>
+            </select>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">
+                Diagnóstico Estadístico en Vivo:
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-heading);" id="custom-math-summary">
+                Calculando regresión lineal...
+            </div>
+        </div>
+    </div>
+
+    <!-- Lienzo del Gráfico Dinámico -->
+    <div class="chart-stage-container" style="height: 380px; margin-top: 10px;">
+        <canvas id="customComparatorChart"></canvas>
+    </div>
+</div>
+
+<!-- SECCIÓN 4: GRÁFICAS INDIVIDUALES DEDICADAS DE ALTA RESOLUCIÓN -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: var(--accent-success); font-size: 24px;">insights</span>
+                <div>
+                    <h3>Paneles Gráficos Individuales de Investigación</h3>
+                    <p>Monitoreo continuo desglosado de morfología, vigor y curvas climáticas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-grid-2x2">
+        <!-- Gráfica 1: Área Foliar -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Evolución de Área Foliar (cm²)</h4>
+                <span class="badge badge-success">Biometría</span>
+            </div>
+            <div class="chart-stage-container" style="height: 260px;">
+                <canvas id="dedicFoliarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 2: Altura y Tallo -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Altura de Planta (cm) y Tallo (mm)</h4>
+                <span class="badge badge-primary">Morfología</span>
+            </div>
+            <div class="chart-stage-container" style="height: 260px;">
+                <canvas id="dedicMorphChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 3: Clima Temperatura y Humedad -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Temperatura (°C) y Humedad (% HR)</h4>
+                <span class="badge badge-primary">Microclima</span>
+            </div>
+            <div class="chart-stage-container" style="height: 260px;">
+                <canvas id="dedicClimateChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 4: Radiación y Bombeo -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Radiación Solar (lux) y Bombeo (A)</h4>
+                <span class="badge badge-warning">Fotoperíodo / Hidráulica</span>
+            </div>
+            <div class="chart-stage-container" style="height: 260px;">
+                <canvas id="dedicSolarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 5: TABLA DE CRUCE SINCRONIZADO POR PERÍODO -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <h3>Matriz de Cruce Sincronizado por Período de Muestreo</h3>
+            <p>Emparejamiento promedio exacto entre las 5 fotos procesadas y las lecturas climáticas</p>
+        </div>
+        <div class="badge badge-primary">
+            {{ cross_data | length }} Períodos Registrados
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="cross-matrix-table">
+            <thead>
+                <tr>
+                    <th>Fecha y Período</th>
+                    <th>Hora Exacta</th>
+                    <th>Área Foliar</th>
+                    <th>Altura</th>
+                    <th>Tallo</th>
+                    <th>Salud</th>
+                    <th>Temperatura</th>
+                    <th>Humedad</th>
+                    <th>Radiación Solar</th>
+                    <th>Bomba (A)</th>
+                    <th>Fotos</th>
+                    <th style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cross-table-body">
+                {% if cross_data %}
+                    {% for row in cross_data %}
+                        <tr class="cross-row" data-period="{{ row.period_name }}" data-date="{{ row.date_str }}">
+                            <td>
+                                <div style="font-weight: 700; color: var(--text-heading);">{{ row.full_period_label }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ row.crop_type | capitalize }} (Canastilla #{{ row.plant_id }})</div>
+                            </td>
+                            <td style="font-size: 12px; font-weight: 600; color: var(--text-muted);">
+                                {{ row.exact_time }}
+                            </td>
+                            <td style="font-weight: 700; color: var(--accent-success);">
+                                {{ row.foliar_area_cm2 }} cm²
+                            </td>
+                            <td>{{ row.plant_height_cm }} cm</td>
+                            <td>{{ row.stem_diameter_mm }} mm</td>
+                            <td>
+                                <span class="badge {% if row.health_index >= 80 %}badge-success{% elif row.health_index >= 60 %}badge-warning{% else %}badge-danger{% endif %}">
+                                    {{ row.health_index }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #2563eb;">
+                                    {{ row.temperature_c }} °C
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #0284c7;">
+                                    {{ row.humidity_rh }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #d97706;">
+                                    {{ row.uv_solar_lux }} lux
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-size: 12px; font-weight: 600; color: #059669;">{{ row.motor_current_a }} A</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-success">{{ row.photos_count }} fotos</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="showIndividualPhotosModal({{ row.session_id }})" title="Ver fotos cenital y lateral procesadas">
+                                    <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                                    <span>Ver Fotos</span>
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteSessionFromCross({{ row.session_id }})" title="Eliminar este período">
+                                    <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                                </button>
                             </td>
                         </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- SECCION 4: VISUALIZACION DE GRAFICAS (CORRELACIONES Y METRICAS INDIVIDUALES) -->
-    <div class="glass-card" style="margin-bottom: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-            <div class="glass-card-title" style="margin-bottom: 0;">
-                <span class="material-icons-round">analytics</span>
-                <h3>Análisis Gráfico: Correlaciones Multivariables y Métricas Individuales</h3>
-            </div>
-
-            <!-- Botones de Conmutacion de Tipo de Graficas -->
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn-period chart-tab-btn active" data-chart-group="all" onclick="switchChartGroup('all', this)">
-                    Todas las Gráficas
-                </button>
-                <button type="button" class="btn-period chart-tab-btn" data-chart-group="correlations" onclick="switchChartGroup('correlations', this)">
-                    Correlaciones Multieje
-                </button>
-                <button type="button" class="btn-period chart-tab-btn" data-chart-group="vision" onclick="switchChartGroup('vision', this)">
-                    Métricas de Visión (Cámaras)
-                </button>
-                <button type="button" class="btn-period chart-tab-btn" data-chart-group="sensors" onclick="switchChartGroup('sensors', this)">
-                    Sensores Ambientales
-                </button>
-            </div>
-        </div>
-
-        <!-- GRUPO 1: CORRELACIONES MULTIEJE -->
-        <div class="chart-section-group" id="group-correlations">
-            <h4 style="font-size: 14px; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 15px;">
-                Gráficas de Correlación Multivariable:
-            </h4>
-            <div class="chart-grid" style="margin-bottom: 25px;">
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round">insights</span>
-                        <h3>Correlación: Área Foliar vs Radiación Solar UV y Temperatura</h3>
-                    </div>
-                    <div class="chart-container" style="height: 300px;">
-                        <canvas id="crossGrowthChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round">water_drop</span>
-                        <h3>Correlación: Vigor Foliar y Salud vs Humedad Relativa</h3>
-                    </div>
-                    <div class="chart-container" style="height: 300px;">
-                        <canvas id="crossHealthChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- GRUPO 2: METRICAS INDIVIDUALES DE VISION ARTIFICIAL (CAMARAS) -->
-        <div class="chart-section-group" id="group-vision">
-            <h4 style="font-size: 14px; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 15px;">
-                Evolución Individual de Métricas de Fenotipado (Cámaras):
-            </h4>
-            <div class="chart-grid-2" style="margin-bottom: 25px;">
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #10b981;">eco</span>
-                        <h3>Área Foliar Estimada (cm²)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indAreaChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #3b82f6;">height</span>
-                        <h3>Altura de Planta (cm)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indHeightChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #f59e0b;">adjust</span>
-                        <h3>Diámetro del Tallo (mm)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indDiameterChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #06b6d4;">health_and_safety</span>
-                        <h3>Índice de Salud Foliar (%)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indHealthChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- GRUPO 3: METRICAS INDIVIDUALES DE SENSORES -->
-        <div class="chart-section-group" id="group-sensors">
-            <h4 style="font-size: 14px; font-family: var(--font-heading); color: var(--text-heading); margin-bottom: 15px;">
-                Evolución Individual de Sensores Ambientales:
-            </h4>
-            <div class="chart-grid-2">
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #ef4444;">device_thermostat</span>
-                        <h3>Temperatura Ambiente (°C)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indTempChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #3b82f6;">water_drop</span>
-                        <h3>Humedad Relativa (%)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indHumChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #f59e0b;">wb_sunny</span>
-                        <h3>Radiación Solar UV / CO2 (lux)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indUvChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="glass-card-title">
-                        <span class="material-icons-round" style="color: #10b981;">electrical_services</span>
-                        <h3>Consumo Eléctrico de Bomba (A)</h3>
-                    </div>
-                    <div class="chart-container" style="height: 240px;">
-                        <canvas id="indCurrChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECCION 5: BITACORA Y CONCLUSIONES AGRONOMICAS DEL INVESTIGADOR -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round">rate_review</span>
-            <h3>Bitácora de Investigación y Conclusiones Agronómicas del Investigador</h3>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-            Registra y almacena las conclusiones cuantitativas y cualitativas de la jornada, semana o mes sobre el comportamiento del cultivo.
-        </p>
-
-        <!-- Formulario de Registro de Conclusiones -->
-        <form id="agronomic-conclusion-form" onsubmit="saveAgronomicConclusion(event)" style="background: rgba(15, 23, 42, 0.02); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 25px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 18px;">
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
-                        Período de Evaluación:
-                    </label>
-                    <select id="conclusion-period-type" class="form-control">
-                        <option value="diario">Conclusión Diaria</option>
-                        <option value="semanal">Conclusión Semanal</option>
-                        <option value="mensual">Conclusión Mensual</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
-                        Fecha de la Observación:
-                    </label>
-                    <input type="date" id="conclusion-date" class="form-control" required value="{{ available_dates[0] if available_dates else '' }}">
-                </div>
-
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
-                        Nombre del Investigador / Evaluador:
-                    </label>
-                    <input type="text" id="conclusion-author" class="form-control" value="Andres Luna / Cristian Peña" placeholder="Nombre del investigador">
-                </div>
-            </div>
-
-            <!-- Preguntas Guía -->
-            <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 18px;">
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-heading); display: block; margin-bottom: 6px;">
-                        1. Observaciones sobre el Crecimiento Foliar, Altura y Vigor:
-                    </label>
-                    <textarea id="conclusion-growth" class="form-control" rows="2" placeholder="Describe cómo evolucionó el área foliar, desarrollo de hojas, coloración y vigor vegetal durante este período..."></textarea>
-                </div>
-
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-heading); display: block; margin-bottom: 6px;">
-                        2. Respuesta a las Variables Ambientales (Temperatura, Humedad, Luz UV):
-                    </label>
-                    <textarea id="conclusion-climate" class="form-control" rows="2" placeholder="¿Cómo respondió el cultivo a los rangos de temperatura y humedad registrados? ¿Hubo signos de estrés térmico o hídrico?..."></textarea>
-                </div>
-
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-heading); display: block; margin-bottom: 6px;">
-                        3. Comportamiento de la Solución Nutritiva y Bombeo:
-                    </label>
-                    <textarea id="conclusion-nutrition" class="form-control" rows="2" placeholder="Observaciones del consumo de corriente de bomba, flujo de solución y nutrición..."></textarea>
-                </div>
-
-                <div>
-                    <label style="font-size: 13px; font-weight: 600; color: var(--accent-primary); display: block; margin-bottom: 6px;">
-                        4. Conclusión General y Decisiones Agronómicas:
-                    </label>
-                    <textarea id="conclusion-general" class="form-control" rows="3" required placeholder="Conclusión final del evaluador para el reporte de investigación..."></textarea>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end;">
-                <button type="submit" id="btn-save-conclusion" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px;">
-                    <span class="material-icons-round" style="font-size: 18px;">save</span>
-                    Guardar Conclusión de Investigación
-                </button>
-            </div>
-
-            <div id="conclusion-feedback" style="display: none; margin-top: 12px; font-size: 13px; padding: 10px; border-radius: 8px;"></div>
-        </form>
-
-        <!-- Historial de Conclusiones Registradas -->
-        <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h4 style="font-size: 14px; font-family: var(--font-heading); color: var(--text-heading); margin: 0;">
-                    Historial de Conclusiones Guardadas para esta Canastilla:
-                </h4>
-                <div style="display: flex; gap: 8px;">
-                    <select id="filter-conclusions-type" class="form-control" style="font-size: 12px; padding: 4px 10px;" onchange="loadConclusionsList()">
-                        <option value="todos">Todos los Tipos</option>
-                        <option value="diario">Diarias</option>
-                        <option value="semanal">Semanales</option>
-                        <option value="mensual">Mensuales</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="conclusions-history-container" style="display: flex; flex-direction: column; gap: 15px;">
-                {% if conclusions %}
-                    {% for c in conclusions %}
-                        <div class="glass-card" style="padding: 16px; border: 1px solid var(--glass-border);" id="note-card-{{ c.id }}">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span class="badge badge-primary" style="text-transform: uppercase;">
-                                        {{ c.period_type }}
-                                    </span>
-                                    <strong style="color: var(--text-heading); font-size: 14px;">Fecha Evaluada: {{ c.date_str }}</strong>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 12px; color: var(--text-inactive);">
-                                        Por: {{ c.author }} ({{ c.created_at }})
-                                    </span>
-                                    <button type="button" class="btn-period" onclick="deleteConclusion({{ c.id }})" title="Eliminar Conclusión" style="padding: 4px 8px; color: var(--accent-danger);">
-                                        <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {% if c.growth_obs %}
-                                <p style="font-size: 12px; color: var(--text-main); margin-bottom: 6px;">
-                                    <strong>Crecimiento y Vigor:</strong> {{ c.growth_obs }}
-                                </p>
-                            {% endif %}
-                            {% if c.climate_obs %}
-                                <p style="font-size: 12px; color: var(--text-main); margin-bottom: 6px;">
-                                    <strong>Clima y Luz:</strong> {{ c.climate_obs }}
-                                </p>
-                            {% endif %}
-                            {% if c.nutrition_obs %}
-                                <p style="font-size: 12px; color: var(--text-main); margin-bottom: 6px;">
-                                    <strong>Nutrición y Bombeo:</strong> {{ c.nutrition_obs }}
-                                </p>
-                            {% endif %}
-                            <div style="background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--accent-primary); padding: 10px; border-radius: 4px; margin-top: 8px;">
-                                <p style="font-size: 13px; color: var(--text-heading); font-weight: 600; margin: 0;">
-                                    Conclusión: {{ c.general_conclusion }}
-                                </p>
-                            </div>
-                        </div>
                     {% endfor %}
                 {% else %}
-                    <p id="no-conclusions-msg" style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">
-                        No hay conclusiones registradas aún. Utiliza el formulario superior para redactar la primera observación.
-                    </p>
+                    <tr>
+                        <td colspan="12" style="text-align: center; padding: 35px; color: var(--text-muted);">
+                            No hay sesiones cruzadas registradas para la Canastilla #{{ active_plant_id }}.
+                        </td>
+                    </tr>
                 {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SECCIÓN 6: ESCRUTINIO DETALLADO FOTO A FOTO CON PLEGADO Y DESPLEGADO -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header">
+        <div class="widget-header-title">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: var(--accent-primary); font-size: 24px;">photo_library</span>
+                <div>
+                    <h3>Escrutinio y Desglose Individual Foto a Foto (5 Fotos por Período)</h3>
+                    <p>Detalle individual de cada captura fotográfica comparado directamente con la telemetría ambiental exacta</p>
+                </div>
             </div>
+        </div>
+        
+        <!-- Botón maestro para Plegar/Desplegar todas las sesiones -->
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-all-photos" onclick="toggleAllPhotoSessions()">
+                <span class="material-icons-round" id="icon-toggle-all">unfold_more</span>
+                <span id="text-toggle-all">Desplegar Todas las Fotos</span>
+            </button>
         </div>
     </div>
 
+    {% if cross_data %}
+        <div style="display: flex; flex-direction: column; gap: 14px;" id="photo-sessions-accordion">
+            {% for s in cross_data %}
+                <div class="session-accordion-card" id="session-card-{{ s.session_id }}" data-period="{{ s.period_name }}" data-date="{{ s.date_str }}" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
+                    <!-- Cabecera de la sesión (Clickeable para plegar/desplegar) -->
+                    <div style="padding: 14px 18px; background: #f8fafc; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" 
+                         onclick="toggleSinglePhotoSession({{ s.session_id }})">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="material-icons-round accordion-arrow-icon" id="arrow-session-{{ s.session_id }}" style="font-size: 20px; transition: transform 0.2s; transform: rotate(0deg);">
+                                chevron_right
+                            </span>
+                            <div>
+                                <span style="font-weight: 700; font-size: 14px; color: var(--text-heading);">{{ s.full_period_label }}</span>
+                                <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">| Hora: <strong>{{ s.exact_time }}</strong> | Área Media: <strong style="color: var(--accent-success);">{{ s.foliar_area_cm2 }} cm²</strong></span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 12px; color: #2563eb; font-weight: 600;">{{ s.temperature_c }} °C</span>
+                            <span style="font-size: 12px; color: #0284c7; font-weight: 600;">{{ s.humidity_rh }}%</span>
+                            <span style="font-size: 12px; color: #d97706; font-weight: 600;">{{ s.uv_solar_lux }} lux</span>
+                            <span class="badge badge-success">{{ s.individual_photos | length }} Fotos</span>
+                        </div>
+                    </div>
+
+                    <!-- Contenedor plegable de fotos individuales -->
+                    <div class="session-photos-content" id="photos-content-{{ s.session_id }}" style="display: none; padding: 14px 18px;">
+                        <div class="table-responsive">
+                            <table class="table" style="font-size: 12.5px; margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>Toma</th>
+                                        <th>Vista Cenital</th>
+                                        <th>Vista Lateral</th>
+                                        <th>Área Foliar</th>
+                                        <th>Altura</th>
+                                        <th>Diámetro</th>
+                                        <th>Salud</th>
+                                        <th>Temperatura</th>
+                                        <th>Humedad</th>
+                                        <th>Radiación</th>
+                                        <th>Corriente</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in s.individual_photos %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge badge-primary">Toma #{{ p.photo_num }}</span>
+                                            </td>
+                                            <td>
+                                                {% if p.cenital_url %}
+                                                    <img src="{{ p.cenital_url }}" class="photo-thumb-mini" alt="Cenital {{ p.photo_num }}" onclick="openLightbox('{{ p.cenital_url }}', 'Toma #{{ p.photo_num }} Cenital - {{ s.full_period_label }}')" style="cursor: pointer;" title="Clic para ampliar">
+                                                {% else %}
+                                                    <span style="color: var(--text-muted); font-size: 11px;">Sin imagen</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if p.lateral_url %}
+                                                    <img src="{{ p.lateral_url }}" class="photo-thumb-mini" alt="Lateral {{ p.photo_num }}" onclick="openLightbox('{{ p.lateral_url }}', 'Toma #{{ p.photo_num }} Lateral - {{ s.full_period_label }}')" style="cursor: pointer;" title="Clic para ampliar">
+                                                {% else %}
+                                                    <span style="color: var(--text-muted); font-size: 11px;">Sin imagen</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="font-weight: 700; color: var(--accent-success);">{{ p.foliar_area_cm2 }} cm²</td>
+                                            <td>{{ p.plant_height_cm }} cm</td>
+                                            <td>{{ p.stem_diameter_mm }} mm</td>
+                                            <td>
+                                                <span class="badge {% if p.health_index >= 80 %}badge-success{% elif p.health_index >= 60 %}badge-warning{% else %}badge-danger{% endif %}">
+                                                    {{ p.health_index }}%
+                                                </span>
+                                            </td>
+                                            <td><span style="font-weight: 600; color: #2563eb;">{{ p.temperature_c }} °C</span></td>
+                                            <td><span style="font-weight: 600; color: #0284c7;">{{ p.humidity_rh }}%</span></td>
+                                            <td><span style="font-weight: 600; color: #d97706;">{{ p.uv_solar_lux }} lux</span></td>
+                                            <td><span style="font-size: 11.5px; font-weight: 600; color: #059669;">{{ p.motor_current_a }} A</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="text-align: center; padding: 30px; color: var(--text-muted);">
+            No hay tomas fotográficas registradas para desglosar.
+        </p>
+    {% endif %}
 </div>
+
+<!-- SECCIÓN 7: BITÁCORA AGRONÓMICA DEL INVESTIGADOR Y GENERADOR DE REPORTES CIENTÍFICOS PDF -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div class="widget-header-title">
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--text-heading); margin: 0;">
+                Bitácora de Investigación y Conclusiones Agronómicas
+            </h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Documentación científica, generación de fichas técnicas certificadas en PDF y registro de inferencias de la torre
+            </p>
+        </div>
+
+        <!-- Botón de Generación de Ficha Técnica PDF -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="/report/scientific?date={{ active_date if active_date != 'todos' else (available_dates[0] if available_dates else '') }}&plant_id={{ active_plant_id }}" 
+               target="_blank"
+               class="btn btn-primary" 
+               style="background: #059669; border-color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);"
+               title="Generar e imprimir Ficha Técnica de Investigación en PDF">
+                <span class="material-icons-round">picture_as_pdf</span>
+                <span>Generar Ficha Técnica / Reporte PDF</span>
+            </a>
+            <a href="/api/cross_analysis/export_csv?plant_id={{ active_plant_id }}" class="btn btn-outline" style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                <span class="material-icons-round">table_view</span>
+                <span>Exportar Datos CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- TARJETA INFORMATIVA DEL REPORTE CIENTÍFICO -->
+    <div style="background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(2, 132, 199, 0.08)); border: 1px solid rgba(5, 150, 105, 0.25); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 8px; background: #059669; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                <span class="material-icons-round">science</span>
+            </div>
+            <div>
+                <strong style="font-size: 13.5px; color: var(--text-heading); display: block;">
+                    Dossier Científico & Ficha Técnica Lista para Tesis y Publicaciones
+                </strong>
+                <span style="font-size: 11.5px; color: var(--text-muted);">
+                    El informe PDF integra matrices estadísticas paramétricas (&mu;, &sigma;, IQR, CV%), correlaciones de Pearson, comparativa fotográfica (RAW vs Segmentada) y firmas de validación.
+                </span>
+            </div>
+        </div>
+        <a href="/report/scientific?date={{ active_date if active_date != 'todos' else (available_dates[0] if available_dates else '') }}&plant_id={{ active_plant_id }}" 
+           target="_blank"
+           class="btn btn-outline btn-sm" 
+           style="background: #ffffff; color: #059669; border-color: #059669; font-weight: 700;">
+            <span class="material-icons-round" style="font-size: 15px;">open_in_new</span>
+            <span>Abrir Vista de Impresión PDF</span>
+        </a>
+    </div>
+
+    <form id="agronomic-conclusion-form" onsubmit="saveAgronomicConclusion(event)" style="background: var(--bg-card-subtle); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 18px;">
+            <div>
+                <label style="font-size: 12.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
+                    Período de Evaluación:
+                </label>
+                <select id="conclusion-period-type" class="form-control">
+                    <option value="diario">Conclusión Diaria</option>
+                    <option value="semanal">Conclusión Semanal</option>
+                    <option value="mensual">Conclusión Mensual</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 12.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
+                    Fecha de la Observación:
+                </label>
+                <input type="date" id="conclusion-date" class="form-control" required value="{{ available_dates[0] if available_dates else '' }}">
+            </div>
+
+            <div>
+                <label style="font-size: 12.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
+                    Nombre del Investigador:
+                </label>
+                <input type="text" id="conclusion-author" class="form-control" value="{{ current_user.name }}" placeholder="Nombre del evaluador">
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
+            <div>
+                <label style="font-size: 13px; font-weight: 600; color: var(--text-heading); display: block; margin-bottom: 6px;">
+                    1. Crecimiento Foliar, Altura y Vigor:
+                </label>
+                <textarea id="conclusion-growth" class="form-control" rows="2" placeholder="Evolución del área foliar, desarrollo foliar y vigor vegetal..."></textarea>
+            </div>
+
+            <div>
+                <label style="font-size: 13px; font-weight: 600; color: var(--text-heading); display: block; margin-bottom: 6px;">
+                    2. Respuesta Ambiental (Temperatura, Humedad, Luz UV):
+                </label>
+                <textarea id="conclusion-climate" class="form-control" rows="2" placeholder="Respuesta del cultivo a los rangos climáticos registrados..."></textarea>
+            </div>
+
+            <div>
+                <label style="font-size: 13px; font-weight: 600; color: var(--text-heading); display: block; margin-bottom: 6px;">
+                    3. Conclusión General y Decisiones Agronómicas:
+                </label>
+                <textarea id="conclusion-general" class="form-control" rows="3" required placeholder="Conclusión final del evaluador para el reporte de investigación..."></textarea>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" id="btn-save-conclusion" class="btn btn-primary">
+                <span class="material-icons-round">save</span>
+                <span>Guardar Conclusión de Investigación</span>
+            </button>
+        </div>
+
+        <div id="conclusion-feedback" style="display: none; margin-top: 12px; font-size: 13px; padding: 10px; border-radius: 8px;"></div>
+    </form>
+
+    <!-- Historial de Conclusiones Guardadas -->
+    <div>
+        <h4 style="font-size: 14px; font-weight: 700; color: var(--text-heading); margin-bottom: 14px;">
+            Historial de Conclusiones Registradas:
+        </h4>
+        
+        {% if conclusions %}
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                {% for note in conclusions %}
+                    <div id="note-card-{{ note.id }}" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div>
+                                <span class="badge badge-success" style="font-size: 11.5px; text-transform: uppercase;">
+                                    {{ note.period_type }}
+                                </span>
+                                <span style="font-size: 13.5px; font-weight: 700; color: var(--text-heading); margin-left: 8px;">
+                                    Fecha: {{ note.date_str }}
+                                </span>
+                                <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">
+                                    | Autor: <strong>{{ note.author }}</strong> ({{ note.created_at }})
+                                </span>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteConclusion({{ note.id }})" title="Eliminar conclusión">
+                                <span class="material-icons-round">delete</span>
+                            </button>
+                        </div>
+
+                        {% if note.growth_obs %}
+                            <p style="font-size: 13px; margin-bottom: 6px;">
+                                <strong>Crecimiento y Vigor:</strong> {{ note.growth_obs }}
+                            </p>
+                        {% endif %}
+
+                        {% if note.climate_obs %}
+                            <p style="font-size: 13px; margin-bottom: 6px;">
+                                <strong>Respuesta Ambiental:</strong> {{ note.climate_obs }}
+                            </p>
+                        {% endif %}
+
+                        <div style="background: var(--bg-card-subtle); padding: 12px 14px; border-radius: 8px; margin-top: 8px; border-left: 4px solid var(--accent-success);">
+                            <p style="font-size: 13px; font-weight: 600; color: var(--text-heading); margin: 0;">
+                                {{ note.general_conclusion }}
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px;">
+                No se han registrado conclusiones agronómicas para esta canastilla aún.
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MODAL PARA VER FOTOS INDIVIDUALES DE UN PERÍODO ESPECÍFICO -->
+<div id="photosModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <div>
+                <h3 id="modalPeriodTitle" style="font-size: 16px; font-weight: 700; color: var(--text-heading); margin: 0;">Desglose de Fotos del Período</h3>
+                <p id="modalPeriodSub" style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">5 capturas individuales analizadas</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="closePhotosModal()">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+        
+        <div id="modalPhotosGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+            <!-- Contenido dinámico inyectado por JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- LIGHTBOX PARA AMPLIAR FOTOS EN ALTA RESOLUCIÓN -->
+<div id="imageLightbox" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; padding: 20px;" onclick="closeLightbox()">
+    <div style="position: relative; max-width: 90vw; max-height: 85vh;" onclick="event.stopPropagation()">
+        <img id="lightboxImg" src="" style="max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); object-fit: contain;">
+        <div id="lightboxTitle" style="text-align: center; color: #ffffff; font-size: 14px; font-weight: 600; margin-top: 10px;"></div>
+        <button type="button" class="btn btn-sm" style="position: absolute; top: -12px; right: -12px; background: #ffffff; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="closeLightbox()">
+            <span class="material-icons-round" style="font-size: 18px; color: #0f172a;">close</span>
+        </button>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    const fullDataset = {{ cross_data | tojson | safe }};
-    let activePeriodFilter = 'todos';
-    let activeDateFilter = 'todos';
-    let crossChartInstances = {};
+    const rawCrossData = {{ cross_data | tojson | safe }};
+    const activePlantId = {{ active_plant_id }};
+    let currentPeriodFilter = 'todos';
+    let currentDateFilter = 'todos';
+    let currentChartType = 'scatter';
+    let customComparatorChart = null;
+    let dedicCharts = {};
+    let allPhotosExpanded = false;
 
-    function normalizeStr(str) {
-        if (!str) return "";
-        return str.toLowerCase()
-                  .replace(/ñ/g, "n")
-                  .replace(/á/g, "a")
-                  .replace(/é/g, "e")
-                  .replace(/í/g, "i")
-                  .replace(/ó/g, "o")
-                  .replace(/ú/g, "u")
-                  .replace(/_/g, "")
-                  .replace(/\s+/g, "");
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    const varMeta = {
+        foliar_area_cm2: { label: 'Área Foliar', unit: 'cm²', color: '#059669', type: 'pheno' },
+        plant_height_cm: { label: 'Altura de Planta', unit: 'cm', color: '#16a34a', type: 'pheno' },
+        stem_diameter_mm: { label: 'Diámetro de Tallo', unit: 'mm', color: '#84cc16', type: 'pheno' },
+        health_index: { label: 'Índice de Salud', unit: '%', color: '#10b981', type: 'pheno' },
+        compacity_index: { label: 'Compacidad', unit: 'pts', color: '#047857', type: 'pheno' },
+        temperature_c: { label: 'Temperatura Ambiente', unit: '°C', color: '#2563eb', type: 'sensor' },
+        humidity_rh: { label: 'Humedad Relativa', unit: '% HR', color: '#0284c7', type: 'sensor' },
+        uv_solar_lux: { label: 'Radiación Solar', unit: 'lux', color: '#d97706', type: 'sensor' },
+        motor_current_a: { label: 'Corriente Bomba', unit: 'A', color: '#059669', type: 'sensor' }
+    };
+
+    function getFilteredCrossData() {
+        return rawCrossData.filter(d => {
+            const matchPeriod = (currentPeriodFilter === 'todos') || (d.period_name && d.period_name.includes(currentPeriodFilter));
+            const matchDate = (currentDateFilter === 'todos') || (d.date_str === currentDateFilter);
+            return matchPeriod && matchDate;
+        });
     }
 
-    // FILTRO COMBINADO POR PERIODO Y FECHA
-    function filterCrossPeriod(period, btnEl) {
-        activePeriodFilter = period;
+    function selectCustomPair(sensorKey, phenoKey) {
+        document.getElementById('select-sensor-var').value = sensorKey;
+        document.getElementById('select-pheno-var').value = phenoKey;
+        
+        document.querySelector('.comparator-lab-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        renderCustomComparatorChart();
+    }
+
+    function setChartType(type, btnElement) {
+        currentChartType = type;
+        document.querySelectorAll('.comparator-lab-card .filter-btn').forEach(b => b.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+        renderCustomComparatorChart();
+    }
+
+    function renderCustomComparatorChart() {
+        const data = getFilteredCrossData();
+        const phenoKey = document.getElementById('select-pheno-var').value;
+        const sensorKey = document.getElementById('select-sensor-var').value;
+
+        const pMeta = varMeta[phenoKey];
+        const sMeta = varMeta[sensorKey];
+
+        const ctx = document.getElementById('customComparatorChart');
+        if (!ctx) return;
+        if (customComparatorChart) customComparatorChart.destroy();
+
+        if (!data || data.length === 0) {
+            document.getElementById('custom-math-summary').innerText = 'Sin datos disponibles para el filtro actual.';
+            return;
+        }
+
+        const labels = data.map(d => d.full_period_label || d.period);
+        const phenoVals = data.map(d => d[phenoKey]);
+        const sensorVals = data.map(d => d[sensorKey]);
+
+        // Cálculo de Regresión y Pearson
+        let r = 0, r2 = 0, slope = 0, intercept = 0;
+        let hasVariance = false;
+
+        if (data.length >= 2) {
+            const n = data.length;
+            const sumX = sensorVals.reduce((a, b) => a + b, 0);
+            const sumY = phenoVals.reduce((a, b) => a + b, 0);
+            const sumXY = sensorVals.reduce((acc, x, i) => acc + x * phenoVals[i], 0);
+            const sumX2 = sensorVals.reduce((a, b) => a + b * b, 0);
+            const sumY2 = phenoVals.reduce((a, b) => a + b * b, 0);
+
+            const denom = (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY);
+            if (denom > 1e-6) {
+                r = (n * sumXY - sumX * sumY) / Math.sqrt(denom);
+                hasVariance = true;
+            }
+            r2 = r * r;
+
+            const slopeDenom = (n * sumX2 - sumX * sumX);
+            if (Math.abs(slopeDenom) > 1e-6) {
+                slope = (n * sumXY - sumX * sumY) / slopeDenom;
+                intercept = (sumY - slope * sumX) / n;
+            } else {
+                slope = 0;
+                intercept = sumY / n;
+            }
+        }
+
+        const signStr = r >= 0 ? '+' : '';
+        if (hasVariance) {
+            document.getElementById('custom-math-summary').innerHTML = `
+                Pearson: <strong style="color: ${r >= 0 ? '#059669' : '#dc2626'};">${signStr}${r.toFixed(2)}</strong> | 
+                R²: <strong>${r2.toFixed(3)}</strong> | 
+                Tendencia: <em>y = ${slope.toFixed(2)}x ${intercept >= 0 ? '+' : ''}${intercept.toFixed(2)}</em>
+            `;
+        } else {
+            document.getElementById('custom-math-summary').innerHTML = `
+                <span>Valores constantes en la muestra (${sensorVals[0]} ${sMeta.unit}, ${phenoVals[0]} ${pMeta.unit})</span>
+            `;
+        }
+
+        if (currentChartType === 'scatter') {
+            const scatterPoints = data.map(d => ({
+                x: d[sensorKey],
+                y: d[phenoKey],
+                label: d.full_period_label
+            }));
+
+            let minX = Math.min(...sensorVals);
+            let maxX = Math.max(...sensorVals);
+            if (minX === maxX) {
+                minX = minX * 0.9 - 1;
+                maxX = maxX * 1.1 + 1;
+            }
+
+            const trendLine = [
+                { x: minX, y: slope * minX + intercept },
+                { x: maxX, y: slope * maxX + intercept }
+            ];
+
+            customComparatorChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: `${pMeta.label} vs ${sMeta.label}`,
+                            data: scatterPoints,
+                            backgroundColor: pMeta.color,
+                            borderColor: pMeta.color,
+                            pointRadius: 6,
+                            pointHoverRadius: 9
+                        },
+                        {
+                            label: 'Línea de Tendencia',
+                            data: trendLine,
+                            type: 'line',
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (c) => ` ${c.raw.label || ''} -> ${sMeta.label}: ${c.raw.x} ${sMeta.unit}, ${pMeta.label}: ${c.raw.y} ${pMeta.unit}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: `${sMeta.label} (${sMeta.unit})` },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            title: { display: true, text: `${pMeta.label} (${pMeta.unit})` },
+                            grid: { color: '#f1f5f9' }
+                        }
+                    }
+                }
+            });
+
+        } else if (currentChartType === 'dual') {
+            customComparatorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `${sMeta.label} (${sMeta.unit})`,
+                            data: sensorVals,
+                            borderColor: sMeta.color,
+                            backgroundColor: sMeta.color + '15',
+                            yAxisID: 'ySensor',
+                            tension: 0.3,
+                            borderWidth: 2.2,
+                            fill: true,
+                            pointRadius: 4
+                        },
+                        {
+                            label: `${pMeta.label} (${pMeta.unit})`,
+                            data: phenoVals,
+                            borderColor: pMeta.color,
+                            backgroundColor: pMeta.color + '20',
+                            yAxisID: 'yPheno',
+                            tension: 0.3,
+                            borderWidth: 2.5,
+                            fill: false,
+                            pointRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        ySensor: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: `${sMeta.label} (${sMeta.unit})`, color: sMeta.color },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        yPheno: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: `${pMeta.label} (${pMeta.unit})`, color: pMeta.color },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+        } else if (currentChartType === 'radar') {
+            const periods = ['mañana', 'mediodía', 'tarde'];
+            const avgByPeriod = periods.map(p => {
+                const subset = rawCrossData.filter(d => d.period_name && d.period_name.includes(p));
+                if (!subset.length) return { p, pheno: 0, sensor: 0 };
+                const avgP = subset.reduce((a, b) => a + b[phenoKey], 0) / subset.length;
+                const avgS = subset.reduce((a, b) => a + b[sensorKey], 0) / subset.length;
+                return { p: p.toUpperCase(), pheno: avgP, sensor: avgS };
+            });
+
+            customComparatorChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Mañana (07:00)', 'Mediodía (12:00)', 'Tarde (17:00)'],
+                    datasets: [
+                        {
+                            label: `${pMeta.label} (${pMeta.unit})`,
+                            data: avgByPeriod.map(a => a.pheno),
+                            borderColor: pMeta.color,
+                            backgroundColor: pMeta.color + '33',
+                            borderWidth: 2
+                        },
+                        {
+                            label: `${sMeta.label} (${sMeta.unit})`,
+                            data: avgByPeriod.map(a => a.sensor),
+                            borderColor: sMeta.color,
+                            backgroundColor: sMeta.color + '33',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+        } else if (currentChartType === 'polar') {
+            customComparatorChart = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${pMeta.label}`,
+                        data: phenoVals,
+                        backgroundColor: [
+                            'rgba(37, 99, 235, 0.65)',
+                            'rgba(5, 150, 105, 0.65)',
+                            'rgba(217, 119, 6, 0.65)',
+                            'rgba(147, 51, 234, 0.65)',
+                            'rgba(16, 185, 129, 0.65)',
+                            'rgba(239, 68, 68, 0.65)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+        } else if (currentChartType === 'bar') {
+            customComparatorChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `${pMeta.label} (${pMeta.unit})`,
+                            data: phenoVals,
+                            backgroundColor: pMeta.color,
+                            borderRadius: 6
+                        },
+                        {
+                            label: `${sMeta.label} (${sMeta.unit})`,
+                            data: sensorVals,
+                            backgroundColor: sMeta.color,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+        }
+    }
+
+    // Inicializar gráficas individuales dedicadas
+    function initDedicatedCharts() {
+        const data = getFilteredCrossData();
+        const labels = data.map(d => d.full_period_label || d.period);
+
+        // 1. Área Foliar
+        const ctxFoliar = document.getElementById('dedicFoliarChart');
+        if (ctxFoliar) {
+            if (dedicCharts.foliar) dedicCharts.foliar.destroy();
+            dedicCharts.foliar = new Chart(ctxFoliar, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Área Foliar (cm²)',
+                        data: data.map(d => d.foliar_area_cm2),
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.15)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => `${v} cm²` } } }
+                }
+            });
+        }
+
+        // 2. Altura y Diámetro
+        const ctxMorph = document.getElementById('dedicMorphChart');
+        if (ctxMorph) {
+            if (dedicCharts.morph) dedicCharts.morph.destroy();
+            dedicCharts.morph = new Chart(ctxMorph, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Altura (cm)',
+                            data: data.map(d => d.plant_height_cm),
+                            backgroundColor: '#16a34a',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Diámetro Tallo (mm)',
+                            data: data.map(d => d.stem_diameter_mm),
+                            backgroundColor: '#84cc16',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } }
+                }
+            });
+        }
+
+        // 3. Clima Temp y Humedad
+        const ctxClimate = document.getElementById('dedicClimateChart');
+        if (ctxClimate) {
+            if (dedicCharts.climate) dedicCharts.climate.destroy();
+            dedicCharts.climate = new Chart(ctxClimate, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperatura (°C)',
+                            data: data.map(d => d.temperature_c),
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            fill: true,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Humedad (% HR)',
+                            data: data.map(d => d.humidity_rh),
+                            borderColor: '#0284c7',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } }
+                }
+            });
+        }
+
+        // 4. Radiación y Bombeo
+        const ctxSolar = document.getElementById('dedicSolarChart');
+        if (ctxSolar) {
+            if (dedicCharts.solar) dedicCharts.solar.destroy();
+            dedicCharts.solar = new Chart(ctxSolar, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Radiación Solar (lux)',
+                            data: data.map(d => d.uv_solar_lux),
+                            borderColor: '#d97706',
+                            backgroundColor: 'rgba(217, 119, 6, 0.15)',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            fill: true,
+                            yAxisID: 'yLux',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Corriente Bomba (A)',
+                            data: data.map(d => d.motor_current_a),
+                            borderColor: '#059669',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            yAxisID: 'yAmp',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        yLux: { type: 'linear', position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'lux' } },
+                        yAmp: { type: 'linear', position: 'right', grid: { display: false }, title: { display: true, text: 'Amperios' } }
+                    }
+                }
+            });
+        }
+    }
+
+    function toggleSinglePhotoSession(sessionId) {
+        const content = document.getElementById(`photos-content-${sessionId}`);
+        const arrow = document.getElementById(`arrow-session-${sessionId}`);
+        if (!content) return;
+
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            if (arrow) arrow.style.transform = 'rotate(90deg)';
+        } else {
+            content.style.display = 'none';
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function toggleAllPhotoSessions() {
+        allPhotosExpanded = !allPhotosExpanded;
+        const contents = document.querySelectorAll('.session-photos-content');
+        const arrows = document.querySelectorAll('.accordion-arrow-icon');
+        const btnText = document.getElementById('text-toggle-all');
+        const btnIcon = document.getElementById('icon-toggle-all');
+
+        contents.forEach(c => {
+            c.style.display = allPhotosExpanded ? 'block' : 'none';
+        });
+        arrows.forEach(a => {
+            a.style.transform = allPhotosExpanded ? 'rotate(90deg)' : 'rotate(0deg)';
+        });
+
+        if (btnText) btnText.innerText = allPhotosExpanded ? 'Plegar Todas las Fotos' : 'Desplegar Todas las Fotos';
+        if (btnIcon) btnIcon.innerText = allPhotosExpanded ? 'unfold_less' : 'unfold_more';
+    }
+
+    function filterCrossPeriod(period, btnElement) {
+        currentPeriodFilter = period.toLowerCase();
         document.querySelectorAll('.cross-period-btn').forEach(b => b.classList.remove('active'));
-        if (btnEl) btnEl.classList.add('active');
+        if (btnElement) btnElement.classList.add('active');
         applyCrossFilters();
     }
 
-    function filterCrossDate(dateStr, btnEl) {
-        activeDateFilter = dateStr;
+    function filterCrossDate(dateStr, btnElement) {
+        currentDateFilter = dateStr;
         document.querySelectorAll('.cross-date-btn').forEach(b => b.classList.remove('active'));
-        if (btnEl) btnEl.classList.add('active');
+        if (btnElement) btnElement.classList.add('active');
         applyCrossFilters();
     }
 
     function applyCrossFilters() {
-        const periodNorm = normalizeStr(activePeriodFilter);
-        const filteredData = fullDataset.filter(row => {
-            // Filtrar Periodo
-            const rowPeriodNorm = normalizeStr(row.date_str);
-            let periodMatch = (activePeriodFilter === 'todos') || 
-                              (rowPeriodNorm.includes(periodNorm)) ||
-                              (periodNorm === 'mediodia' && (rowPeriodNorm.includes('medio') || rowPeriodNorm.includes('mediodia')));
-
-            // Filtrar Fecha
-            const rowDate = row.timestamp ? row.timestamp.split(' ')[0] : '';
-            let dateMatch = (activeDateFilter === 'todos') || (rowDate === activeDateFilter) || (row.date_str.includes(activeDateFilter));
-
-            return periodMatch && dateMatch;
-        });
-
-        // Actualizar Filas de la Tabla
-        const rows = document.querySelectorAll('.cross-table-row');
+        const rows = document.querySelectorAll('#cross-table-body .cross-row');
         let visibleCount = 0;
+
         rows.forEach(r => {
-            const rPeriod = normalizeStr(r.getAttribute('data-period') || '');
+            const rPeriod = r.getAttribute('data-period') || '';
             const rDate = r.getAttribute('data-date') || '';
 
-            let pMatch = (activePeriodFilter === 'todos') || 
-                         (rPeriod.includes(periodNorm)) ||
-                         (periodNorm === 'mediodia' && (rPeriod.includes('medio') || rPeriod.includes('mediodia')));
-            let dMatch = (activeDateFilter === 'todos') || (rDate === activeDateFilter) || (rPeriod.includes(activeDateFilter));
+            const matchPeriod = (currentPeriodFilter === 'todos') || rPeriod.includes(currentPeriodFilter);
+            const matchDate = (currentDateFilter === 'todos') || (rDate === currentDateFilter);
 
-            if (pMatch && dMatch) {
+            if (matchPeriod && matchDate) {
                 r.style.display = '';
                 visibleCount++;
             } else {
@@ -545,301 +1254,165 @@
             }
         });
 
-        const countBadge = document.getElementById('cross-table-count-badge');
-        if (countBadge) {
-            countBadge.innerText = `${visibleCount} sesiones cruzadas`;
-        }
+        // Filtrar tarjetas de acordeón de fotos
+        document.querySelectorAll('.session-accordion-card').forEach(card => {
+            const rPeriod = card.getAttribute('data-period') || '';
+            const rDate = card.getAttribute('data-date') || '';
+            const matchPeriod = (currentPeriodFilter === 'todos') || rPeriod.includes(currentPeriodFilter);
+            const matchDate = (currentDateFilter === 'todos') || (rDate === currentDateFilter);
+            card.style.display = (matchPeriod && matchDate) ? '' : 'none';
+        });
 
-        // Redibujar todas las gráficas con el dataset filtrado
-        renderAllCharts(filteredData.length > 0 ? filteredData : fullDataset);
+        const badge = document.getElementById('cross-table-count-badge');
+        if (badge) badge.innerText = `${visibleCount} sesiones mostradas`;
+
+        renderCustomComparatorChart();
+        initDedicatedCharts();
     }
 
-    // CONMUTACION DE GRUPOS DE GRAFICAS
-    function switchChartGroup(groupName, btnEl) {
-        document.querySelectorAll('.chart-tab-btn').forEach(b => b.classList.remove('active'));
-        if (btnEl) btnEl.classList.add('active');
+    function showIndividualPhotosModal(sessionId) {
+        const session = rawCrossData.find(s => s.session_id === sessionId);
+        if (!session) return;
 
-        const gCorrelations = document.getElementById('group-correlations');
-        const gVision = document.getElementById('group-vision');
-        const gSensors = document.getElementById('group-sensors');
+        document.getElementById('modalPeriodTitle').innerText = `Desglose Fotográfico: ${session.full_period_label}`;
+        document.getElementById('modalPeriodSub').innerText = `${session.photos_count} capturas | Temp: ${session.temperature_c}°C, Hum: ${session.humidity_rh}%, Radiación: ${session.uv_solar_lux} lux`;
 
-        if (groupName === 'all') {
-            gCorrelations.style.display = 'block';
-            gVision.style.display = 'block';
-            gSensors.style.display = 'block';
-        } else if (groupName === 'correlations') {
-            gCorrelations.style.display = 'block';
-            gVision.style.display = 'none';
-            gSensors.style.display = 'none';
-        } else if (groupName === 'vision') {
-            gCorrelations.style.display = 'none';
-            gVision.style.display = 'block';
-            gSensors.style.display = 'none';
-        } else if (groupName === 'sensors') {
-            gCorrelations.style.display = 'none';
-            gVision.style.display = 'none';
-            gSensors.style.display = 'block';
-        }
-    }
+        const grid = document.getElementById('modalPhotosGrid');
+        grid.innerHTML = '';
 
-    // RENDERIZACION DE GRAFICAS
-    function renderAllCharts(dataset) {
-        if (!dataset || dataset.length === 0) return;
-
-        const labels = dataset.map(d => d.date_str);
-        const areas = dataset.map(d => d.foliar_area_cm2);
-        const heights = dataset.map(d => d.plant_height_cm);
-        const diameters = dataset.map(d => d.stem_diameter_mm);
-        const healths = dataset.map(d => d.health_index);
-        const temps = dataset.map(d => d.temperature_c);
-        const hums = dataset.map(d => d.humidity_rh);
-        const uvs = dataset.map(d => d.uv_solar_lux);
-        const currents = dataset.map(d => d.motor_current_a);
-
-        const helperChart = (id, label, data, color, fillGradColor, suffix) => {
-            const ctx = document.getElementById(id);
-            if (!ctx) return;
-            if (crossChartInstances[id]) crossChartInstances[id].destroy();
-
-            const cctx = ctx.getContext('2d');
-            const grad = cctx.createLinearGradient(0, 0, 0, 240);
-            grad.addColorStop(0, fillGradColor);
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-
-            crossChartInstances[id] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: label,
-                        data: data,
-                        borderColor: color,
-                        borderWidth: 2.2,
-                        backgroundColor: grad,
-                        fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: color,
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { color: 'rgba(15, 23, 42, 0.04)' }, ticks: { color: '#64748b', font: { size: 11 } } },
-                        y: { grid: { color: 'rgba(15, 23, 42, 0.04)' }, ticks: { color: '#64748b', callback: val => `${val}${suffix}` } }
-                    }
-                }
-            });
-        };
-
-        // 1. Correlación 1
-        const ctx1 = document.getElementById('crossGrowthChart');
-        if (ctx1) {
-            if (crossChartInstances['crossGrowthChart']) crossChartInstances['crossGrowthChart'].destroy();
-            crossChartInstances['crossGrowthChart'] = new Chart(ctx1, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Área Foliar (cm²)', data: areas, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', fill: true, tension: 0.3, yAxisID: 'yArea', pointRadius: 5 },
-                        { label: 'Radiación UV (lux)', data: uvs, borderColor: '#f59e0b', borderWidth: 2, fill: false, tension: 0.3, yAxisID: 'yUv', pointRadius: 4 },
-                        { label: 'Temperatura (°C)', data: temps, borderColor: '#3b82f6', borderWidth: 2, fill: false, tension: 0.3, yAxisID: 'yTemp', pointRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yArea: { type: 'linear', position: 'left', title: { display: true, text: 'Área (cm²)', color: '#10b981' } },
-                        yUv: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'UV (lux)', color: '#f59e0b' } },
-                        yTemp: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // 2. Correlación 2
-        const ctx2 = document.getElementById('crossHealthChart');
-        if (ctx2) {
-            if (crossChartInstances['crossHealthChart']) crossChartInstances['crossHealthChart'].destroy();
-            crossChartInstances['crossHealthChart'] = new Chart(ctx2, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Salud Foliar (%)', data: healths, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3, yAxisID: 'yHealth', pointRadius: 5 },
-                        { label: 'Humedad Relativa (%)', data: hums, borderColor: '#06b6d4', borderWidth: 2, fill: false, tension: 0.3, yAxisID: 'yHum', pointRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yHealth: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Salud (%)', color: '#10b981' } },
-                        yHum: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Humedad (%)', color: '#06b6d4' } }
-                    }
-                }
-            });
-        }
-
-        // 3. Gráficas individuales de visión
-        helperChart('indAreaChart', 'Área Foliar', areas, '#10b981', 'rgba(16, 185, 129, 0.15)', ' cm²');
-        helperChart('indHeightChart', 'Altura', heights, '#3b82f6', 'rgba(59, 130, 246, 0.15)', ' cm');
-        helperChart('indDiameterChart', 'Tallo', diameters, '#f59e0b', 'rgba(245, 158, 11, 0.15)', ' mm');
-        helperChart('indHealthChart', 'Salud Foliar', healths, '#06b6d4', 'rgba(6, 182, 212, 0.15)', ' %');
-
-        // 4. Gráficas individuales de sensores
-        helperChart('indTempChart', 'Temperatura', temps, '#ef4444', 'rgba(239, 68, 68, 0.15)', ' °C');
-        helperChart('indHumChart', 'Humedad', hums, '#3b82f6', 'rgba(59, 130, 246, 0.15)', ' %');
-        helperChart('indUvChart', 'Radiación UV / CO2', uvs, '#f59e0b', 'rgba(245, 158, 11, 0.15)', ' lux');
-        helperChart('indCurrChart', 'Corriente Bomba', currents, '#10b981', 'rgba(16, 185, 129, 0.15)', ' A');
-    }
-
-    // GESTION DE CONCLUSIONES AGRONOMICAS
-    async function saveAgronomicConclusion(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btn-save-conclusion');
-        const feedback = document.getElementById('conclusion-feedback');
-
-        const payload = {
-            plant_id: {{ active_plant_id }},
-            period_type: document.getElementById('conclusion-period-type').value,
-            date_str: document.getElementById('conclusion-date').value,
-            author: document.getElementById('conclusion-author').value,
-            growth_obs: document.getElementById('conclusion-growth').value,
-            climate_obs: document.getElementById('conclusion-climate').value,
-            nutrition_obs: document.getElementById('conclusion-nutrition').value,
-            general_conclusion: document.getElementById('conclusion-general').value
-        };
-
-        btn.disabled = true;
-        btn.innerText = 'Guardando conclusión...';
-
-        try {
-            const resp = await fetch('/api/agronomic_conclusions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await resp.json();
-
-            if (data.status === 'success') {
-                feedback.style.display = 'block';
-                feedback.style.background = 'rgba(16, 185, 129, 0.1)';
-                feedback.style.border = '1px solid var(--accent-success)';
-                feedback.style.color = 'var(--accent-success)';
-                feedback.innerText = data.message;
+        if (session.individual_photos && session.individual_photos.length) {
+            session.individual_photos.forEach((p, idx) => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px;';
                 
-                // Limpiar campos
-                document.getElementById('conclusion-growth').value = '';
-                document.getElementById('conclusion-climate').value = '';
-                document.getElementById('conclusion-nutrition').value = '';
-                document.getElementById('conclusion-general').value = '';
+                const cenitalImg = p.cenital_url ? `<img src="${p.cenital_url}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;" onclick="openLightbox('${p.cenital_url}', 'Toma #${idx+1} Cenital')" title="Clic para ampliar">` : '';
+                const lateralImg = p.lateral_url ? `<img src="${p.lateral_url}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;" onclick="openLightbox('${p.lateral_url}', 'Toma #${idx+1} Lateral')" title="Clic para ampliar">` : '';
 
-                // Recargar lista
-                loadConclusionsList();
-            } else {
-                feedback.style.display = 'block';
-                feedback.style.background = 'rgba(239, 68, 68, 0.1)';
-                feedback.style.border = '1px solid var(--accent-danger)';
-                feedback.style.color = 'var(--accent-danger)';
-                feedback.innerText = data.message;
-            }
-        } catch (e) {
-            feedback.style.display = 'block';
-            feedback.style.background = 'rgba(239, 68, 68, 0.1)';
-            feedback.style.border = '1px solid var(--accent-danger)';
-            feedback.style.color = 'var(--accent-danger)';
-            feedback.innerText = 'Error al guardar: ' + e.message;
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'Guardar Conclusión de Investigación';
-        }
-    }
-
-    async function loadConclusionsList() {
-        const typeFilter = document.getElementById('filter-conclusions-type').value;
-        const container = document.getElementById('conclusions-history-container');
-
-        try {
-            const resp = await fetch(`/api/agronomic_conclusions?plant_id={{ active_plant_id }}&period_type=${encodeURIComponent(typeFilter)}`);
-            const data = await resp.json();
-
-            if (data.status === 'success') {
-                if (data.conclusions.length === 0) {
-                    container.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No hay conclusiones registradas para este filtro.</p>`;
-                    return;
-                }
-
-                container.innerHTML = data.conclusions.map(c => `
-                    <div class="glass-card" style="padding: 16px; border: 1px solid var(--glass-border);" id="note-card-${c.id}">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="badge badge-primary" style="text-transform: uppercase;">
-                                    ${c.period_type}
-                                </span>
-                                <strong style="color: var(--text-heading); font-size: 14px;">Fecha Evaluada: ${c.date_str}</strong>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 12px; color: var(--text-inactive);">
-                                    Por: ${c.author} (${c.created_at})
-                                </span>
-                                <button type="button" class="btn-period" onclick="deleteConclusion(${c.id})" title="Eliminar Conclusión" style="padding: 4px 8px; color: var(--accent-danger);">
-                                    <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                                </button>
-                            </div>
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="badge badge-primary">Toma #${idx + 1}</span>
+                        <span style="font-size: 12px; font-weight: 700; color: #059669;">${p.foliar_area_cm2} cm²</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <div style="font-size: 10.5px; font-weight: 600; color: #64748b; margin-bottom: 2px;">Cenital</div>
+                            ${cenitalImg || '<div style="height:130px; background:#e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#94a3b8;">N/A</div>'}
                         </div>
-
-                        ${c.growth_obs ? `<p style="font-size: 12px; color: var(--text-main); margin-bottom: 6px;"><strong>Crecimiento y Vigor:</strong> ${c.growth_obs}</p>` : ''}
-                        ${c.climate_obs ? `<p style="font-size: 12px; color: var(--text-main); margin-bottom: 6px;"><strong>Clima y Luz:</strong> ${c.climate_obs}</p>` : ''}
-                        ${c.nutrition_obs ? `<p style="font-size: 12px; color: var(--text-main); margin-bottom: 6px;"><strong>Nutrición y Bombeo:</strong> ${c.nutrition_obs}</p>` : ''}
-                        <div style="background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--accent-primary); padding: 10px; border-radius: 4px; margin-top: 8px;">
-                            <p style="font-size: 13px; color: var(--text-heading); font-weight: 600; margin: 0;">
-                                Conclusión: ${c.general_conclusion}
-                            </p>
+                        <div>
+                            <div style="font-size: 10.5px; font-weight: 600; color: #64748b; margin-bottom: 2px;">Lateral</div>
+                            ${lateralImg || '<div style="height:130px; background:#e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#94a3b8;">N/A</div>'}
                         </div>
                     </div>
-                `).join('');
+                    <div style="font-size: 11.5px; color: #64748b; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">
+                        <div>Altura: <strong>${p.plant_height_cm} cm</strong></div>
+                        <div>Tallo: <strong>${p.stem_diameter_mm} mm</strong></div>
+                        <div>Salud: <strong>${p.health_index}%</strong></div>
+                        <div>Compacidad: <strong>${p.compacity_index}</strong></div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } else {
+            grid.innerHTML = '<p style="color: #94a3b8; text-align: center; grid-column: 1/-1;">No hay fotos procesadas disponibles para esta sesión.</p>';
+        }
+
+        document.getElementById('photosModal').style.display = 'flex';
+    }
+
+    function closePhotosModal() {
+        document.getElementById('photosModal').style.display = 'none';
+    }
+
+    function openLightbox(url, title) {
+        if (!url) return;
+        document.getElementById('lightboxImg').src = url;
+        document.getElementById('lightboxTitle').innerText = title || '';
+        document.getElementById('imageLightbox').style.display = 'flex';
+    }
+
+    function closeLightbox() {
+        document.getElementById('imageLightbox').style.display = 'none';
+    }
+
+    async function saveAgronomicConclusion(e) {
+        e.preventDefault();
+        const pType = document.getElementById('conclusion-period-type').value;
+        const dStr = document.getElementById('conclusion-date').value;
+        const auth = document.getElementById('conclusion-author').value;
+        const gObs = document.getElementById('conclusion-growth').value;
+        const cObs = document.getElementById('conclusion-climate').value;
+        const gen = document.getElementById('conclusion-general').value;
+
+        const fb = document.getElementById('conclusion-feedback');
+        fb.style.display = 'block';
+        fb.style.background = 'rgba(5, 150, 105, 0.1)';
+        fb.style.color = '#047857';
+        fb.innerText = 'Guardando conclusión...';
+
+        try {
+            const res = await fetch('/api/conclusions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plant_id: activePlantId,
+                    period_type: pType,
+                    date_str: dStr,
+                    author: auth,
+                    growth_obs: gObs,
+                    climate_obs: cObs,
+                    general_conclusion: gen
+                })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                fb.innerText = 'Conclusión registrada exitosamente.';
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                fb.style.background = 'rgba(220, 38, 38, 0.1)';
+                fb.style.color = '#b91c1c';
+                fb.innerText = 'Error al registrar: ' + data.message;
             }
-        } catch (e) {
-            console.error('Error loading conclusions:', e);
+        } catch (err) {
+            fb.style.background = 'rgba(220, 38, 38, 0.1)';
+            fb.style.color = '#b91c1c';
+            fb.innerText = 'Error de conexión al servidor.';
         }
     }
 
     async function deleteConclusion(noteId) {
-        if (!confirm('¿Estás seguro de que deseas eliminar esta conclusión?')) return;
-
+        if (!confirm('¿Deseas eliminar esta conclusión de investigación?')) return;
         try {
-            const resp = await fetch(`/api/agronomic_conclusions/${noteId}`, { method: 'DELETE' });
-            const data = await resp.json();
+            const res = await fetch(`/api/conclusions/${noteId}`, { method: 'DELETE' });
+            const data = await res.json();
             if (data.status === 'success') {
-                const card = document.getElementById(`note-card-${noteId}`);
-                if (card) card.remove();
+                const el = document.getElementById(`note-card-${noteId}`);
+                if (el) el.remove();
+            } else {
+                alert('Error al eliminar: ' + data.message);
             }
         } catch (e) {
-            alert('Error al eliminar: ' + e.message);
+            alert('Error de comunicación.');
         }
     }
 
     async function deleteSessionFromCross(sessionId) {
-        if (!confirm('¿Estás seguro de que deseas eliminar este período de fotos y métricas?')) return;
+        if (!confirm('¿Deseas eliminar este período y sus capturas asociadas?')) return;
         try {
-            const resp = await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
-            const data = await resp.json();
+            const res = await fetch(`/api/delete_session/${sessionId}`, { method: 'POST' });
+            const data = await res.json();
             if (data.status === 'success') {
-                alert(data.message);
                 window.location.reload();
             } else {
                 alert('Error: ' + data.message);
             }
         } catch (e) {
-            alert('Error al eliminar sesión: ' + e.message);
+            alert('Error al eliminar sesión.');
         }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        renderAllCharts(fullDataset);
+        renderCustomComparatorChart();
+        initDedicatedCharts();
     });
 </script>
 {% endblock %}

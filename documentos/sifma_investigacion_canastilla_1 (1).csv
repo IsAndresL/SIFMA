@@ -1,0 +1,7 @@
+﻿ID_Sesion;Periodo_Muestreo;Fecha_Hora_Captura;Especie_Cultivo;Canastilla_ID;Area_Foliar_cm2;Altura_Planta_cm;Diametro_Tallo_mm;Indice_Salud_pct;Indice_Compacidad;Temperatura_C;Humedad_Relativa_pct;Radiacion_Solar_UV_lux;Corriente_Motor_A;Numero_Fotos_Lote
+1;2026-08-31 - Mañana;2026-08-31 22:08:35;cebollin;1;9.63;17.37;0.0;84.5;0.108;18.8;80.7;228.1;0.0;5
+2;2026-08-31 - Mediodía;2026-08-31 22:08:38;cebollin;1;9.63;17.37;0.0;84.5;0.108;18.8;80.7;228.1;0.0;5
+3;2026-08-31 - Tarde;2026-08-31 22:08:40;cebollin;1;9.63;17.37;0.0;84.5;0.108;18.8;80.7;228.1;0.0;5
+4;2026-09-01 - Mañana;2026-08-31 22:10:59;cebollin;1;9.63;17.37;0.0;84.5;0.108;18.8;80.7;228.1;0.0;5
+5;2026-09-01 - Mediodía;2026-08-31 22:11:04;cebollin;1;9.63;17.37;0.0;84.5;0.108;18.8;80.7;228.1;0.0;5
+6;2026-09-01 - Tarde;2026-08-31 22:11:10;cebollin;1;9.63;17.37;0.0;84.5;0.108;18.8;80.7;228.1;0.0;5

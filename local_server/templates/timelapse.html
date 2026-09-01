@@ -1,0 +1,586 @@
+{% extends 'base.html' %}
+
+{% block title %}Time-Lapse & Evolución Biológica{% endblock %}
+{% block heading %}Time-Lapse & Evolución Biológica{% endblock %}
+{% block subheading %}Visor cronológico y reproducción secuencial de desarrollo vegetativo para Canastilla #{{ active_plant_id }}{% endblock %}
+
+{% block header_controls %}
+<!-- Selector de Canastilla / Torre -->
+<div style="display: flex; align-items: center; gap: 6px;">
+    <select id="header-plant-selector" class="form-input-control" style="padding: 6px 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: auto;" onchange="switchActivePlant(this.value)">
+        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1 (Cebollín)</option>
+        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2 (Albahaca)</option>
+        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3 (Lechuga)</option>
+        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4 (Fresa)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% if not timelapse_data.has_frames %}
+<!-- ESTADO SIN FOTOGRAMAS -->
+<div class="zero-data-banner" style="margin-bottom: 24px;">
+    <div class="zero-data-icon">
+        <span class="material-icons-round">slow_motion_video</span>
+    </div>
+    <div class="zero-data-text">
+        <h4>Canastilla #{{ active_plant_id }} - Sin Fotogramas Registrados</h4>
+        <p>No se encontraron capturas procesadas para la <strong>Canastilla #{{ active_plant_id }}</strong> ({{ selected_profile.display_name }}). Puedes procesar lotes fotográficos en la sección <strong>Procesamiento</strong> para generar la secuencia temporal.</p>
+    </div>
+</div>
+{% else %}
+
+<!-- REPRODUCTOR TIME-LAPSE PRINCIPAL -->
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; margin-bottom: 24px;">
+    
+    <!-- COLUMNA IZQUIERDA: VISOR DE IMÁGENES Y CONTROLES -->
+    <div class="widget-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        
+        <!-- Barra de Modos de Vista -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge badge-success" id="player-crop-badge" style="font-size: 11px;">
+                    Canastilla #{{ active_plant_id }}: {{ timelapse_data.crop_name }}
+                </span>
+                <span id="player-frame-counter" style="font-size: 12px; font-weight: 700; color: var(--text-heading);">
+                    Fotograma 1 / {{ timelapse_data.total_frames }}
+                </span>
+            </div>
+
+            <!-- Selector de Ángulo de Cámara -->
+            <div class="filter-group">
+                <button type="button" class="filter-btn active" id="btn-view-cenital" onclick="switchCameraView('cenital')">
+                    <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                    <span>Cenital</span>
+                </button>
+                <button type="button" class="filter-btn" id="btn-view-lateral" onclick="switchCameraView('lateral')">
+                    <span class="material-icons-round" style="font-size: 14px;">view_sidebar</span>
+                    <span>Lateral</span>
+                </button>
+                <button type="button" class="filter-btn" id="btn-view-dual" onclick="switchCameraView('dual')">
+                    <span class="material-icons-round" style="font-size: 14px;">splitscreen</span>
+                    <span>Vista Dual</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- STAGE DE VISUALIZACIÓN DE IMÁGENES CON OVERLAY HUD -->
+        <div class="timelapse-stage-container" id="timelapse-stage">
+            
+            <!-- Vista Cenital -->
+            <div class="timelapse-img-wrapper" id="wrapper-cenital">
+                <img id="tl-img-cenital" src="" alt="Cenital" class="timelapse-display-img">
+                <div class="timelapse-cam-tag">ÁNGULO CENITAL (ÁREA FOLIAR)</div>
+            </div>
+
+            <!-- Vista Lateral -->
+            <div class="timelapse-img-wrapper" id="wrapper-lateral" style="display: none;">
+                <img id="tl-img-lateral" src="" alt="Lateral" class="timelapse-display-img">
+                <div class="timelapse-cam-tag">ÁNGULO LATERAL (ALTURA & TALLO)</div>
+            </div>
+
+            <!-- HUD de Telemetría Flotante Superior -->
+            <div class="timelapse-hud-overlay">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round" style="font-size: 16px; color: var(--accent-success);">calendar_today</span>
+                    <strong id="hud-date-text">2026-09-01</strong>
+                    <span style="opacity: 0.7;">|</span>
+                    <span id="hud-period-text">Mañana</span>
+                </div>
+                <div id="hud-time-text" style="font-size: 11px; opacity: 0.85;">08:30:00</div>
+            </div>
+        </div>
+
+        <!-- CONTROLES DE REPRODUCCIÓN Y SCRUBBER SLIDER -->
+        <div style="margin-top: 16px;">
+            
+            <!-- Barra Deslizante de Tiempo (Scrubber) -->
+            <div style="margin-bottom: 12px;">
+                <input type="range" id="timeline-slider" min="0" max="{{ timelapse_data.total_frames - 1 }}" value="0" step="1" 
+                       oninput="onSliderSeek(this.value)" class="timelapse-slider">
+                <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted); margin-top: 4px;">
+                    <span id="slider-start-label">{{ timelapse_data.frames[0].date_str if timelapse_data.frames else '' }}</span>
+                    <span>Línea Temporal de Crecimiento</span>
+                    <span id="slider-end-label">{{ timelapse_data.frames[-1].date_str if timelapse_data.frames else '' }}</span>
+                </div>
+            </div>
+
+            <!-- Botones de Acción del Reproductor -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn btn-primary" id="btn-play-pause" onclick="togglePlayPause()" style="min-width: 100px;">
+                        <span class="material-icons-round" id="play-pause-icon">play_arrow</span>
+                        <span id="play-pause-text">Reproducir</span>
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="stepFrame(-1)" title="Fotograma Anterior">
+                        <span class="material-icons-round">skip_previous</span>
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="stepFrame(1)" title="Fotograma Siguiente">
+                        <span class="material-icons-round">skip_next</span>
+                    </button>
+                </div>
+
+                <!-- Velocidad y Bucle -->
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Velocidad:</span>
+                    <button type="button" class="speed-btn" onclick="setPlaySpeed(0.5, this)">0.5x</button>
+                    <button type="button" class="speed-btn active" onclick="setPlaySpeed(1.0, this)">1x</button>
+                    <button type="button" class="speed-btn" onclick="setPlaySpeed(2.0, this)">2x</button>
+                    <button type="button" class="speed-btn" onclick="setPlaySpeed(4.0, this)">4x</button>
+                    
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-loop-toggle" onclick="toggleLoop()" style="margin-left: 6px;" title="Repetir en Bucle">
+                        <span class="material-icons-round" id="loop-icon" style="color: var(--accent-success);">repeat</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: GAUGES BIOMÉTRICOS Y AMBIENTALES EN VIVO -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+        
+        <!-- Bloque Biométrico Sincronizado -->
+        <div class="widget-card">
+            <h4 style="font-size: 13.5px; font-weight: 700; color: var(--accent-success); margin-bottom: 14px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round" style="font-size: 18px;">spa</span>
+                <span>Biometría en Este Fotograma</span>
+            </h4>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="timelapse-gauge-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11.5px; color: var(--text-muted);">Área Foliar Cenital</span>
+                        <strong id="gauge-foliar-area" style="font-size: 16px; color: var(--text-heading);">0.0 cm²</strong>
+                    </div>
+                    <div class="gauge-bar-bg">
+                        <div id="gauge-bar-area-fill" class="gauge-bar-fill emerald" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="timelapse-gauge-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11.5px; color: var(--text-muted);">Altura de Planta</span>
+                        <strong id="gauge-plant-height" style="font-size: 16px; color: var(--text-heading);">0.0 cm</strong>
+                    </div>
+                    <div class="gauge-bar-bg">
+                        <div id="gauge-bar-height-fill" class="gauge-bar-fill blue" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="timelapse-gauge-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11.5px; color: var(--text-muted);">Diámetro de Tallo</span>
+                        <strong id="gauge-stem-dia" style="font-size: 15px; color: var(--text-heading);">0.0 mm</strong>
+                    </div>
+                </div>
+
+                <div class="timelapse-gauge-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11.5px; color: var(--text-muted);">Índice de Salud Foliar</span>
+                        <strong id="gauge-health-index" style="font-size: 15px; color: var(--accent-success);">100%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloque Ambiental Concurrente -->
+        <div class="widget-card">
+            <h4 style="font-size: 13.5px; font-weight: 700; color: #0284c7; margin-bottom: 14px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round" style="font-size: 18px;">thermostat</span>
+                <span>Telemetría Concurrente</span>
+            </h4>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div style="background: rgba(2, 132, 199, 0.06); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(2, 132, 199, 0.15);">
+                    <span style="font-size: 10px; color: var(--text-muted); display: block;">Temperatura</span>
+                    <strong id="gauge-env-temp" style="font-size: 14px; color: #0369a1;">0.0 °C</strong>
+                </div>
+                <div style="background: rgba(2, 132, 199, 0.06); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(2, 132, 199, 0.15);">
+                    <span style="font-size: 10px; color: var(--text-muted); display: block;">Humedad Relativa</span>
+                    <strong id="gauge-env-hum" style="font-size: 14px; color: #0369a1;">0.0 %</strong>
+                </div>
+                <div style="background: rgba(2, 132, 199, 0.06); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(2, 132, 199, 0.15);">
+                    <span style="font-size: 10px; color: var(--text-muted); display: block;">Radiación Solar</span>
+                    <strong id="gauge-env-uv" style="font-size: 14px; color: #0369a1;">0.0 lux</strong>
+                </div>
+                <div style="background: rgba(2, 132, 199, 0.06); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(2, 132, 199, 0.15);">
+                    <span style="font-size: 10px; color: var(--text-muted); display: block;">Bomba</span>
+                    <strong id="gauge-env-curr" style="font-size: 14px; color: #0369a1;">0.00 A</strong>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- SECCIÓN 3: CARROUSEL DE FOTOGRAMAS MINIATURA (FILMSTRIP) -->
+<div class="widget-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-heading); margin: 0;">
+            Secuencia Completa de Fotogramas (Filmstrip)
+        </h4>
+        <span style="font-size: 11.5px; color: var(--text-muted);">
+            Haz clic en cualquier miniatura para saltar a ese momento del cultivo
+        </span>
+    </div>
+
+    <div class="filmstrip-scrollable-container">
+        {% for f in timelapse_data.frames %}
+            <div class="filmstrip-card {% if loop.first %}active{% endif %}" id="filmstrip-item-{{ f.frame_index }}" 
+                 onclick="jumpToFrame({{ f.frame_index }})">
+                <div class="filmstrip-thumb-box">
+                    <img src="{{ f.cenital_url or f.lateral_url }}" alt="Frame {{ f.frame_index }}">
+                </div>
+                <div style="padding: 6px 8px; font-size: 11px;">
+                    <strong style="color: var(--text-heading); display: block;">{{ f.date_str }}</strong>
+                    <span style="color: var(--text-muted); font-size: 10px;">{{ f.period }}</span>
+                    <div style="margin-top: 2px; color: var(--accent-success); font-weight: 700; font-size: 10.5px;">
+                        {{ f.foliar_area_cm2 }} cm²
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* ESTILOS DEL REPRODUCTOR TIME-LAPSE SIFMA */
+.timelapse-stage-container {
+    background: #0f172a;
+    border-radius: 12px;
+    height: 420px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.timelapse-img-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timelapse-display-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: opacity 0.15s ease;
+}
+
+.timelapse-cam-tag {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.timelapse-hud-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.timelapse-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    outline: none;
+    accent-color: var(--accent-success);
+    cursor: pointer;
+}
+
+.speed-btn {
+    background: var(--bg-card-subtle);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.speed-btn.active {
+    background: var(--accent-success);
+    color: #ffffff;
+    border-color: var(--accent-success);
+}
+
+.timelapse-gauge-card {
+    background: var(--bg-card-subtle);
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.gauge-bar-bg {
+    width: 100%;
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.gauge-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.2s ease;
+}
+
+.gauge-bar-fill.emerald { background: var(--accent-success); }
+.gauge-bar-fill.blue { background: #0284c7; }
+
+.filmstrip-scrollable-container {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.filmstrip-card {
+    flex: 0 0 130px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filmstrip-card:hover {
+    border-color: var(--accent-success);
+    transform: translateY(-2px);
+}
+
+.filmstrip-card.active {
+    border: 2px solid var(--accent-success);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.filmstrip-thumb-box {
+    width: 100%;
+    height: 75px;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+.filmstrip-thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+</style>
+
+<script>
+    const framesData = {{ timelapse_data.frames | tojson | safe }};
+    const totalFrames = framesData ? framesData.length : 0;
+    let currentFrameIndex = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let playSpeed = 1.0;
+    let isLooping = true;
+    let activeCameraView = 'cenital';
+
+    function initTimelapsePlayer() {
+        if (!totalFrames) return;
+        renderFrame(0);
+    }
+
+    function renderFrame(index) {
+        if (!framesData || index < 0 || index >= totalFrames) return;
+        currentFrameIndex = index;
+        const frame = framesData[index];
+
+        // 1. Actualizar Imágenes
+        const imgCenital = document.getElementById('tl-img-cenital');
+        const imgLateral = document.getElementById('tl-img-lateral');
+        if (imgCenital) imgCenital.src = frame.cenital_url || frame.lateral_url;
+        if (imgLateral) imgLateral.src = frame.lateral_url || frame.cenital_url;
+
+        // 2. Actualizar HUD
+        document.getElementById('hud-date-text').innerText = frame.date_str;
+        document.getElementById('hud-period-text').innerText = frame.period;
+        document.getElementById('hud-time-text').innerText = frame.time_str;
+        document.getElementById('player-frame-counter').innerText = `Fotograma ${index + 1} / ${totalFrames}`;
+
+        // 3. Sincronizar Slider
+        const slider = document.getElementById('timeline-slider');
+        if (slider) slider.value = index;
+
+        // 4. Actualizar Gauges Biométricos
+        document.getElementById('gauge-foliar-area').innerText = `${frame.foliar_area_cm2} cm²`;
+        document.getElementById('gauge-plant-height').innerText = `${frame.plant_height_cm} cm`;
+        document.getElementById('gauge-stem-dia').innerText = `${frame.stem_diameter_mm} mm`;
+        document.getElementById('gauge-health-index').innerText = `${frame.health_index}%`;
+
+        // Barras porcentuales relativas
+        const maxAreaExpected = 150.0;
+        const maxHeightExpected = 40.0;
+        const areaPct = Math.min((frame.foliar_area_cm2 / maxAreaExpected) * 100, 100);
+        const heightPct = Math.min((frame.plant_height_cm / maxHeightExpected) * 100, 100);
+        document.getElementById('gauge-bar-area-fill').style.width = `${areaPct}%`;
+        document.getElementById('gauge-bar-height-fill').style.width = `${heightPct}%`;
+
+        // 5. Actualizar Gauges Ambientales
+        document.getElementById('gauge-env-temp').innerText = `${frame.temperature} °C`;
+        document.getElementById('gauge-env-hum').innerText = `${frame.humidity} %`;
+        document.getElementById('gauge-env-uv').innerText = `${frame.uv_solar} lux`;
+        document.getElementById('gauge-env-curr').innerText = `${frame.motor_current} A`;
+
+        // 6. Resaltar Filmstrip Card activa
+        document.querySelectorAll('.filmstrip-card').forEach(c => c.classList.remove('active'));
+        const activeCard = document.getElementById(`filmstrip-item-${index}`);
+        if (activeCard) {
+            activeCard.classList.add('active');
+            activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
+
+    function togglePlayPause() {
+        if (isPlaying) {
+            pauseTimelapse();
+        } else {
+            playTimelapse();
+        }
+    }
+
+    function playTimelapse() {
+        if (totalFrames <= 1) return;
+        isPlaying = true;
+        document.getElementById('play-pause-icon').innerText = 'pause';
+        document.getElementById('play-pause-text').innerText = 'Pausar';
+
+        const baseIntervalMs = 1000;
+        const intervalMs = baseIntervalMs / playSpeed;
+
+        clearInterval(playInterval);
+        playInterval = setInterval(() => {
+            if (currentFrameIndex >= totalFrames - 1) {
+                if (isLooping) {
+                    renderFrame(0);
+                } else {
+                    pauseTimelapse();
+                }
+            } else {
+                renderFrame(currentFrameIndex + 1);
+            }
+        }, intervalMs);
+    }
+
+    function pauseTimelapse() {
+        isPlaying = false;
+        clearInterval(playInterval);
+        document.getElementById('play-pause-icon').innerText = 'play_arrow';
+        document.getElementById('play-pause-text').innerText = 'Reproducir';
+    }
+
+    function stepFrame(delta) {
+        pauseTimelapse();
+        let nextIdx = currentFrameIndex + delta;
+        if (nextIdx < 0) nextIdx = 0;
+        if (nextIdx >= totalFrames) nextIdx = totalFrames - 1;
+        renderFrame(nextIdx);
+    }
+
+    function onSliderSeek(val) {
+        pauseTimelapse();
+        renderFrame(parseInt(val));
+    }
+
+    function jumpToFrame(index) {
+        pauseTimelapse();
+        renderFrame(index);
+    }
+
+    function setPlaySpeed(speed, btnElement) {
+        playSpeed = speed;
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+        if (isPlaying) {
+            playTimelapse();
+        }
+    }
+
+    function toggleLoop() {
+        isLooping = !isLooping;
+        const icon = document.getElementById('loop-icon');
+        if (isLooping) {
+            icon.style.color = 'var(--accent-success)';
+        } else {
+            icon.style.color = 'var(--text-muted)';
+        }
+    }
+
+    function switchCameraView(view) {
+        activeCameraView = view;
+        document.querySelectorAll('.filter-group .filter-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById(`btn-view-${view}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        const stage = document.getElementById('timelapse-stage');
+        const wrapCenital = document.getElementById('wrapper-cenital');
+        const wrapLateral = document.getElementById('wrapper-lateral');
+
+        if (view === 'cenital') {
+            stage.style.display = 'flex';
+            wrapCenital.style.display = 'flex';
+            wrapLateral.style.display = 'none';
+        } else if (view === 'lateral') {
+            stage.style.display = 'flex';
+            wrapCenital.style.display = 'none';
+            wrapLateral.style.display = 'flex';
+        } else if (view === 'dual') {
+            stage.style.display = 'grid';
+            stage.style.gridTemplateColumns = '1fr 1fr';
+            wrapCenital.style.display = 'flex';
+            wrapLateral.style.display = 'flex';
+        }
+    }
+
+    // Atajo de teclado: Barra espaciadora para reproducir/pausar
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            togglePlayPause();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initTimelapsePlayer();
+    });
+</script>
+{% endblock %}

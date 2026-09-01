@@ -19,7 +19,7 @@ from infrastructure.database.connection import db
 
 class VisionApplicationService:
     """
-    Caso de uso: Procesamiento de lotes fotográficos, detección USB y persistencia de métricas.
+    Caso de uso: Procesamiento de lotes fotográficos, detección USB y persistencia de métricas individuales.
     (SOLID: SRP, DIP)
     """
     
@@ -115,12 +115,26 @@ class VisionApplicationService:
             raise FileNotFoundError(f"La ruta {folder_path} no existe.")
             
         metadata_file = os.path.join(folder_path, "metadata.json")
-        if os.path.exists(metadata_file) and not sensor_data:
+        photos_meta_map = {}
+        session_timestamp = datetime.now()
+        
+        if os.path.exists(metadata_file):
             try:
                 with open(metadata_file, "r") as f:
                     meta = json.load(f)
-                    sensor_data = meta.get("sensor_data", sensor_data)
                     crop_type = meta.get("crop_type", crop_type)
+                    if "timestamp" in meta:
+                        try:
+                            session_timestamp = datetime.fromisoformat(meta["timestamp"])
+                        except Exception:
+                            try:
+                                session_timestamp = datetime.strptime(meta["timestamp"], "%Y-%m-%d %H:%M:%S")
+                            except Exception:
+                                pass
+                    for p_info in meta.get("photos", []):
+                        p_idx = p_info.get("photo_index")
+                        if p_idx is not None:
+                            photos_meta_map[p_idx] = p_info
             except Exception:
                 pass
                 
@@ -130,8 +144,8 @@ class VisionApplicationService:
         if not all_images:
             all_images = glob.glob(os.path.join(folder_path, "*", "*.png")) + glob.glob(os.path.join(folder_path, "*", "*.jpg"))
             
-        cenital_imgs = [f for f in all_images if "cenital" in os.path.basename(f).lower()]
-        lateral_imgs = [f for f in all_images if "lateral" in os.path.basename(f).lower()]
+        cenital_imgs = sorted([f for f in all_images if "cenital" in os.path.basename(f).lower()])
+        lateral_imgs = sorted([f for f in all_images if "lateral" in os.path.basename(f).lower()])
         
         if not cenital_imgs and not lateral_imgs and all_images:
             half = len(all_images) // 2
@@ -183,19 +197,32 @@ class VisionApplicationService:
                     "metrics": res
                 })
                 
-        # Construir métricas individuales
+        # Construir métricas individuales con timestamps específicos de cada toma
         max_photos = max(len(cenital_paths_list), len(lateral_paths_list), 1)
         individual_metrics = []
+        
         for i in range(max_photos):
+            photo_index = i + 1
             c_data = cenital_paths_list[i] if i < len(cenital_paths_list) else None
             l_data = lateral_paths_list[i] if i < len(lateral_paths_list) else None
             
             c_metrics = c_data["metrics"] if c_data else {}
             l_metrics = l_data["metrics"] if l_data else {}
             
+            # Timestamp exacto de la toma individual
+            p_meta = photos_meta_map.get(photo_index, {})
+            p_time_str = p_meta.get("timestamp")
+            if p_time_str:
+                try:
+                    exact_dt = datetime.strptime(p_time_str, "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    exact_dt = session_timestamp
+            else:
+                exact_dt = session_timestamp
+            
             individual_metrics.append({
-                "photo_index": i + 1,
-                "capture_time": datetime.now(),
+                "photo_index": photo_index,
+                "capture_time": exact_dt,
                 "foliar_area_cm2": c_metrics.get("area_cm2", 0.0),
                 "health_index": c_metrics.get("health_index", 100.0),
                 "compacity_index": c_metrics.get("compacity_index", 0.0),
@@ -225,7 +252,8 @@ class VisionApplicationService:
             individual_metrics=individual_metrics,
             cenital_paths={"orig": default_cen_orig, "proc": default_cen_proc},
             lateral_paths={"orig": default_lat_orig, "proc": default_lat_proc},
-            plant_id=plant_id
+            plant_id=plant_id,
+            session_timestamp=session_timestamp
         )
         
         return {
@@ -240,15 +268,18 @@ class VisionApplicationService:
 
     def _save_capture_session_with_metrics(
         self, period, crop_type, sensor_data, final_metrics, 
-        individual_metrics=None, cenital_paths=None, lateral_paths=None, plant_id=1
+        individual_metrics=None, cenital_paths=None, lateral_paths=None, plant_id=1,
+        session_timestamp=None
     ) -> int:
         if not cenital_paths: cenital_paths = {}
         if not lateral_paths: lateral_paths = {}
         if not sensor_data: sensor_data = {}
+        if not session_timestamp: session_timestamp = datetime.now()
 
         sensor_id = None
         if sensor_data and any(sensor_data.values()):
             sensor_record = SensorReading(
+                timestamp=session_timestamp,
                 temperature=float(sensor_data.get("temperature", 0.0)),
                 humidity=float(sensor_data.get("humidity", 0.0)),
                 uv_solar=float(sensor_data.get("uv_solar", 0.0)),
@@ -257,13 +288,13 @@ class VisionApplicationService:
             self.sensor_repo.add(sensor_record)
             sensor_id = sensor_record.id
         else:
-            nearest = self.sensor_repo.find_nearest(datetime.now())
+            nearest = self.sensor_repo.find_nearest(session_timestamp)
             sensor_id = nearest.id if nearest else None
 
         existing = self.session_repo.get_by_period_and_plant(period, int(plant_id))
         if existing:
             session_record = existing
-            session_record.timestamp = datetime.now()
+            session_record.timestamp = session_timestamp
             session_record.crop_type = crop_type
             if sensor_id:
                 session_record.sensor_reading_id = sensor_id
@@ -277,7 +308,7 @@ class VisionApplicationService:
                 plant_id=int(plant_id),
                 crop_type=crop_type,
                 sensor_reading_id=sensor_id,
-                timestamp=datetime.now()
+                timestamp=session_timestamp
             )
             self.session_repo.save(session_record)
 
@@ -286,7 +317,7 @@ class VisionApplicationService:
             session_id=session_record.id,
             photo_index=0,
             is_average=True,
-            capture_exact_time=datetime.now(),
+            capture_exact_time=session_timestamp,
             foliar_area_cm2=final_metrics.get("foliar_area_cm2", 0.0),
             plant_height_cm=final_metrics.get("plant_height_cm", 0.0),
             stem_diameter_mm=final_metrics.get("stem_diameter_mm", 0.0),
@@ -301,15 +332,16 @@ class VisionApplicationService:
         )
         db.session.add(avg_record)
 
-        # 2. Métricas individuales
+        # 2. Métricas individuales por cada una de las 5 tomas
         if individual_metrics:
             for item in individual_metrics:
                 idx = item.get("photo_index", 1)
+                t_exact = item.get("capture_time", session_timestamp)
                 ind_record = BiometricMetric(
                     session_id=session_record.id,
                     photo_index=idx,
                     is_average=False,
-                    capture_exact_time=item.get("capture_time", datetime.now()),
+                    capture_exact_time=t_exact,
                     foliar_area_cm2=item.get("foliar_area_cm2", 0.0),
                     plant_height_cm=item.get("plant_height_cm", 0.0),
                     stem_diameter_mm=item.get("stem_diameter_mm", 0.0),
@@ -318,7 +350,7 @@ class VisionApplicationService:
                     spots_count=0,
                     fruits_count=0,
                     image_path_cenital_orig=item.get("cenital_orig"),
-                    image_path_cenital_proc=item.get("cenital_proc"),
+                    image_path_cenital_proc=item.get("proc") if "proc" in item else item.get("cenital_proc"),
                     image_path_lateral_orig=item.get("lateral_orig"),
                     image_path_lateral_proc=item.get("lateral_proc")
                 )

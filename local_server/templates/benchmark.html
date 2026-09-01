@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Comparador Inter-Canastillas & Benchmark{% endblock %}
+{% block heading %}Comparador Inter-Canastillas & Benchmark{% endblock %}
+{% block subheading %}Evaluación simultánea de crecimiento, gradiente vertical en la torre y Tasa de Crecimiento Relativo (RGR){% endblock %}
+
+{% block header_controls %}
+<!-- Selector de Canastilla / Torre para redirecciones rápidas -->
+<div style="display: flex; align-items: center; gap: 6px;">
+    <select id="header-plant-selector" class="form-input-control" style="padding: 6px 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: auto;" onchange="switchActivePlant(this.value)">
+        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1</option>
+        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2</option>
+        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3</option>
+        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- SECCIÓN 1: TARJETAS DE BENCHMARK POR NODO/CANASTILLA -->
+<div class="kpi-row-grid" style="margin-bottom: 24px;">
+    {% for pid in [1, 2, 3, 4] %}
+        {% set c = benchmark_data.canastillas[pid] %}
+        <div class="kpi-card" style="border-top: 3px solid {{ c.color.border }};">
+            <div class="kpi-card-header">
+                <div>
+                    <span class="kpi-label" style="font-size: 11px; font-weight: 700; color: {{ c.color.border }};">
+                        CANASTILLA #{{ pid }} ({{ c.level_name.split(' - ')[0] }})
+                    </span>
+                    <div style="font-size: 13.5px; font-weight: 700; color: var(--text-heading); margin-top: 2px;">
+                        {{ c.display_name }}
+                    </div>
+                </div>
+                <div class="kpi-icon-badge" style="background: {{ c.color.bg }}; color: {{ c.color.border }};">
+                    <span class="material-icons-round">spa</span>
+                </div>
+            </div>
+
+            {% if c.has_data %}
+                <div class="kpi-value-row" style="margin-top: 8px;">
+                    <span class="kpi-big-number">{{ c.latest_area }}</span>
+                    <span class="kpi-unit">cm² foliares</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; font-size: 11.5px;">
+                    <div style="background: var(--bg-card-subtle); padding: 5px 7px; border-radius: 6px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 10px;">Ganancia ΔA:</span>
+                        <strong style="color: var(--accent-success);">+{{ c.total_area_gain }} cm²</strong>
+                    </div>
+                    <div style="background: var(--bg-card-subtle); padding: 5px 7px; border-radius: 6px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 10px;">Tasa RGR:</span>
+                        <strong style="color: #0284c7;">{{ c.rgr_pct_day }} %/día</strong>
+                    </div>
+                    <div style="background: var(--bg-card-subtle); padding: 5px 7px; border-radius: 6px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 10px;">Altura:</span>
+                        <strong>{{ c.latest_height }} cm</strong>
+                    </div>
+                    <div style="background: var(--bg-card-subtle); padding: 5px 7px; border-radius: 6px;">
+                        <span style="color: var(--text-muted); display: block; font-size: 10px;">Salud Media:</span>
+                        <strong>{{ c.avg_health_overall }}%</strong>
+                    </div>
+                </div>
+            {% else %}
+                <div style="padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 12px;">
+                    <span class="material-icons-round" style="font-size: 24px; opacity: 0.5; display: block; margin-bottom: 4px;">hourglass_empty</span>
+                    Sin muestras fenotípicas
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<!-- SECCIÓN 2: GRÁFICA MULTIVARIABLE COMPARATIVA SUPERPUESTA -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-heading); margin: 0;">
+                Curvas Comparativas Superpuestas Inter-Canastillas
+            </h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Superposición temporal para identificar variaciones de vigor híbrido y velocidad de expansión foliar
+            </p>
+        </div>
+
+        <!-- Selector de Métrica a Comparar -->
+        <div class="filter-group">
+            <button type="button" class="filter-btn active" id="btn-metric-area" onclick="switchBenchmarkMetric('area')">
+                <span class="material-icons-round" style="font-size: 15px;">yard</span>
+                <span>Área Foliar (cm²)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-metric-height" onclick="switchBenchmarkMetric('height')">
+                <span class="material-icons-round" style="font-size: 15px;">height</span>
+                <span>Altura (cm)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-metric-health" onclick="switchBenchmarkMetric('health')">
+                <span class="material-icons-round" style="font-size: 15px;">favorite</span>
+                <span>Salud Foliar (%)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtro de Canastillas Visibles (Checkboxes) -->
+    <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; padding: 10px 14px; background: var(--bg-card-subtle); border-radius: 8px; font-size: 12.5px; font-weight: 600;">
+        <span style="color: var(--text-muted);">Canastillas visibles:</span>
+        {% for pid in [1, 2, 3, 4] %}
+            {% set c = benchmark_data.canastillas[pid] %}
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="toggle-plant-{{ pid }}" checked onchange="toggleDatasetVisibility({{ pid - 1 }})" style="accent-color: {{ c.color.border }}; cursor: pointer;">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {{ c.color.border }};"></span>
+                <span>Canastilla #{{ pid }} ({{ c.display_name }})</span>
+            </label>
+        {% endfor %}
+    </div>
+
+    <!-- Contenedor del Canvas -->
+    <div style="position: relative; height: 380px; width: 100%;">
+        <canvas id="benchmarkComparisonChart"></canvas>
+    </div>
+</div>
+
+<!-- SECCIÓN 3: ANÁLISIS DE GRADIENTE VERTICAL EN LA TORRE -->
+<div class="widget-card" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-heading); margin: 0;">
+                Evaluación del Gradiente Vertical en la Torre
+            </h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Influencia del estrato de altura (Nivel 4 Cúspide vs Nivel 1 Base) en la tasa de fotosíntesis y transpiración
+            </p>
+        </div>
+        <span class="badge badge-primary">Estructura Aeropónica</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+        {% for pid in [4, 3, 2, 1] %}
+            {% set c = benchmark_data.canastillas[pid] %}
+            <div style="background: #ffffff; border: 1px solid var(--border-color); border-left: 4px solid {{ c.color.border }}; border-radius: 10px; padding: 14px; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                            {{ c.level_name }}
+                        </span>
+                        <h4 style="font-size: 14px; font-weight: 700; color: var(--text-heading); margin: 2px 0 0 0;">
+                            Canastilla #{{ pid }}: {{ c.display_name }}
+                        </h4>
+                    </div>
+                    <span class="badge" style="background: {{ c.color.bg }}; color: {{ c.color.border }}; font-weight: 700; font-size: 11px;">
+                        {% if pid == 4 %}Máxima Luz{% elif pid == 1 %}Mayor Humedad{% else %}Intermedio{% endif %}
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-top: 10px;">
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 10.5px;">Tasa RGR:</span>
+                        <strong style="display: block; color: #0284c7; font-size: 13px;">{{ c.rgr_pct_day }} %/día</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 10.5px;">Tasa AGR:</span>
+                        <strong style="display: block; color: var(--accent-success); font-size: 13px;">{{ c.agr_cm2_day }} cm²/día</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 10.5px;">Expansión Total:</span>
+                        <strong style="display: block;">{{ c.total_area_gain }} cm²</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 10.5px;">Salud Foliar:</span>
+                        <strong style="display: block;">{{ c.avg_health_overall }}%</strong>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- SECCIÓN 4: TABLA CONSOLIDADA DE BENCHMARK CIENTÍFICO -->
+<div class="widget-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-heading); margin: 0;">
+                Matriz Comparativa de Desempeño Biométrico
+            </h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Métricas biométricas consolidadas para análisis de publicaciones y reportes
+            </p>
+        </div>
+        <a href="/api/cross_analysis/export_csv?plant_id={{ active_plant_id }}" class="btn btn-outline btn-sm">
+            <span class="material-icons-round">download</span>
+            <span>Exportar CSV Completo</span>
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" style="font-size: 12.5px;">
+            <thead>
+                <tr>
+                    <th>Canastilla</th>
+                    <th>Especie / Variedad</th>
+                    <th>Nivel en Torre</th>
+                    <th>Lotes Procesados</th>
+                    <th>Área Inicial</th>
+                    <th>Área Actual</th>
+                    <th>Ganancia ΔA</th>
+                    <th>Tasa RGR (%/día)</th>
+                    <th>Tasa AGR (cm²/día)</th>
+                    <th>Altura Actual</th>
+                    <th>Salud Foliar</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pid in [1, 2, 3, 4] %}
+                    {% set c = benchmark_data.canastillas[pid] %}
+                    <tr>
+                        <td style="font-weight: 700;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {{ c.color.border }};"></span>
+                                <span>#{{ pid }}</span>
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ c.display_name }}</strong>
+                            {% if c.scientific_name %}
+                                <span style="display: block; font-size: 10.5px; color: var(--text-muted); font-style: italic;">
+                                    {{ c.scientific_name }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge badge-neutral" style="font-size: 11px;">{{ c.level_name.split(' - ')[0] }}</span></td>
+                        <td>{{ c.sessions_count }} sesiones</td>
+                        <td>{{ c.initial_area }} cm²</td>
+                        <td><strong style="color: var(--text-heading);">{{ c.latest_area }} cm²</strong></td>
+                        <td style="color: var(--accent-success); font-weight: 700;">+{{ c.total_area_gain }} cm²</td>
+                        <td style="color: #0284c7; font-weight: 700;">{{ c.rgr_pct_day }} %</td>
+                        <td style="font-weight: 600;">{{ c.agr_cm2_day }} cm²/d</td>
+                        <td>{{ c.latest_height }} cm</td>
+                        <td>
+                            <span class="badge {% if c.avg_health_overall >= 80 %}badge-success{% else %}badge-warning{% endif %}">
+                                {{ c.avg_health_overall }}%
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/?plant_id={{ pid }}" class="btn btn-outline btn-sm" style="padding: 3px 7px; font-size: 11px;" title="Ver Dashboard de Canastilla #{{ pid }}">
+                                <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const chartLabels = {{ benchmark_data.chart_labels | tojson | safe }};
+    const chartsData = {{ benchmark_data.charts | tojson | safe }};
+    let activeMetric = 'area';
+    let comparisonChartInstance = null;
+
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    function initBenchmarkChart() {
+        const ctx = document.getElementById('benchmarkComparisonChart').getContext('2d');
+        
+        const datasets = getDatasetsForMetric(activeMetric);
+
+        comparisonChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels.length ? chartLabels : ['Sin registros'],
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 14,
+                            font: { size: 12, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleFont: { size: 12, weight: '700' },
+                        bodyFont: { size: 11.5 },
+                        padding: 10,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                        title: { display: true, text: 'Fecha de Muestreo', font: { size: 11, weight: '600' } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                        title: { display: true, text: getYAxisTitle(activeMetric), font: { size: 11, weight: '600' } },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function getYAxisTitle(metric) {
+        if (metric === 'area') return 'Área Foliar Promedio (cm²)';
+        if (metric === 'height') return 'Altura de Planta (cm)';
+        if (metric === 'health') return 'Índice de Salud Foliar (%)';
+        return '';
+    }
+
+    function getDatasetsForMetric(metric) {
+        return chartsData[metric] || [];
+    }
+
+    function switchBenchmarkMetric(metric) {
+        activeMetric = metric;
+        document.querySelectorAll('.filter-group .filter-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById(`btn-metric-${metric}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        if (comparisonChartInstance) {
+            comparisonChartInstance.data.datasets = getDatasetsForMetric(metric);
+            comparisonChartInstance.options.scales.y.title.text = getYAxisTitle(metric);
+            
+            // Sincronizar visibilidad de checkboxes
+            for (let i = 0; i < 4; i++) {
+                const cb = document.getElementById(`toggle-plant-${i + 1}`);
+                if (cb && comparisonChartInstance.data.datasets[i]) {
+                    comparisonChartInstance.data.datasets[i].hidden = !cb.checked;
+                }
+            }
+            comparisonChartInstance.update();
+        }
+    }
+
+    function toggleDatasetVisibility(datasetIndex) {
+        if (comparisonChartInstance && comparisonChartInstance.data.datasets[datasetIndex]) {
+            const cb = document.getElementById(`toggle-plant-${datasetIndex + 1}`);
+            comparisonChartInstance.data.datasets[datasetIndex].hidden = !cb.checked;
+            comparisonChartInstance.update();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initBenchmarkChart();
+    });
+</script>
+{% endblock %}

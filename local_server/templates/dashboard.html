@@ -1,136 +1,339 @@
 {% extends 'base.html' %}
 
-{% block title %}Monitoreo de Cultivo{% endblock %}
-{% block heading %}Dashboard de Monitoreo{% endblock %}
+{% block title %}Dashboard Analítico{% endblock %}
+{% block heading %}Dashboard analítico{% endblock %}
+{% block subheading %}Resumen general de la jornada: {{ target_date }}{% endblock %}
+
+{% block header_controls %}
+<!-- Navegador por Día / Fecha -->
+<div class="date-navigator-box">
+    <button class="date-nav-btn" id="btn-prev-day" title="Día Anterior">
+        <span class="material-icons-round">chevron_left</span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 4px;">
+        <span class="material-icons-round text-muted" style="font-size: 16px;">calendar_today</span>
+        <input type="date" id="dashboard-date-picker" class="date-selector-input" value="{{ target_date }}" onchange="navigateDate(this.value)">
+    </div>
+    <button class="date-nav-btn" id="btn-next-day" title="Día Siguiente">
+        <span class="material-icons-round">chevron_right</span>
+    </button>
+</div>
+
+<!-- Selector de Canastilla / Torre -->
+<div style="display: flex; align-items: center; gap: 6px;">
+    <select id="header-plant-selector" class="form-input-control" style="padding: 6px 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: auto;" onchange="switchActivePlant(this.value)">
+        <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1</option>
+        <option value="2" {% if active_plant_id == 2 %}selected{% endif %}>Canastilla #2</option>
+        <option value="3" {% if active_plant_id == 3 %}selected{% endif %}>Canastilla #3</option>
+        <option value="4" {% if active_plant_id == 4 %}selected{% endif %}>Canastilla #4</option>
+    </select>
+</div>
+
+<!-- Botón Exportar CSV -->
+<a href="{{ url_for('api.export_cross_analysis_csv', plant_id=active_plant_id) }}" class="btn-header-action" title="Exportar Registro Científico en CSV">
+    <span class="material-icons-round">download</span>
+    <span>Exportar</span>
+</a>
+{% endblock %}
 
 {% block content %}
-<!-- SECCIÓN 1: TARJETAS DE MÉTRICAS PRINCIPALES -->
-<div class="metric-grid">
-    <!-- Tarjeta 1: Área Foliar -->
-    <div class="glass-card metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Área Foliar Est.</span>
-            <div class="icon-container success">
+
+<!-- AVISO DE JORNADA SIN DATOS / ESTADO BASE CERO -->
+{% if not daily.has_data %}
+<div class="zero-data-banner">
+    <div class="zero-data-icon">
+        <span class="material-icons-round">event_busy</span>
+    </div>
+    <div class="zero-data-text">
+        <h4>Canastilla #{{ active_plant_id }} ({{ active_crop_profile.display_name }}) - Sin Muestreo en Fecha: {{ target_date }}</h4>
+        <p>No se encontraron capturas de fenotipado para esta fecha en la <strong>Canastilla #{{ active_plant_id }}</strong>. Todas las métricas de la planta se muestran en estado base 0. Para registrar datos, sube un lote en la sección de <em>Procesamiento</em> o selecciona una fecha con muestras registradas.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- SECCIÓN 1: 5 TARJETAS KPI EJECUTIVAS SUPERIORES -->
+<div class="kpi-row-grid">
+    <!-- KPI 1: Área Foliar -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Área Foliar Promedio</span>
+            <div class="kpi-icon-badge emerald">
                 <span class="material-icons-round">spa</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="val-area">
-                {% if latest_metric %}{{ latest_metric.foliar_area_cm2 }}{% else %}0.00{% endif %}
-            </span>
-            <span class="metric-unit">cm²</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ daily.kpis.foliar_area_cm2 }}</span>
+            <span class="kpi-unit">cm²</span>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">trending_up</span>
-            <span>Expansión de Canopia (Cenital)</span>
+        <div class="kpi-footer-badge {% if daily.kpis.foliar_area_diff >= 0 %}positive{% else %}neutral{% endif %}">
+            <span class="material-icons-round" style="font-size: 14px;">{% if daily.kpis.foliar_area_diff >= 0 %}trending_up{% else %}trending_flat{% endif %}</span>
+            <span>{% if daily.kpis.foliar_area_diff != 0.0 %}{{ '+ ' if daily.kpis.foliar_area_diff > 0 else '' }}{{ daily.kpis.foliar_area_diff }} cm² vs día previo{% else %}Expansión de Canopia{% endif %}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 2: Altura Planta -->
-    <div class="glass-card metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Altura Estimada</span>
-            <div class="icon-container primary">
-                <span class="material-icons-round">straighten</span>
+    <!-- KPI 2: Temperatura -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Temperatura Media</span>
+            <div class="kpi-icon-badge blue">
+                <span class="material-icons-round">thermostat</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="val-height">
-                {% if latest_metric %}{{ latest_metric.plant_height_cm }}{% else %}0.00{% endif %}
-            </span>
-            <span class="metric-unit">cm</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ daily.kpis.temperature_c }}</span>
+            <span class="kpi-unit">°C</span>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">straight</span>
-            <span>Crecimiento Vertical (Lateral)</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in daily.kpis.temperature_status %}positive{% else %}neutral{% endif %}">
+            <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
+            <span>{{ daily.kpis.temperature_status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 3: Diámetro del Tallo -->
-    <div class="glass-card metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Diámetro del Tallo</span>
-            <div class="icon-container warning">
-                <span class="material-icons-round">adjust</span>
+    <!-- KPI 3: Humedad Relativa -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Humedad Relativa</span>
+            <div class="kpi-icon-badge cyan">
+                <span class="material-icons-round">water_drop</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="val-diameter">
-                {% if latest_metric %}{{ latest_metric.stem_diameter_mm }}{% else %}0.00{% endif %}
-            </span>
-            <span class="metric-unit">mm</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ daily.kpis.humidity_rh }}</span>
+            <span class="kpi-unit">% HR</span>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">width</span>
-            <span>Espesor en Base (Lateral)</span>
+        <div class="kpi-footer-badge {% if 'Adecuado' in daily.kpis.humidity_status %}positive{% else %}neutral{% endif %}">
+            <span class="material-icons-round" style="font-size: 14px;">info</span>
+            <span>{{ daily.kpis.humidity_status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 4: Salud Foliar -->
-    <div class="glass-card metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Índice de Salud</span>
-            <div class="icon-container {% if latest_metric and latest_metric.health_index < 80 %}danger{% else %}success{% endif %}">
+    <!-- KPI 4: Radiación Solar UV -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Radiación Solar</span>
+            <div class="kpi-icon-badge amber">
+                <span class="material-icons-round">wb_sunny</span>
+            </div>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ daily.kpis.uv_solar_lux }}</span>
+            <span class="kpi-unit">lux</span>
+        </div>
+        <div class="kpi-footer-badge neutral">
+            <span class="material-icons-round" style="font-size: 14px;">light_mode</span>
+            <span>{{ daily.kpis.uv_solar_status }}</span>
+        </div>
+    </div>
+
+    <!-- KPI 5: Salud Vegetal -->
+    <div class="kpi-card">
+        <div class="kpi-card-header">
+            <span class="kpi-label">Salud y Vigor Foliar</span>
+            <div class="kpi-icon-badge emerald">
                 <span class="material-icons-round">health_and_safety</span>
             </div>
         </div>
-        <div class="metric-value-container">
-            <span class="metric-value" id="val-health">
-                {% if latest_metric %}{{ latest_metric.health_index }}{% else %}100.00{% endif %}
-            </span>
-            <span class="metric-unit">%</span>
+        <div class="kpi-value-row">
+            <span class="kpi-big-number">{{ daily.kpis.health_index }}</span>
+            <span class="kpi-unit">%</span>
         </div>
-        <div class="metric-footer">
-            <span class="material-icons-round">circle</span>
-            <span>Coloración Verde Foliar</span>
+        <div class="kpi-footer-badge positive">
+            <span class="material-icons-round" style="font-size: 14px;">eco</span>
+            <span>{{ daily.kpis.health_status }}</span>
         </div>
     </div>
 </div>
 
-<!-- SECCIÓN 2: GRÁFICAS DE EVOLUCIÓN -->
-<div class="chart-grid">
-    <!-- Gráfica de Crecimiento -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round">show_chart</span>
-            <h3>Histórico de Crecimiento Biométrico</h3>
+<!-- SECCIÓN 2: 4 WIDGETS ANALÍTICOS Y GRÁFICAS (GRID 2x2) -->
+<div class="analytics-grid-2x2">
+    <!-- WIDGET 1: Temperatura y Curva Térmica de la Jornada -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Temperatura y Clima de la Jornada</h3>
+                <p>Comportamiento térmico con banda de amplitud diaria</p>
+            </div>
+            <div class="widget-actions-box">
+                <span class="widget-badge-tag active">Jornada Diaria</span>
+            </div>
         </div>
-        <div class="chart-container">
-            <canvas id="growthChart"></canvas>
+        
+        <div class="chart-stage-container">
+            <canvas id="thermalCurveChart"></canvas>
+        </div>
+
+        <div class="widget-stats-row">
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Máx. Diaria</span>
+                <span class="stat-item-value">{{ daily.thermal_curve.max_temp }} °C</span>
+                <span class="stat-item-desc">Pico térmico</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Mín. Diaria</span>
+                <span class="stat-item-value">{{ daily.thermal_curve.min_temp }} °C</span>
+                <span class="stat-item-desc">Mínimo nocturno</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Amplitud</span>
+                <span class="stat-item-value">{{ daily.thermal_curve.amplitude }} °C</span>
+                <span class="stat-item-desc">Delta térmico</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Régimen</span>
+                <span class="stat-item-value">{{ daily.thermal_curve.regime }}</span>
+                <span class="stat-item-desc">Evaluación</span>
+            </div>
         </div>
     </div>
 
-    <!-- Gráfica Resumida de Sensores (Temperatura y Humedad Combinadas) -->
-    <div class="glass-card">
-        <div class="glass-card-title">
-            <span class="material-icons-round">analytics</span>
-            <h3>Resumen Climatológico (Telemetría)</h3>
+    <!-- WIDGET 2: Morfometría y Crecimiento Diario -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Crecimiento y Morfometría del Día</h3>
+                <p>Evolución del área foliar por período de muestreo</p>
+            </div>
+            <div class="widget-actions-box">
+                <span class="widget-badge-tag active">3 Períodos</span>
+            </div>
         </div>
-        <div class="chart-container">
-            <canvas id="sensorSummaryChart"></canvas>
+
+        <div class="chart-stage-container">
+            <canvas id="growthPeriodsChart"></canvas>
+        </div>
+
+        <div class="widget-stats-row">
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Mayor Vigor</span>
+                <span class="stat-item-value">{{ daily.growth_chart.best_period }}</span>
+                <span class="stat-item-desc">Máxima área</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Altura Planta</span>
+                <span class="stat-item-value">{{ daily.growth_chart.avg_height }} cm</span>
+                <span class="stat-item-desc">Morfometría</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Diámetro Tallo</span>
+                <span class="stat-item-value">{{ daily.growth_chart.avg_diameter }} mm</span>
+                <span class="stat-item-desc">Espesor basal</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Compacidad</span>
+                <span class="stat-item-value">{{ daily.kpis.compacity_index }}</span>
+                <span class="stat-item-desc">Densidad foliar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIDGET 3: Corriente de Bomba y Riego -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Flujo y Corriente de Bomba (Telemetría)</h3>
+                <p>Estabilidad de recirculación de la solución nutritiva</p>
+            </div>
+            <div class="widget-actions-box">
+                <span class="widget-badge-tag active">Amperaje</span>
+            </div>
+        </div>
+
+        <div class="chart-stage-container">
+            <canvas id="pumpCurrentChart"></canvas>
+        </div>
+
+        <div class="widget-stats-row">
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Corriente Media</span>
+                <span class="stat-item-value">{{ daily.pump_chart.avg_current }} A</span>
+                <span class="stat-item-desc">Consumo motor</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Máx. Registrado</span>
+                <span class="stat-item-value">{{ daily.pump_chart.max_current }} A</span>
+                <span class="stat-item-desc">Pico de arranque</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Estado Bombeo</span>
+                <span class="stat-item-value">{{ daily.pump_chart.status }}</span>
+                <span class="stat-item-desc">Presión estable</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Canastilla</span>
+                <span class="stat-item-value">Torre #{{ active_plant_id }}</span>
+                <span class="stat-item-desc">Posición vertical</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIDGET 4: Radiación Solar UV y Fotoperíodo -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Radiación Solar UV (Irradiancia)</h3>
+                <p>Distribución de luz útil a lo largo de las horas</p>
+            </div>
+            <div class="widget-actions-box">
+                <span class="widget-badge-tag active">Luximetría</span>
+            </div>
+        </div>
+
+        <div class="chart-stage-container">
+            <canvas id="solarIrradianceChart"></canvas>
+        </div>
+
+        <div class="widget-stats-row">
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Radiación Media</span>
+                <span class="stat-item-value">{{ daily.solar_chart.avg_uv }} lux</span>
+                <span class="stat-item-desc">Media diurna</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Máx. Radiación</span>
+                <span class="stat-item-value">{{ daily.solar_chart.max_uv }} lux</span>
+                <span class="stat-item-desc">Pico solar</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Especie Activa</span>
+                <span class="stat-item-value">{{ selected_profile.display_name }}</span>
+                <span class="stat-item-desc">Perfil botánico</span>
+            </div>
+            <div class="widget-stats-item">
+                <span class="stat-item-label">Fotoperíodo</span>
+                <span class="stat-item-value">Adecuado</span>
+                <span class="stat-item-desc">Luz acumulada</span>
+            </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Inyectar datos históricos de crecimiento desde Flask
-    const growthData = {{ growth_data | tojson | safe }};
-    
-    // Inyectar datos históricos de sensores ambientales
-    const sensorRaw = [
-        {% for s in sensors %}
-        {
-            time: "{{ s.timestamp.strftime('%H:%M') }}",
-            temp: {{ s.temperature }},
-            hum: {{ s.humidity }},
-            uv: {{ s.uv_solar }},
-            curr: {{ s.motor_current }}
-        },
-        {% endfor %}
-    ];
+    const dailyData = {{ daily | tojson | safe }};
+    const availableDates = {{ available_dates | tojson | safe }};
+    const activePlantId = {{ active_plant_id }};
+
+    function navigateDate(selectedDate) {
+        if (!selectedDate) return;
+        window.location.href = `/?date=${selectedDate}&plant_id=${activePlantId}`;
+    }
+
+    document.getElementById('btn-prev-day').addEventListener('click', () => {
+        const currentDateStr = document.getElementById('dashboard-date-picker').value;
+        const d = new Date(currentDateStr + 'T00:00:00');
+        d.setDate(d.getDate() - 1);
+        const prevStr = d.toISOString().split('T')[0];
+        navigateDate(prevStr);
+    });
+
+    document.getElementById('btn-next-day').addEventListener('click', () => {
+        const currentDateStr = document.getElementById('dashboard-date-picker').value;
+        const d = new Date(currentDateStr + 'T00:00:00');
+        d.setDate(d.getDate() + 1);
+        const nextStr = d.toISOString().split('T')[0];
+        navigateDate(nextStr);
+    });
 </script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

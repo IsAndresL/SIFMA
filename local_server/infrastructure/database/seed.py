@@ -1,12 +1,16 @@
-from domain.models import Config, CropProfile
 from infrastructure.database.connection import db
+from core.security import SecurityService
 from core.logger import logger
 
 def init_db_data(app):
     """
     Inicializa la base de datos con tablas y configuraciones por defecto si no existen.
-    Ejecuta migraciones idempotentes y siembra los perfiles botánicos precalibrados.
+    Ejecuta migraciones idempotentes y siembra los perfiles botánicos y el Administrador Principal.
     """
+    from domain.models.config import Config
+    from domain.models.crop_profile import CropProfile
+    from domain.models.user import User
+
     with app.app_context():
         db.create_all()
         
@@ -15,15 +19,40 @@ def init_db_data(app):
             for col_sql in [
                 "ALTER TABLE biometric_metric ADD COLUMN photo_index INTEGER DEFAULT 0",
                 "ALTER TABLE biometric_metric ADD COLUMN is_average BOOLEAN DEFAULT 0",
-                "ALTER TABLE biometric_metric ADD COLUMN capture_exact_time DATETIME"
+                "ALTER TABLE biometric_metric ADD COLUMN capture_exact_time DATETIME",
+                "ALTER TABLE config ADD COLUMN plant_1_crop VARCHAR(50) DEFAULT 'cebollin'",
+                "ALTER TABLE config ADD COLUMN plant_2_crop VARCHAR(50) DEFAULT 'albahaca'",
+                "ALTER TABLE config ADD COLUMN plant_3_crop VARCHAR(50) DEFAULT 'lechuga'",
+                "ALTER TABLE config ADD COLUMN plant_4_crop VARCHAR(50) DEFAULT 'fresa'",
+                "ALTER TABLE config ADD COLUMN shared_telemetry BOOLEAN DEFAULT 1",
+                "ALTER TABLE config ADD COLUMN telemetry_mode VARCHAR(50) DEFAULT 'shared_tower'"
             ]:
                 try:
                     conn.execute(db.text(col_sql))
                     conn.commit()
                 except Exception:
                     pass
+
+        # 1. Sembrar Administrador Principal por defecto si no existe
+        admin_user = User.query.filter_by(username="admin").first()
+        if not admin_user:
+            admin_user = User(
+                username="admin",
+                full_name="Andres Luna",
+                email="admin@sifma.local",
+                password_hash=SecurityService.hash_password("sifma2026"),
+                role="admin",
+                is_active=True
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+            logger.info("Usuario Administrador Principal 'admin' creado exitosamente.")
+        else:
+            if admin_user.role != "admin":
+                admin_user.role = "admin"
+                db.session.commit()
         
-        # Configuración inicial del sistema
+        # 2. Configuración inicial del sistema
         if not Config.query.first():
             default_config = Config(
                 server_url="http://127.0.0.1:5000",
@@ -36,7 +65,7 @@ def init_db_data(app):
             )
             db.session.add(default_config)
 
-        # Perfiles botánicos por defecto calibrados para fenotipado en entorno real
+        # 3. Perfiles botánicos por defecto calibrados para fenotipado en entorno real
         default_profiles = [
             CropProfile(
                 crop_type="cebollin",
@@ -97,4 +126,4 @@ def init_db_data(app):
                 existing.b_min = p.b_min
 
         db.session.commit()
-        logger.info("Base de datos SIFMA inicializada y perfiles botánicos verificados.")
+        logger.info("Base de datos SIFMA inicializada y perfiles verificados.")

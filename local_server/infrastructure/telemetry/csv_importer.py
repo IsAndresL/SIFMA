@@ -10,7 +10,8 @@ from infrastructure.database.connection import db
 class TowerCsvImporter:
     """
     Parser robusto para importar archivos CSV emitidos por la torre hidropónica.
-    Soporta múltiples formatos de fecha/hora, delimitadores (; y ,) y comas decimales.
+    Soporta múltiples formatos de fecha/hora (incluyendo formato regional español con 'p, m,' o 'p.m.'),
+    delimitadores (; , y tabuladores) y números con coma o punto decimal.
     """
     
     def __init__(self, sensor_repo: Optional[SensorRepository] = None, session_repo: Optional[CaptureSessionRepository] = None):
@@ -22,12 +23,23 @@ class TowerCsvImporter:
         if not time_str:
             return None
         ts = str(time_str).strip()
-        ts = ts.replace('p,m,', 'PM').replace('a,m,', 'AM')
-        ts = ts.replace('p.m.', 'PM').replace('a.m.', 'AM')
-        ts = ts.replace('p. m.', 'PM').replace('a. m.', 'AM')
+        
+        # Limpiar caracteres invisibles, espacios duros y puntuación regional
+        ts = ts.replace('\xa0', ' ').replace('\u202f', ' ').replace('\t', ' ')
+        
+        # Normalizar sufijos de mañana y tarde en español (ej: "p, m,", "p. m.", "p.m.", "pm", "a, m,")
+        ts = re.sub(r'p[\.,\s]+m[\.,\s]*', ' PM', ts, flags=re.IGNORECASE)
+        ts = re.sub(r'a[\.,\s]+m[\.,\s]*', ' AM', ts, flags=re.IGNORECASE)
         ts = re.sub(r'\s+', ' ', ts).strip()
         
-        formats = ['%I:%M:%S %p', '%H:%M:%S', '%I:%M %p', '%H:%M']
+        formats = [
+            '%I:%M:%S %p', 
+            '%H:%M:%S', 
+            '%I:%M %p', 
+            '%H:%M',
+            '%I:%M:%S%p',
+            '%I:%M%p'
+        ]
         for fmt in formats:
             try:
                 return datetime.strptime(ts, fmt).time()
@@ -39,8 +51,8 @@ class TowerCsvImporter:
     def parse_date_str(date_str: str):
         if not date_str:
             return None
-        ds = str(date_str).strip()
-        formats = ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d']
+        ds = str(date_str).strip().replace('\xa0', ' ')
+        formats = ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d', '%d/%m/%y']
         for fmt in formats:
             try:
                 return datetime.strptime(ds, fmt).date()
@@ -60,20 +72,32 @@ class TowerCsvImporter:
             return {"status": "error", "message": "El archivo CSV está vacío."}
 
         first_line = lines[0]
-        delimiter = ';' if ';' in first_line else ','
+        # Detección inteligente de delimitador
+        if ';' in first_line:
+            delimiter = ';'
+        elif '\t' in first_line:
+            delimiter = '\t'
+        else:
+            delimiter = ','
         
         reader = csv.reader(lines, delimiter=delimiter)
         try:
-            header = [h.strip().lower() for h in next(reader)]
+            raw_header = next(reader)
+            header = [h.strip().lower() for h in raw_header]
         except StopIteration:
             return {"status": "error", "message": "Formato de archivo inválido."}
         
-        col_fecha = next((i for i, h in enumerate(header) if 'fecha' in h or 'date' in h), 0)
-        col_hora = next((i for i, h in enumerate(header) if 'hora' in h or 'time' in h), 1)
-        col_temp = next((i for i, h in enumerate(header) if 'temp' in h), None)
-        col_hr = next((i for i, h in enumerate(header) if 'hr' in h or 'hum' in h), None)
-        col_co2_uv = next((i for i, h in enumerate(header) if 'co2' in h or 'uv' in h or 'lux' in h), None)
-        col_amp = next((i for i, h in enumerate(header) if 'amp' in h or 'curr' in h or 'corr' in h), None)
+        col_fecha = next((i for i, h in enumerate(header) if any(k in h for k in ['fecha', 'date', 'timestamp', 'tiempo'])), 0)
+        col_hora = next((i for i, h in enumerate(header) if any(k in h for k in ['hora', 'time'])), None)
+        col_temp = next((i for i, h in enumerate(header) if any(k in h for k in ['temp', 'temperatura'])), None)
+        col_hr = next((i for i, h in enumerate(header) if any(k in h for k in ['hr', 'hum', 'humedad'])), None)
+        
+        # Priorizar columna de radiación solar sobre co2 si ambas existen
+        col_rad = next((i for i, h in enumerate(header) if any(k in h for k in ['rad', 'solar', 'uv', 'lux', 'luz', 'irradiancia'])), None)
+        if col_rad is None:
+            col_rad = next((i for i, h in enumerate(header) if 'co2' in h), None)
+            
+        col_amp = next((i for i, h in enumerate(header) if any(k in h for k in ['amp', 'curr', 'corr', 'motor', 'bomba', 'corriente'])), None)
 
         imported_count = 0
         readings_batch = []
@@ -82,7 +106,9 @@ class TowerCsvImporter:
         def safe_float(val, default=0.0):
             if not val: return default
             try:
-                return float(str(val).replace(',', '.').strip())
+                # Soporte para coma decimal (ej. "27,1" -> "27.1")
+                cleaned_val = str(val).replace(',', '.').strip()
+                return float(cleaned_val)
             except ValueError:
                 return default
 
@@ -92,27 +118,42 @@ class TowerCsvImporter:
 
             try:
                 d = self.parse_date_str(row[col_fecha])
-                t = self.parse_time_str(row[col_hora]) if col_hora < len(row) else None
+                t = self.parse_time_str(row[col_hora]) if (col_hora is not None and col_hora < len(row)) else None
+                
+                # Si no se obtuvieron por separado, intentar parsear fecha/hora completa en una celda
                 if not d or not t:
-                    continue
+                    raw_dt_str = str(row[col_fecha]).strip()
+                    dt = None
+                    for dt_fmt in ['%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M:%S', '%Y-%m-%d %H:%M', '%d/%m/%Y %H:%M', '%Y-%m-%dT%H:%M:%S']:
+                        try:
+                            dt = datetime.strptime(raw_dt_str, dt_fmt)
+                            d = dt.date()
+                            t = dt.time()
+                            break
+                        except Exception:
+                            pass
+                    if not dt:
+                        continue
+                else:
+                    dt = datetime.combine(d, t)
 
-                dt = datetime.combine(d, t)
                 dates_seen.add(d.strftime("%Y-%m-%d"))
 
                 temp_val = safe_float(row[col_temp]) if col_temp is not None and col_temp < len(row) else 0.0
                 hr_val = safe_float(row[col_hr]) if col_hr is not None and col_hr < len(row) else 0.0
-                co2_uv_val = safe_float(row[col_co2_uv]) if col_co2_uv is not None and col_co2_uv < len(row) else 0.0
+                rad_val = safe_float(row[col_rad]) if col_rad is not None and col_rad < len(row) else 0.0
                 amp_val = safe_float(row[col_amp]) if col_amp is not None and col_amp < len(row) else 0.0
 
                 readings_batch.append(SensorReading(
                     timestamp=dt,
                     temperature=temp_val,
                     humidity=hr_val,
-                    uv_solar=co2_uv_val,
+                    uv_solar=rad_val,
                     motor_current=amp_val
                 ))
                 imported_count += 1
 
+                # Inserción en lotes de 1000 para máximo rendimiento
                 if len(readings_batch) >= 1000:
                     self.sensor_repo.bulk_add(readings_batch)
                     readings_batch = []
@@ -123,18 +164,22 @@ class TowerCsvImporter:
         if readings_batch:
             self.sensor_repo.bulk_add(readings_batch)
 
-        # Reasociar sesiones de captura existentes con las nuevas lecturas reales
-        sessions = self.session_repo.get_all_by_plant(plant_id=1)
-        for s in sessions:
-            if not s.sensor_reading_id or (s.sensor_reading and s.sensor_reading.temperature == 0.0):
-                nearest_sensor = self.sensor_repo.find_nearest(s.timestamp)
-                if nearest_sensor:
-                    s.sensor_reading_id = nearest_sensor.id
-        db.session.commit()
+        # Reasociar sesiones de captura existentes con las nuevas lecturas de sensores
+        try:
+            sessions = self.session_repo.get_all()
+            for s in sessions:
+                if not s.sensor_reading_id or (s.sensor_reading and s.sensor_reading.temperature == 0.0):
+                    nearest_sensor = self.sensor_repo.find_nearest(s.timestamp)
+                    if nearest_sensor:
+                        s.sensor_reading_id = nearest_sensor.id
+            db.session.commit()
+        except Exception:
+            pass
 
         return {
             "status": "success",
+            "imported_records": imported_count,
             "imported_rows": imported_count,
-            "dates_found": list(dates_seen),
+            "dates_found": sorted(list(dates_seen)),
             "message": f"Se importaron {imported_count} lecturas de telemetría exitosamente."
         }

@@ -3,7 +3,8 @@ from .repositories import (
     ICropProfileRepository,
     ISensorRepository,
     ICaptureSessionRepository,
-    IConclusionRepository
+    IConclusionRepository,
+    IUserRepository
 )
 from .vision import ISegmentationStrategy, IBiometricCalculator, IVisionPipeline
 from .telemetry import ITelemetryAdapter, ICsvTelemetryParser
@@ -14,6 +15,7 @@ __all__ = [
     "ISensorRepository",
     "ICaptureSessionRepository",
     "IConclusionRepository",
+    "IUserRepository",
     "ISegmentationStrategy",
     "IBiometricCalculator",
     "IVisionPipeline",
