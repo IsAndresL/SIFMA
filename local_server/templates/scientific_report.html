@@ -711,13 +711,13 @@
                 </div>
                 <div class="report-header-title">
                     <h1>SIFMA - DOSSIER CIENTÍFICO</h1>
-                    <p>Sistema de Fenotipado & Telemetría Agronómica en Torres Aeropónicas</p>
+                    <p>Sistema de Fenotipado & Telemetría Agronómica en Torres Hidropónicas</p>
                 </div>
             </div>
             <div class="report-meta-box">
                 <div>INFORME ID: <strong>{{ dossier.report_id }}</strong></div>
                 <div>FECHA DE EMISIÓN: <strong>{{ dossier.generated_at }}</strong></div>
-                <div>VERSIÓN ALGORITMO: <strong>SIFMA-CV v2.4 (Otsu + LAB + HSV)</strong></div>
+                <div>VERSIÓN ALGORITMO: <strong>SIFMA-CV v1.1 (Otsu + LAB + HSV)</strong></div>
             </div>
         </header>
 
@@ -739,7 +739,7 @@
                 <td class="meta-label">INVESTIGADOR PRINCIPAL:</td>
                 <td class="meta-val"><span id="meta-evaluator-name" class="editable-field" contenteditable="true">{{ current_user.name if current_user else 'Ing. Andrés Luna' }}</span></td>
                 <td class="meta-label">ESTRUCTURA DE CULTIVO:</td>
-                <td class="meta-val">Torre Aeropónica Vertical - Módulo Central</td>
+                <td class="meta-val">Torre Hidropónica Vertical - Módulo Central</td>
             </tr>
         </table>
 
@@ -1080,8 +1080,8 @@
                     </div>
                 </div>
                 <div class="signature-rule">
-                    <strong id="sig-name-2" class="editable-field" contenteditable="true">Comité de Validación SIFMA</strong>
-                    <span id="sig-role-2" class="editable-field" contenteditable="true">Investigador/Profesor</span>
+                    <strong id="sig-name-2" class="editable-field" contenteditable="true">Prof. Críspulo Enrique Deluque</strong>
+                    <span id="sig-role-2" class="editable-field" contenteditable="true">Profesor Asesor & Director de Investigación</span>
                 </div>
             </div>
         </div>

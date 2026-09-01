@@ -115,6 +115,10 @@
                             <span class="nav-link-text">Usuarios y Roles</span>
                         </a>
                         {% endif %}
+                        <a href="{{ url_for('dashboard.system_info') }}" class="nav-link {% if '/about' in request.path or '/system_info' in request.path %}active{% endif %}" id="nav-about" title="Información & Créditos">
+                            <span class="material-icons-round">info</span>
+                            <span class="nav-link-text">Información & Créditos</span>
+                        </a>
                     </div>
                 </div>
             </div>

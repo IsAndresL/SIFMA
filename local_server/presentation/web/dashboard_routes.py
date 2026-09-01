@@ -424,3 +424,36 @@ def users_management():
                            config=config,
                            users=users,
                            active_plant_id=active_plant_id)
+
+@dashboard_bp.route('/about')
+@dashboard_bp.route('/system_info')
+def system_info():
+    """Vista institucional de información del sistema, créditos, autores y términos de licencia."""
+    config = system_service.get_config()
+    active_plant_id = get_active_plant_id()
+    profiles = system_service.get_all_profiles()
+    selected_profile = system_service.get_profile_for_plant(active_plant_id)
+
+    system_metadata = {
+        "version": "1.1",
+        "release_name": "SIFMA PhenoCore v1.1 - Hydroponic Research Edition",
+        "release_date": "Septiembre 2026",
+        "author": "Ing. Andrés Luna & Cristian",
+        "lead_developer": "Ing. Andrés Luna",
+        "co_developer": "Cristian",
+        "scientific_advisor": "Prof. Críspulo Enrique Deluque",
+        "founding_professors": "Prof. Críspulo Enrique Deluque y Comité Docente",
+        "institution": "Laboratorio de Automatización, Visión Artificial & Fenotipado Digital",
+        "license": "MIT License",
+        "python_version": "3.10+",
+        "opencv_version": "4.8+",
+        "architecture": "Clean Architecture / Hexagonal"
+    }
+
+    return render_template('about.html',
+                           config=config,
+                           profiles=profiles,
+                           selected_profile=selected_profile,
+                           active_plant_id=active_plant_id,
+                           system_meta=system_metadata)
+

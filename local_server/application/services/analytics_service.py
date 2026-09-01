@@ -1465,7 +1465,7 @@ class AnalyticsApplicationService:
             automated_insights.append({
                 "type": "warning",
                 "title": "Déficit de Humedad Relativa",
-                "detail": f"La humedad media ({hum_stats['mean']} %) se situó por debajo del rango óptimo para sistemas aeropónicos, incrementando el riesgo de desecación foliar."
+                "detail": f"La humedad media ({hum_stats['mean']} %) se situó por debajo del rango óptimo para sistemas hidropónicos, incrementando el riesgo de desecación foliar."
             })
         if len(areas) >= 2 and areas[-1] > areas[0]:
             gain = round(areas[-1] - areas[0], 2)

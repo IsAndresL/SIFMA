@@ -1,8 +1,8 @@
 <div align="center">
   <img src="local_server/static/img/sifma_logo.svg" alt="SIFMA Logo" width="110" height="110" />
   <h1>SIFMA</h1>
-  <h3>Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Aeropónicas</h3>
-  <p><strong>Versión 2.5 - Documentación Técnica y Manual de Operación</strong></p>
+  <h3>Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Hidropónicas</h3>
+  <p><strong>Versión 1.1 - Documentación Técnica y Manual de Operación</strong></p>
   <p><em>Plataforma para automatización de fenotipado no destructivo, análisis biométrico por visión artificial y telemetría microclimática multivariable</em></p>
 </div>
 
@@ -10,7 +10,7 @@
 
 ## 1. Resumen Ejecutivo y Propósito del Sistema
 
-**SIFMA** es una infraestructura tecnológica integral concebida para la investigación agronómica, la optimización de cultivos y la sustentación científica en torres aeropónicas e hidropónicas verticales. El sistema permite cuantificar con exactitud matemática la evolución morfométrica de las plantas (**área foliar fotosintéticamente activa, altura vertical, diámetro del tallo basal, compacidad e índice de salud clorofílica**) correlacionada con las variables ambientales (**temperatura, humedad relativa, radiación solar y consumo energético de la bomba**).
+**SIFMA** es una infraestructura tecnológica integral concebida para la investigación agronómica, la optimización de cultivos y la sustentación científica en torres hidropónicas verticales. El sistema permite cuantificar con exactitud matemática la evolución morfométrica de las plantas (**área foliar fotosintéticamente activa, altura vertical, diámetro del tallo basal, compacidad e índice de salud clorofílica**) correlacionada con las variables ambientales (**temperatura, humedad relativa, radiación solar y consumo energético de la bomba**).
 
 ### Principios Fundamentales del Sistema:
 1. **Fenotipado no destructivo de alta resolución**: Adquisición automatizada en ángulos cenital y lateral sin perturbar el dosel vegetal.
@@ -27,7 +27,7 @@ El sistema implementa una **Arquitectura Limpia (Clean Architecture)** distribui
 
 ```
 +-----------------------------------------------------------------------------+
-|               TORRE AEROPÓNICA VERTICAL (CAMPO / IN-SITU)                  |
+|               TORRE HIDROPÓNICA VERTICAL (CAMPO / IN-SITU)                  |
 |                                                                             |
 |   [ Canastilla #4 - Cúspide ]   ---> Nodo Cámara Dual (Cenital / Lateral)   |
 |   [ Canastilla #3 - Medio-Alto] ---> Nodo Cámara Dual (Cenital / Lateral)   |
@@ -175,6 +175,11 @@ SIFMA cuenta con una suite completa de módulos accesibles desde la barra latera
 * **Administrador Principal**: Acceso total al sistema, configuración, calibración y gestión de usuarios.
 * **Investigador / Agrónomo**: Acceso a procesamiento, bitácora, análisis de cruces, time-lapse y emisión de reportes.
 * **Operador de Torre**: Visualización de dashboard, ingreso de datos de campo y carga de lotes.
+
+#### L. Información del Sistema, Créditos y Licencia (`/about`)
+* **Panel Institucional**: Visualización de versión oficial del software (**v1.1**), edición de investigación, topología de hardware soportada y autoría principal (Ing. Andrés Luna y colaboradores).
+* **Términos de Licencia MIT**: Declaración de uso académico, científico y permisos de distribución.
+* **Historial de Versiones (Changelog)**: Registro cronológico de cambios y módulos incorporados en cada actualización.
 
 ---
 
@@ -409,9 +414,14 @@ SIFMA/
 
 ---
 
-## 10. Licencia y Créditos
+## 10. Licencia, Autores y Créditos
 
-* **Proyecto**: SIFMA - Sistema Integrado de Fenotipado y Monitoreo Agronómico.
-* **Desarrollo y Autoría**: Ing. Andrés Luna y colaboradores.
-* **Institución**: Laboratorio de Automatización & Fenotipado Digital.
-* **Licencia**: MIT License - Uso académico, científico y de investigación.
+* **Proyecto**: SIFMA - Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Hidropónicas.
+* **Autores y Desarrolladores del Software**:
+  * **Ing. Andrés Luna** - *Desarrollador Principal & Arquitectura Software/Hardware* ([GitHub: @IsAndresL](https://github.com/IsAndresL))
+  * **Cristian** - *Co-desarrollador de Software & Fenotipado Digital*
+* **Dirección Científica & Profesores Fundadores**:
+  * **Prof. Críspulo Enrique Deluque** - *Profesor Asesor & Director de Investigación*
+  * **Comité Docente e Investigadores del Laboratorio**
+* **Laboratorio / Entidad**: Laboratorio de Automatización, Visión Artificial & Fenotipado Digital.
+* **Licencia**: MIT License - Uso académico, científico y de investigación abierta.
