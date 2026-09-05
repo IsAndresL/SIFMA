@@ -397,6 +397,26 @@ def configuration_panel():
                 
                 profile.pixel_to_cm_ratio = float(request.form.get('pixel_to_cm_ratio', profile.pixel_to_cm_ratio))
                 profile.has_stem = 'has_stem' in request.form
+
+                # Parámetros dedicados para Cámara Lateral (Perfil Vertical)
+                profile.lat_h_min = int(request.form.get('lat_h_min', getattr(profile, 'lat_h_min', profile.h_min)))
+                profile.lat_h_max = int(request.form.get('lat_h_max', getattr(profile, 'lat_h_max', profile.h_max)))
+                profile.lat_s_min = int(request.form.get('lat_s_min', getattr(profile, 'lat_s_min', profile.s_min)))
+                profile.lat_s_max = int(request.form.get('lat_s_max', getattr(profile, 'lat_s_max', profile.s_max)))
+                profile.lat_v_min = int(request.form.get('lat_v_min', getattr(profile, 'lat_v_min', profile.v_min)))
+                profile.lat_v_max = int(request.form.get('lat_v_max', getattr(profile, 'lat_v_max', profile.v_max)))
+                
+                profile.lat_l_min = int(request.form.get('lat_l_min', getattr(profile, 'lat_l_min', profile.l_min)))
+                profile.lat_l_max = int(request.form.get('lat_l_max', getattr(profile, 'lat_l_max', profile.l_max)))
+                profile.lat_a_min = int(request.form.get('lat_a_min', getattr(profile, 'lat_a_min', profile.a_min)))
+                profile.lat_a_max = int(request.form.get('lat_a_max', getattr(profile, 'lat_a_max', profile.a_max)))
+                profile.lat_b_min = int(request.form.get('lat_b_min', getattr(profile, 'lat_b_min', profile.b_min)))
+                profile.lat_b_max = int(request.form.get('lat_b_max', getattr(profile, 'lat_b_max', profile.b_max)))
+                
+                profile.lat_pixel_to_cm_ratio = float(request.form.get('lat_pixel_to_cm_ratio', getattr(profile, 'lat_pixel_to_cm_ratio', profile.pixel_to_cm_ratio)))
+                profile.lat_min_area = int(request.form.get('lat_min_area', getattr(profile, 'lat_min_area', 60)))
+                profile.lat_filter_isolated = 'lat_filter_isolated' in request.form
+
                 system_service.update_profile(profile)
                 
             return redirect(url_for('dashboard.configuration_panel', crop_type=crop_type))

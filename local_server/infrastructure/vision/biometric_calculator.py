@@ -53,37 +53,70 @@ class BiometricCalculator:
         y_min = None
         y_max = None
         x_points = None
+        filtered_contours = []
         
         if contours:
-            all_points = np.vstack([c for c in contours])
+            # 1. Filtro Espacial de Cluster Central (Descartar bordes y manchas aisladas)
+            filter_isolated = getattr(profile, 'lat_filter_isolated', True)
+            
+            if filter_isolated and len(contours) > 1:
+                # El contorno más grande representa el follaje/tallo principal
+                largest_contour = max(contours, key=cv2.contourArea)
+                lx, ly, lw, lh = cv2.boundingRect(largest_contour)
+                lcx = lx + (lw / 2.0)
+                
+                # Tolerancia de proximidad al cluster vegetal principal
+                max_horizontal_dist = max(75.0, min(140.0, lw * 1.0))
+                
+                for c in contours:
+                    cx, cy, cw, ch = cv2.boundingRect(c)
+                    center_x = cx + (cw / 2.0)
+                    if abs(center_x - lcx) <= max_horizontal_dist:
+                        filtered_contours.append(c)
+                        
+                if not filtered_contours:
+                    filtered_contours = [largest_contour]
+            else:
+                filtered_contours = contours
+                
+            all_points = np.vstack([c for c in filtered_contours])
             y_points = all_points[:, 0, 1]
             x_points = all_points[:, 0, 0]
             
             y_min = int(np.min(y_points))
             y_max = int(np.max(y_points))
             
+            # Usar la escala vertical específica si existe, de lo contrario pixel_to_cm_ratio
+            lateral_ratio = getattr(profile, 'lat_pixel_to_cm_ratio', None)
+            if lateral_ratio is None or lateral_ratio <= 0:
+                lateral_ratio = profile.pixel_to_cm_ratio
+                
             if y_min < y_max:
                 height_pixels = y_max - y_min
-                height_cm = height_pixels * profile.pixel_to_cm_ratio
+                height_cm = height_pixels * lateral_ratio
                 
                 # Diámetro de tallo basal
                 has_stem = getattr(profile, 'has_stem', True)
                 if has_stem and height_cm >= 0.5:
                     widths = []
                     valid_y = []
-                    for offset in range(2, 10):
+                    for offset in range(2, 12):
                         test_y = y_max - offset
                         if 0 <= test_y < h and mask is not None:
                             row_pixels = np.where(mask[test_y, :] > 0)[0]
                             if len(row_pixels) > 0:
-                                w_px = np.max(row_pixels) - np.min(row_pixels)
-                                if 1 <= w_px < 60:
-                                    widths.append(w_px)
-                                    valid_y.append(test_y)
+                                if x_points is not None and len(x_points) > 0:
+                                    min_x, max_x = np.min(x_points), np.max(x_points)
+                                    row_pixels = row_pixels[(row_pixels >= min_x - 5) & (row_pixels <= max_x + 5)]
+                                if len(row_pixels) > 0:
+                                    w_px = np.max(row_pixels) - np.min(row_pixels)
+                                    if 1 <= w_px < 70:
+                                        widths.append(w_px)
+                                        valid_y.append(test_y)
                     
                     if widths:
                         stem_width_pixels = np.median(widths)
-                        stem_diameter_mm = stem_width_pixels * profile.pixel_to_cm_ratio * 10
+                        stem_diameter_mm = stem_width_pixels * lateral_ratio * 10
                         stem_draw_y = int(np.median(valid_y))
                         stem_row_pixels = np.where(mask[stem_draw_y, :] > 0)[0] if mask is not None else None
                         
@@ -94,5 +127,6 @@ class BiometricCalculator:
             "y_max": y_max,
             "x_points": x_points,
             "stem_draw_y": stem_draw_y,
-            "stem_row_pixels": stem_row_pixels
+            "stem_row_pixels": stem_row_pixels,
+            "filtered_contours": filtered_contours
         }

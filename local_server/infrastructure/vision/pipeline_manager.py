@@ -62,22 +62,24 @@ class VisionPipelineManager:
         if img is None:
             return None
             
-        mask = self.segmenter.create_mask(img, profile)
-        contours = self.segmenter.extract_contours(mask, min_area=30)
+        mask = self.segmenter.create_mask(img, profile, is_lateral=True)
+        min_area = int(getattr(profile, 'lat_min_area', 60))
+        contours = self.segmenter.extract_contours(mask, min_area=min_area)
         
         metrics = self.calculator.calculate_lateral(img, mask, contours, profile)
+        plant_contours = metrics.get("filtered_contours", contours)
         
         overlay = img.copy()
-        if contours:
-            # Dibujar perfil de la planta en ROJO
-            cv2.drawContours(overlay, contours, -1, (0, 0, 255), 2)
+        if plant_contours:
+            # Dibujar perfil de la planta en ROJO únicamente sobre los contornos del cluster vegetal
+            cv2.drawContours(overlay, plant_contours, -1, (0, 0, 255), 2)
             
             y_min = metrics.get("y_min")
             y_max = metrics.get("y_max")
             x_points = metrics.get("x_points")
             
-            if y_min is not None and y_max is not None and y_min < y_max and x_points is not None:
-                x_center = int((np.min(x_points) + np.max(x_points)) / 2)
+            if y_min is not None and y_max is not None and y_min < y_max and x_points is not None and len(x_points) > 0:
+                x_center = int(np.mean(x_points))
                 cv2.line(overlay, (x_center - 15, y_min), (x_center + 15, y_min), (0, 255, 255), 2)
                 cv2.line(overlay, (x_center - 15, y_max), (x_center + 15, y_max), (0, 255, 255), 2)
                 cv2.line(overlay, (x_center, y_min), (x_center, y_max), (0, 255, 255), 2)

@@ -165,10 +165,12 @@ SIFMA cuenta con una suite completa de módulos accesibles desde la barra latera
 
 ### 3.5. Configuración y Administración
 
-#### J. Parámetros de Cultivo y Calibración (`/config`)
+#### J. Parámetros de Cultivo y Calibración Dual (`/config`)
 * **Gestión de Perfiles Botánicos**: Calibración para Cebollín (*Allium schoenoprasum*), Albahaca (*Ocimum basilicum*), Lechuga (*Lactuca sativa*) y Fresa (*Fragaria*).
-* **Umbrales Cromáticos HSV & LAB**: Calibración de matrices de segmentación por especie.
-* **Factor de Escala Píxel a Centímetro**: Ajuste milimétrico de la relación $\text{px}/\text{cm}$.
+* **Calibración Desacoplada por Cámara (Pestañas Cenital vs Lateral)**:
+  * *Cámara Cenital (Vista Superior)*: Umbrales HSV/LAB específicos y factor de escala horizontal para cuantificación milimétrica de área foliar ($cm^2$), dosel y salud de clorofila.
+  * *Cámara Lateral (Perfil Vertical)*: Umbrales HSV/LAB independientes, factor de escala vertical para altura ($H$), control de área mínima de contorno (`lat_min_area`) y descarte automático de ruido en los bordes de la maceta.
+* **Filtro de Cluster Central de Planta**: Aislamiento geométrico del eje del tallo para prevenir que reflejos o residuos en el borde blanco de la taza distorsionen la medición de altura.
 * **Modo de Aislamiento de Telemetría**: Conmutador para compartir lecturas de sensores en toda la torre o aislar registros por canastilla.
 
 #### K. Control de Usuarios y Roles (`/users`)
@@ -183,31 +185,31 @@ SIFMA cuenta con una suite completa de módulos accesibles desde la barra latera
 
 ---
 
-## 4. Pipeline de Visión Computacional (`core/vision/`)
+## 4. Pipeline de Visión Computacional (`infrastructure/vision/`)
 
-El procesamiento de imágenes implementa un flujo matemático riguroso:
+El procesamiento de imágenes implementa un flujo matemático riguroso y desacoplado:
 
 1. **Preprocesamiento y Filtrado de Ruido**:
-   - Corrección de balance de blancos y reducción de ruido con filtro Gaussiano ($k=5$).
-2. **Segmentación Cromática Dual (HSV + CIELAB)**:
-   - *Espacio HSV*: Aislamiento del tono de clorofila ($H \in [h_{\min}, h_{\max}]$) y saturación vegetal.
+   - Corrección de balance de blancos y reducción de ruido con filtro Gaussiano y operadores morfológicos elípticos adaptados por perspectiva.
+2. **Segmentación Cromática Dual (ExG + HSV + CIELAB)**:
+   - *Índice de Exceso de Verde (ExG)*: $2G - R - B$ con selectividad reforzada en vista lateral para anular reflejos.
+   - *Espacio HSV*: Aislamiento del tono de clorofila ($H \in [h_{\min}, h_{\max}]$) y saturación vegetal con matrices independientes por cámara.
    - *Espacio CIELAB*: Discriminación de reflectancias no fotosintéticas en el plano $a^* b^*$.
    - *Fusión Lógica*:
-     $$\text{Máscara Final} = \text{Máscara}_{\text{HSV}} \cap \text{Máscara}_{\text{LAB}}$$
-     *(Con conmutación automática de respaldo a HSV si LAB resulta sobre-restrictivo).*
-3. **Operaciones Morfológicas**:
-   - Clausura morfológica con elemento estructurante elíptico para rellenar vacuolas sin alterar el perímetro foliar exterior.
+     $$\text{Máscara Final} = \text{Máscara}_{\text{ExG}} \cap \text{Máscara}_{\text{HSV}} \cap \text{Máscara}_{\text{LAB}}$$
+3. **Filtrado Espacial de Cluster Central (Vista Lateral)**:
+   - Identificación del contorno representativo de la planta y descarte automático de contornos periféricos aislados (reflejos plásticos en el borde de la maceta).
 4. **Extracción de Contornos y Métricas Morfométricas**:
    - **Área Foliar ($cm^2$)**:
-     $$A_{\text{foliar}} = \left( \sum \text{píxeles}_{\text{planta}} \right) \times \left(\text{ratio}_{\text{px\_cm}}\right)^2$$
+     $$A_{\text{foliar}} = \left( \sum \text{píxeles}_{\text{planta}} \right) \times \left(\text{ratio}_{\text{px\_cm\_cenital}}\right)^2$$
    - **Altura de Planta ($cm$)**:
-     $$H_{\text{planta}} = (y_{\text{base}} - y_{\text{apical}}) \times \text{ratio}_{\text{px\_cm}}$$
+     $$H_{\text{planta}} = (y_{\text{base\_tallo}} - y_{\text{apical\_hoja}}) \times \text{ratio}_{\text{px\_cm\_lateral}}$$
    - **Compacidad**:
      $$\text{Compacidad} = \frac{4 \pi \cdot A_{\text{contorno}}}{P_{\text{contorno}}^2}$$
-   - **Diámetro de Tallo ($mm$)**: Muestreo transversal en la zona basal.
+   - **Diámetro de Tallo Basal ($mm$)**: Muestreo transversal en la zona de inserción con el sustrato.
    - **Índice de Salud Foliar ($\%$)**: Proporción de píxeles en reflectancia verde saludable respecto al total del dosel.
 5. **Superposición Visual de Contorno**:
-   - Delimitación perimetral en **Rojo Puro** (`BGR: (0, 0, 255)`) y línea de altura en amarillo.
+   - Delimitación perimetral en **Rojo Puro** (`BGR: (0, 0, 255)`) exclusivamente sobre la planta real y línea de altura en amarillo centrada en el eje vertical.
 6. **Filtrado Estadístico de Lote ($\pm 2\sigma$)**:
    - Descarte automático de fotogramas atípicos sobre las 5 capturas del muestreo para calcular el valor representativo del período.
 
