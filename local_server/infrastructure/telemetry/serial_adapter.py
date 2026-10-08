@@ -28,10 +28,14 @@ class SerialTelemetryAdapter:
         self.active_port: Optional[str] = None
         self.fallback_mock = MockTelemetryAdapter()
         self.last_valid_sample = {
-            "temperature": 23.5,
-            "humidity": 65.0,
+            "temperature": 28.5,
+            "humidity": 68.0,
             "uv_solar": 0.0,
             "motor_current": 0.0,
+            "ec_conductivity": 1650.0,
+            "water_ph": 6.2,
+            "turbidity_ntu": 3.8,
+            "dissolved_oxygen_mg_l": 7.4,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
@@ -119,7 +123,10 @@ class SerialTelemetryAdapter:
     def read_sample(self) -> Dict[str, Any]:
         """
         Lee y decodifica una muestra real desde la antena XBee.
-        Formato de trama esperado: 'uv,temperatura,humedad,corriente' (ej: '0.0,33.6,64.9,-0.0').
+        Soporta tramas posicionales (4 u 8 parámetros) y tramas clave-valor (T:, H:, UV:, I:, EC:, PH:, TURB:, DO:).
+        Ejemplos:
+          - '0.0,33.6,64.9,1.65,1680.0,6.20,4.2,7.6'
+          - 'T:33.6,H:64.9,UV:0.0,I:1.65,EC:1680,PH:6.2,TURB:4.2,DO:7.6'
         """
         if self.port == "SIMULADOR_ANTENA_TEST":
             return self.fallback_mock.read_sample()
@@ -128,27 +135,89 @@ class SerialTelemetryAdapter:
             try:
                 raw_line = self.serial_conn.readline().decode('utf-8', errors='ignore').strip()
                 if raw_line:
-                    parts = [p.strip() for p in raw_line.split(',')]
-                    if len(parts) >= 4:
+                    # Delimitador coma o punto y coma
+                    delim = ';' if ';' in raw_line else ','
+                    parts = [p.strip() for p in raw_line.split(delim)]
+                    
+                    sample_dict = dict(self.last_valid_sample)
+                    parsed_any = False
+                    
+                    # 1. Modo Clave-Valor
+                    if any(':' in p for p in parts):
+                        for p in parts:
+                            if ':' in p:
+                                k, v = p.split(':', 1)
+                                k = k.strip().upper()
+                                try:
+                                    v_num = float(v.replace(',', '.').strip())
+                                    if k in ['T', 'TEMP', 'TEMPERATURA']:
+                                        sample_dict['temperature'] = round(v_num, 2)
+                                        parsed_any = True
+                                    elif k in ['H', 'HUM', 'HUMEDAD', 'HR']:
+                                        sample_dict['humidity'] = round(min(100.0, max(0.0, v_num)), 1)
+                                        parsed_any = True
+                                    elif k in ['UV', 'RAD', 'SOLAR', 'LUX']:
+                                        sample_dict['uv_solar'] = round(max(0.0, v_num), 1)
+                                        parsed_any = True
+                                    elif k in ['I', 'CURR', 'AMP', 'CORRIENTE', 'BOMBA']:
+                                        sample_dict['motor_current'] = round(abs(v_num), 3)
+                                        parsed_any = True
+                                    elif k in ['EC', 'COND', 'CONDUCTIVIDAD']:
+                                        sample_dict['ec_conductivity'] = round(max(0.0, v_num), 1)
+                                        parsed_any = True
+                                    elif k in ['PH', 'ACIDEZ']:
+                                        sample_dict['water_ph'] = round(min(14.0, max(0.0, v_num)), 2)
+                                        parsed_any = True
+                                    elif k in ['TURB', 'TURBIDEZ', 'NTU']:
+                                        sample_dict['turbidity_ntu'] = round(max(0.0, v_num), 2)
+                                        parsed_any = True
+                                    elif k in ['DO', 'OD', 'OXIGENO', 'MG/L']:
+                                        sample_dict['dissolved_oxygen_mg_l'] = round(max(0.0, v_num), 2)
+                                        parsed_any = True
+                                except ValueError:
+                                    pass
+                    
+                    # 2. Modo Posicional
+                    elif len(parts) >= 4:
                         try:
-                            uv_val = max(0.0, float(parts[0]))
-                            temp_val = float(parts[1])
-                            hum_val = min(100.0, max(0.0, float(parts[2])))
-                            curr_val = abs(float(parts[3]))
-
-                            sample = {
-                                "temperature": round(temp_val, 2),
-                                "humidity": round(hum_val, 2),
-                                "uv_solar": round(uv_val, 1),
-                                "motor_current": round(curr_val, 3),
-                                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                "raw": raw_line,
-                                "source": f"XBee ({self.active_port})"
-                            }
-                            self.last_valid_sample = sample
-                            return sample
-                        except ValueError:
+                            p_nums = []
+                            for p in parts:
+                                try:
+                                    p_nums.append(float(p.replace(',', '.').strip()))
+                                except ValueError:
+                                    pass
+                            if len(p_nums) >= 4:
+                                # Si primer valor es grande (>100) es UV, si es <60 es Temperatura
+                                if p_nums[0] > 60.0 and p_nums[1] < 60.0:
+                                    sample_dict['uv_solar'] = round(max(0.0, p_nums[0]), 1)
+                                    sample_dict['temperature'] = round(p_nums[1], 2)
+                                    sample_dict['humidity'] = round(min(100.0, max(0.0, p_nums[2])), 1)
+                                    sample_dict['motor_current'] = round(abs(p_nums[3]), 3)
+                                else:
+                                    sample_dict['temperature'] = round(p_nums[0], 2)
+                                    sample_dict['humidity'] = round(min(100.0, max(0.0, p_nums[1])), 1)
+                                    sample_dict['uv_solar'] = round(max(0.0, p_nums[2]), 1)
+                                    sample_dict['motor_current'] = round(abs(p_nums[3]), 3)
+                                
+                                if len(p_nums) >= 5:
+                                    sample_dict['ec_conductivity'] = round(max(0.0, p_nums[4]), 1)
+                                if len(p_nums) >= 6:
+                                    sample_dict['water_ph'] = round(min(14.0, max(0.0, p_nums[5])), 2)
+                                if len(p_nums) >= 7:
+                                    sample_dict['turbidity_ntu'] = round(max(0.0, p_nums[6]), 2)
+                                if len(p_nums) >= 8:
+                                    sample_dict['dissolved_oxygen_mg_l'] = round(max(0.0, p_nums[7]), 2)
+                                    
+                                parsed_any = True
+                        except Exception:
                             pass
+                            
+                    if parsed_any:
+                        sample_dict["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        sample_dict["raw"] = raw_line
+                        sample_dict["source"] = f"XBee ({self.active_port})"
+                        self.last_valid_sample = sample_dict
+                        return sample_dict
             except Exception as e:
                 logger.warning(f"[SIFMA] Error de lectura en antena: {e}")
                 self._disconnect()

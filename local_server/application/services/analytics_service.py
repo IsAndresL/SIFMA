@@ -234,6 +234,10 @@ class AnalyticsApplicationService:
         hums = [r.humidity for r in readings] if readings else [0.0]
         uvs = [r.uv_solar for r in readings] if readings else [0.0]
         currs = [r.motor_current for r in readings] if readings else [0.0]
+        ecs = [(r.ec_conductivity if r.ec_conductivity is not None else 1650.0) for r in readings] if readings else [1650.0]
+        phs = [(r.water_ph if r.water_ph is not None else 6.20) for r in readings] if readings else [6.20]
+        turbs = [(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings] if readings else [3.8]
+        dos = [(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings] if readings else [7.4]
 
         mean_area = round(float(np.mean(areas_list)), 2) if areas_list else 0.0
         mean_height = round(float(np.mean(heights_list)), 2) if heights_list else 0.0
@@ -250,6 +254,10 @@ class AnalyticsApplicationService:
         mean_uv = round(float(np.mean(uvs)), 1) if readings else 0.0
         mean_curr = round(float(np.mean(currs)), 3) if readings else 0.0
         max_curr = round(float(np.max(currs)), 3) if readings else 0.0
+        mean_ec = round(float(np.mean(ecs)), 1) if readings else 1650.0
+        mean_ph = round(float(np.mean(phs)), 2) if readings else 6.20
+        mean_turb = round(float(np.mean(turbs)), 2) if readings else 3.80
+        mean_do = round(float(np.mean(dos)), 2) if readings else 7.40
 
         # Comparación con jornada anterior de esta misma canastilla
         area_diff = 0.0
@@ -330,7 +338,15 @@ class AnalyticsApplicationService:
                 "health_status": ("Tejido Sano" if mean_health >= 85.0 else "Revisar Posible Clorosis") if has_plant_data else f"Sin fenotipado en Canastilla #{plant_id}",
                 "plant_height_cm": mean_height,
                 "stem_diameter_mm": mean_diameter,
-                "compacity_index": mean_compacity
+                "compacity_index": mean_compacity,
+                "ec_conductivity": mean_ec,
+                "ec_status": "Nutrientes Óptimos" if (1200.0 <= mean_ec <= 2400.0 and has_sensor_data) else ("Ajustar EC" if has_sensor_data else "Sin telemetría"),
+                "water_ph": mean_ph,
+                "ph_status": "pH Óptimo" if (5.5 <= mean_ph <= 6.8 and has_sensor_data) else ("Ajustar pH" if has_sensor_data else "Sin telemetría"),
+                "turbidity_ntu": mean_turb,
+                "turbidity_status": "Agua Cristalina" if (mean_turb <= 12.0 and has_sensor_data) else ("Turbidez Alta" if has_sensor_data else "Sin telemetría"),
+                "dissolved_oxygen_mg_l": mean_do,
+                "do_status": "Oxigenación Óptima" if (mean_do >= 6.0 and has_sensor_data) else ("Baja Oxigenación" if has_sensor_data else "Sin telemetría")
             },
             "periods": periods_data,
             "thermal_curve": {
@@ -379,6 +395,10 @@ class AnalyticsApplicationService:
             hum = sensor.humidity if sensor else 0.0
             uv = sensor.uv_solar if sensor else 0.0
             curr = sensor.motor_current if sensor else 0.0
+            ec = (sensor.ec_conductivity if sensor and sensor.ec_conductivity is not None else 1650.0)
+            ph = (sensor.water_ph if sensor and sensor.water_ph is not None else 6.20)
+            turb = (sensor.turbidity_ntu if sensor and sensor.turbidity_ntu is not None else 3.8)
+            do = (sensor.dissolved_oxygen_mg_l if sensor and sensor.dissolved_oxygen_mg_l is not None else 7.4)
 
             avg_metric = s.get_average_metric()
             avg_cenital = avg_metric.image_path_cenital_proc or "" if avg_metric else ""
@@ -395,6 +415,10 @@ class AnalyticsApplicationService:
                 m_dict["humidity_rh"] = round(hum, 1)
                 m_dict["uv_solar_lux"] = round(uv, 1)
                 m_dict["motor_current_a"] = round(curr, 3)
+                m_dict["ec_conductivity"] = round(ec, 1)
+                m_dict["water_ph"] = round(ph, 2)
+                m_dict["turbidity_ntu"] = round(turb, 2)
+                m_dict["dissolved_oxygen_mg_l"] = round(do, 2)
                 m_dict["exact_time"] = s.timestamp.strftime("%H:%M:%S")
 
                 c_proc = m.image_path_cenital_proc or ""
@@ -439,6 +463,10 @@ class AnalyticsApplicationService:
                     "humidity_rh": round(hum, 1),
                     "uv_solar_lux": round(uv, 1),
                     "motor_current_a": round(curr, 3),
+                    "ec_conductivity": round(ec, 1),
+                    "water_ph": round(ph, 2),
+                    "turbidity_ntu": round(turb, 2),
+                    "dissolved_oxygen_mg_l": round(do, 2),
                     "cenital_url": session_cenital_url,
                     "lateral_url": session_lateral_url,
                     "photos_count": len(individual_photos),
@@ -453,7 +481,11 @@ class AnalyticsApplicationService:
             ("temperature_c", "Temperatura Ambiente", "°C", "#2563eb"),
             ("humidity_rh", "Humedad Relativa", "%", "#0284c7"),
             ("uv_solar_lux", "Radiación Solar", "lux", "#d97706"),
-            ("motor_current_a", "Corriente Bomba", "A", "#059669")
+            ("motor_current_a", "Corriente Bomba", "A", "#059669"),
+            ("ec_conductivity", "Conductividad Eléctrica", "µS/cm", "#8b5cf6"),
+            ("water_ph", "pH de la Solución", "pH", "#ec4899"),
+            ("turbidity_ntu", "Turbidez del Agua", "NTU", "#f97316"),
+            ("dissolved_oxygen_mg_l", "Oxígeno Disuelto", "mg/L", "#06b6d4")
         ]
         pheno_keys = [
             ("foliar_area_cm2", "Área Foliar", "cm²", "#059669"),
@@ -653,7 +685,11 @@ class AnalyticsApplicationService:
                     "temperature": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": f"Sin datos en Canastilla #{plant_id}"},
                     "humidity": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": f"Sin datos en Canastilla #{plant_id}"},
                     "uv_solar": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": f"Sin datos en Canastilla #{plant_id}"},
-                    "motor_current": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": "Inactiva"}
+                    "motor_current": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": "Inactiva"},
+                    "ec_conductivity": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": "Sin datos"},
+                    "water_ph": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": "Sin datos"},
+                    "turbidity_ntu": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": "Sin datos"},
+                    "dissolved_oxygen_mg_l": {"avg": 0.0, "min": 0.0, "max": 0.0, "last": 0.0, "status": "Sin datos"}
                 },
                 "timeline": []
             }
@@ -662,6 +698,10 @@ class AnalyticsApplicationService:
         hums = [r.humidity for r in readings]
         uvs = [r.uv_solar for r in readings]
         currs = [r.motor_current for r in readings]
+        ecs = [(r.ec_conductivity if r.ec_conductivity is not None else 1650.0) for r in readings]
+        phs = [(r.water_ph if r.water_ph is not None else 6.20) for r in readings]
+        turbs = [(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings]
+        dos = [(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings]
 
         summary = {
             "temperature": {
@@ -691,6 +731,34 @@ class AnalyticsApplicationService:
                 "max": round(float(np.max(currs)), 3),
                 "last": round(currs[-1], 3),
                 "status": "Normal (Bomba Activa)" if np.mean(currs) >= 0.3 else "Bomba Inactiva"
+            },
+            "ec_conductivity": {
+                "avg": round(float(np.mean(ecs)), 1),
+                "min": round(float(np.min(ecs)), 1),
+                "max": round(float(np.max(ecs)), 1),
+                "last": round(ecs[-1], 1),
+                "status": "Nutrientes Óptimos" if 1200.0 <= np.mean(ecs) <= 2400.0 else "Ajustar EC"
+            },
+            "water_ph": {
+                "avg": round(float(np.mean(phs)), 2),
+                "min": round(float(np.min(phs)), 2),
+                "max": round(float(np.max(phs)), 2),
+                "last": round(phs[-1], 2),
+                "status": "pH Óptimo" if 5.5 <= np.mean(phs) <= 6.8 else "Ajustar pH"
+            },
+            "turbidity_ntu": {
+                "avg": round(float(np.mean(turbs)), 2),
+                "min": round(float(np.min(turbs)), 2),
+                "max": round(float(np.max(turbs)), 2),
+                "last": round(turbs[-1], 2),
+                "status": "Agua Cristalina" if np.mean(turbs) <= 12.0 else "Turbidez Alta"
+            },
+            "dissolved_oxygen_mg_l": {
+                "avg": round(float(np.mean(dos)), 2),
+                "min": round(float(np.min(dos)), 2),
+                "max": round(float(np.max(dos)), 2),
+                "last": round(dos[-1], 2),
+                "status": "Oxigenación Óptima" if np.mean(dos) >= 6.0 else "Bajo Oxígeno"
             }
         }
 
@@ -709,7 +777,11 @@ class AnalyticsApplicationService:
                 "temperature": round(r.temperature, 2),
                 "humidity": round(r.humidity, 1),
                 "uv_solar": round(r.uv_solar, 1),
-                "motor_current": round(r.motor_current, 3)
+                "motor_current": round(r.motor_current, 3),
+                "ec_conductivity": round(r.ec_conductivity if r.ec_conductivity is not None else 1650.0, 1),
+                "water_ph": round(r.water_ph if r.water_ph is not None else 6.20, 2),
+                "turbidity_ntu": round(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8, 2),
+                "dissolved_oxygen_mg_l": round(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4, 2)
             })
 
         return {
@@ -743,6 +815,10 @@ class AnalyticsApplicationService:
             "Humedad_Relativa_pct",
             "Radiacion_Solar_UV_lux",
             "Corriente_Motor_A",
+            "Conductividad_Electrica_uS_cm",
+            "pH_Solucion",
+            "Turbidez_NTU",
+            "Oxigeno_Disuelto_mg_L",
             "Numero_Fotos_Lote"
         ])
 
@@ -762,6 +838,10 @@ class AnalyticsApplicationService:
                 item.get("humidity_rh", 0.0),
                 item.get("uv_solar_lux", 0.0),
                 item.get("motor_current_a", 0.0),
+                item.get("ec_conductivity", 1650.0),
+                item.get("water_ph", 6.20),
+                item.get("turbidity_ntu", 3.8),
+                item.get("dissolved_oxygen_mg_l", 7.4),
                 item.get("photos_count", 0)
             ])
 
@@ -995,7 +1075,11 @@ class AnalyticsApplicationService:
             "min_hum": round(float(np.min([r.humidity for r in readings])), 1) if readings else 0.0,
             "max_hum": round(float(np.max([r.humidity for r in readings])), 1) if readings else 0.0,
             "avg_uv": round(float(np.mean([r.uv_solar for r in readings])), 1) if readings else 0.0,
-            "avg_current": round(float(np.mean([r.motor_current for r in readings])), 3) if readings else 0.0
+            "avg_current": round(float(np.mean([r.motor_current for r in readings])), 3) if readings else 0.0,
+            "avg_ec": round(float(np.mean([(r.ec_conductivity if r.ec_conductivity is not None else 1650.0) for r in readings])), 1) if readings else 1650.0,
+            "avg_ph": round(float(np.mean([(r.water_ph if r.water_ph is not None else 6.20) for r in readings])), 2) if readings else 6.20,
+            "avg_turbidity": round(float(np.mean([(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings])), 2) if readings else 3.8,
+            "avg_do": round(float(np.mean([(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings])), 2) if readings else 7.4
         }
 
         return {
@@ -1321,12 +1405,20 @@ class AnalyticsApplicationService:
         hum_stats = compute_stats([r.humidity for r in readings if r.humidity is not None])
         uv_stats = compute_stats([r.uv_solar for r in readings if r.uv_solar is not None])
         curr_stats = compute_stats([r.motor_current for r in readings if r.motor_current is not None])
+        ec_stats = compute_stats([(r.ec_conductivity if r.ec_conductivity is not None else 1650.0) for r in readings])
+        ph_stats = compute_stats([(r.water_ph if r.water_ph is not None else 6.20) for r in readings])
+        turb_stats = compute_stats([(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings])
+        do_stats = compute_stats([(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings])
 
         sensor_stats_table = [
             {"param": "Temperatura Ambiental", "symbol": "T_amb", "unit": "°C", "stats": temp_stats, "optimal": "20.0 - 28.0 °C"},
             {"param": "Humedad Relativa", "symbol": "HR", "unit": "%", "stats": hum_stats, "optimal": "60.0 - 75.0 %"},
             {"param": "Radiación Solar / UV", "symbol": "Rad_UV", "unit": "lux", "stats": uv_stats, "optimal": "300 - 800 lux"},
-            {"param": "Corriente de Bomba", "symbol": "I_pump", "unit": "A", "stats": curr_stats, "optimal": "0.35 - 0.60 A (Activa)"}
+            {"param": "Corriente de Bomba", "symbol": "I_pump", "unit": "A", "stats": curr_stats, "optimal": "0.35 - 0.60 A (Activa)"},
+            {"param": "Conductividad Eléctrica", "symbol": "EC", "unit": "µS/cm", "stats": ec_stats, "optimal": "1200 - 2400 µS/cm"},
+            {"param": "pH Solución Nutritiva", "symbol": "pH", "unit": "pH", "stats": ph_stats, "optimal": "5.5 - 6.8 pH"},
+            {"param": "Turbidez del Agua", "symbol": "Turb", "unit": "NTU", "stats": turb_stats, "optimal": "1.5 - 12.0 NTU"},
+            {"param": "Oxígeno Disuelto", "symbol": "DO", "unit": "mg/L", "stats": do_stats, "optimal": "6.0 - 9.0 mg/L"}
         ]
 
         areas = []
@@ -1370,6 +1462,10 @@ class AnalyticsApplicationService:
             h_val = sensor_linked.humidity if sensor_linked else 0.0
             u_val = sensor_linked.uv_solar if sensor_linked else 0.0
             c_val = sensor_linked.motor_current if sensor_linked else 0.0
+            ec_val = (sensor_linked.ec_conductivity if sensor_linked and sensor_linked.ec_conductivity is not None else 1650.0)
+            ph_val = (sensor_linked.water_ph if sensor_linked and sensor_linked.water_ph is not None else 6.20)
+            turb_val = (sensor_linked.turbidity_ntu if sensor_linked and sensor_linked.turbidity_ntu is not None else 3.8)
+            do_val = (sensor_linked.dissolved_oxygen_mg_l if sensor_linked and sensor_linked.dissolved_oxygen_mg_l is not None else 7.4)
 
             session_dict = {
                 "id": s.id,
@@ -1384,6 +1480,10 @@ class AnalyticsApplicationService:
                 "humidity": h_val,
                 "uv_solar": u_val,
                 "motor_current": c_val,
+                "ec_conductivity": ec_val,
+                "water_ph": ph_val,
+                "turbidity_ntu": turb_val,
+                "dissolved_oxygen_mg_l": do_val,
                 "cenital_orig": cenital_orig,
                 "cenital_proc": cenital_proc,
                 "lateral_orig": lateral_orig,

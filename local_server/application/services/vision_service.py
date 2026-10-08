@@ -49,7 +49,7 @@ class VisionApplicationService:
                     if os.path.exists(drive):
                         possible_roots.append(drive)
         else:
-            possible_roots = ["/media", "/mnt", "/media/pi"]
+            possible_roots = ["/media/nodo1", "/media/computo1", "/media/pi", "/media", "/mnt/usb", "/mnt"]
             
         for root in possible_roots:
             if not os.path.exists(root):
@@ -163,7 +163,7 @@ class VisionApplicationService:
         cenital_paths_list = []
         lateral_paths_list = []
         
-        for i, src_img in enumerate(cenital_imgs[:5]):
+        for i, src_img in enumerate(cenital_imgs):
             dst_orig = os.path.join(upload_dir, f"cenital_{i+1}.png")
             dst_proc = os.path.join(processed_dir, f"proc_cenital_{i+1}.png")
             shutil.copy(src_img, dst_orig)
@@ -180,7 +180,7 @@ class VisionApplicationService:
                     "metrics": res
                 })
                 
-        for i, src_img in enumerate(lateral_imgs[:5]):
+        for i, src_img in enumerate(lateral_imgs):
             dst_orig = os.path.join(upload_dir, f"lateral_{i+1}.png")
             dst_proc = os.path.join(processed_dir, f"proc_lateral_{i+1}.png")
             shutil.copy(src_img, dst_orig)

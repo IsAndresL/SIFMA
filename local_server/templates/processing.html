@@ -19,243 +19,256 @@
 
 {% block content %}
 
-<!-- CARD PRINCIPAL: IMPORTACIÓN DE LOTE FOTOGRÁFICO Y CALENDARIO -->
-<div class="widget-card" style="margin-bottom: 24px;">
-    <div class="widget-header">
-        <div class="widget-header-title">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="kpi-icon-badge emerald" style="width: 36px; height: 36px;">
-                    <span class="material-icons-round" style="font-size: 20px;">camera</span>
-                </div>
-                <div>
-                    <h3>Gestión de Lotes y Fechas de Muestreo</h3>
-                    <p>Canastilla Activa: <strong>#{{ active_plant_id }}</strong> | Especie Asignada: <strong>{{ active_crop_profile.display_name }}</strong></p>
-                </div>
+<!-- CARD PRINCIPAL: IMPORTACIÓN DE LOTE FOTOGRÁFICO Y CALENDARIO (RETRAÍBLE POR DEFECTO) -->
+<div class="widget-card" style="margin-bottom: 14px; padding: 12px 18px;">
+    <div class="widget-header" style="margin-bottom: 0; padding-bottom: 0; cursor: pointer;" onclick="toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text')">
+        <div class="widget-header-title" style="display: flex; align-items: center; gap: 10px;">
+            <div class="kpi-icon-badge emerald" style="width: 32px; height: 32px;">
+                <span class="material-icons-round" style="font-size: 18px;">camera</span>
             </div>
-        </div>
-        <span class="badge badge-success" style="font-size: 12.5px;">
-            <span class="material-icons-round" style="font-size: 14px; vertical-align: middle;">schedule</span>
-            {{ sessions | length }} Muestreos en Canastilla #{{ active_plant_id }}
-        </span>
-    </div>
-
-    <!-- CALENDARIO SELECTOR DE FECHA -->
-    <div style="background: var(--bg-card-subtle); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border-color);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div>
-                <label for="calendar-date-picker" style="font-weight: 700; font-size: 13.5px; color: var(--text-heading); display: block; margin-bottom: 2px;">
-                    Fecha de la Jornada a Procesar:
-                </label>
-                <span style="font-size: 11.5px; color: var(--text-muted);">
-                    Selecciona la fecha para asociar los lotes fotográficos a su respectiva jornada
-                </span>
-            </div>
-            
-            <div style="display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-                <span class="material-icons-round" style="font-size: 18px; color: var(--accent-success);">edit_calendar</span>
-                <input type="date" id="calendar-date-picker" class="form-control" style="background: transparent; border: none; font-weight: 700; font-size: 13.5px; color: var(--text-heading); cursor: pointer; padding: 0;" onchange="onCalendarDateChange(this.value)">
+                <h3 style="font-size: 13.5px; margin-bottom: 2px;">Gestión de Lotes y Fechas de Muestreo</h3>
+                <p style="font-size: 11.5px; margin: 0;">Canastilla Activa: <strong>#{{ active_plant_id }}</strong> | Especie Asignada: <strong>{{ active_crop_profile.display_name }}</strong></p>
             </div>
         </div>
-
-        <!-- LISTADO DE FECHAS YA REGISTRADAS Y PROCESADAS -->
-        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-color); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span style="font-size: 11.5px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
-                <span class="material-icons-round" style="font-size: 14px;">check_circle</span> Fechas ya Registradas:
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge badge-success" style="font-size: 11.5px;">
+                <span class="material-icons-round" style="font-size: 13px; vertical-align: middle;">schedule</span>
+                {{ sessions | length }} Muestreos en Canastilla #{{ active_plant_id }}
             </span>
-            {% if processed_periods %}
-                {% for p in processed_periods %}
-                    <span class="badge badge-success" style="font-size: 11.5px; cursor: pointer;" title="Haz clic para seleccionar esta fecha" onclick="selectProcessedDate('{{ p }}')">
-                        {{ p }}
-                    </span>
-                {% endfor %}
-            {% else %}
-                <span style="font-size: 12px; color: var(--text-muted);">Ninguna fecha registrada aún para esta canastilla</span>
-            {% endif %}
-        </div>
-
-        <!-- ADVERTENCIA DE SOBREESCRITURA SI LA FECHA YA FUE PROCESADA -->
-        <div id="overwrite-warning-box" style="display: none; margin-top: 12px; background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.3); padding: 10px 14px; border-radius: 8px; color: var(--accent-warning); font-size: 12.5px; font-weight: 600; align-items: center; gap: 8px;">
-            <span class="material-icons-round" style="font-size: 20px;">warning</span>
-            <span id="overwrite-warning-text">Advertencia: Esta fecha ya tiene un muestreo registrado. Si procesas de nuevo se actualizarán los datos.</span>
-        </div>
-    </div>
-
-    <!-- MODO 1: DETECCIÓN AUTOMÁTICA DE MEMORIAS USB CONECTADAS -->
-    <div id="import-mode-usb-container" style="margin-top: 16px; background: #ffffff; padding: 18px; border-radius: 12px; border: 1px dashed var(--border-color);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-size: 13.5px; font-weight: 700; color: var(--text-heading);">Carpetas y Lotes USB Detectados:</span>
-            <button class="btn btn-primary btn-sm" onclick="scanUSBDrives()">
-                <span class="material-icons-round">search</span>
-                <span>Escanear Memorias USB</span>
+            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11.5px; display: flex; align-items: center; gap: 4px;">
+                <span id="btn-lots-text">Ver Lotes y Fechas / Importar</span>
+                <span class="material-icons-round" id="icon-lots-toggle" style="font-size: 18px; transition: transform 0.2s;">expand_more</span>
             </button>
         </div>
-        
-        <div id="usb-scan-results" style="display: flex; flex-direction: column; gap: 10px; min-height: 50px;">
-            <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 12px;">
-                Haz clic en <strong>"Escanear Memorias USB"</strong> para buscar las carpetas guardadas en la memoria.
-            </p>
-        </div>
     </div>
 
-    <!-- MODO 2: ARRASTRAR Y SOLTAR ARCHIVOS / ZIP (DRAG & DROP) -->
-    <div id="import-mode-drag-container" style="margin-top: 16px; display: none;">
-        <form id="upload-form" enctype="multipart/form-data">
-            <div id="drop-zone" style="border: 2px dashed var(--accent-success); border-radius: 12px; padding: 36px 20px; text-align: center; background: rgba(5, 150, 105, 0.03); cursor: pointer; transition: var(--transition-fast);">
-                <span class="material-icons-round" style="font-size: 48px; color: var(--accent-success); margin-bottom: 8px;">cloud_upload</span>
-                <h4 style="margin-bottom: 4px; font-size: 15px; font-weight: 700; color: var(--text-heading);">Arrastra aquí el archivo .ZIP o las imágenes de la fecha seleccionada</h4>
-                <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">Soporta archivos .ZIP con subcarpetas de turnos (mañana, mediodía, tarde) o fotos directas</p>
-                <input type="file" id="file-input" name="images" multiple accept="image/*,.zip" style="display: none;">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click();">
-                    <span class="material-icons-round">folder_open</span>
-                    <span>Seleccionar Archivo .ZIP o Imágenes</span>
+    <!-- CUERPO RETRAÍBLE (OCULTO POR DEFECTO) -->
+    <div id="section-lots-body" style="display: none; margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 14px;">
+        
+        <!-- CALENDARIO SELECTOR DE FECHA -->
+        <div style="background: var(--bg-card-subtle); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <label for="calendar-date-picker" style="font-weight: 700; font-size: 13px; color: var(--text-heading); display: block; margin-bottom: 2px;">
+                        Fecha de la Jornada a Procesar:
+                    </label>
+                    <span style="font-size: 11.5px; color: var(--text-muted);">
+                        Selecciona la fecha para asociar los lotes fotográficos a su respectiva jornada
+                    </span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <span class="material-icons-round" style="font-size: 18px; color: var(--accent-success);">edit_calendar</span>
+                    <input type="date" id="calendar-date-picker" class="form-control" style="background: transparent; border: none; font-weight: 700; font-size: 13px; color: var(--text-heading); cursor: pointer; padding: 0;" onchange="onCalendarDateChange(this.value)">
+                </div>
+            </div>
+
+            <!-- LISTADO DE FECHAS YA REGISTRADAS Y PROCESADAS -->
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-icons-round" style="font-size: 13px;">check_circle</span> Fechas ya Registradas:
+                </span>
+                {% if processed_periods %}
+                    {% for p in processed_periods %}
+                        <span class="badge badge-success" style="font-size: 11px; cursor: pointer; padding: 3px 8px;" title="Haz clic para seleccionar esta fecha" onclick="selectProcessedDate('{{ p }}')">
+                            {{ p }}
+                        </span>
+                    {% endfor %}
+                {% else %}
+                    <span style="font-size: 11.5px; color: var(--text-muted);">Ninguna fecha registrada aún para esta canastilla</span>
+                {% endif %}
+            </div>
+
+            <!-- ADVERTENCIA DE SOBREESCRITURA SI LA FECHA YA FUE PROCESADA -->
+            <div id="overwrite-warning-box" style="display: none; margin-top: 10px; background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.3); padding: 8px 12px; border-radius: 8px; color: var(--accent-warning); font-size: 12px; font-weight: 600; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="font-size: 18px;">warning</span>
+                <span id="overwrite-warning-text">Advertencia: Esta fecha ya tiene un muestreo registrado. Si procesas de nuevo se actualizarán los datos.</span>
+            </div>
+        </div>
+
+        <!-- MODO 1: DETECCIÓN AUTOMÁTICA DE MEMORIAS USB CONECTADAS -->
+        <div id="import-mode-usb-container" style="margin-top: 14px; background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 1px dashed var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--text-heading);">Carpetas y Lotes USB Detectados:</span>
+                <button class="btn btn-primary btn-sm" onclick="scanUSBDrives()">
+                    <span class="material-icons-round">search</span>
+                    <span>Escanear Memorias USB</span>
                 </button>
             </div>
             
-            <div id="selected-files-summary" style="margin-top: 14px; font-size: 13px; color: var(--accent-success); display: none; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <span class="material-icons-round" style="font-size: 20px;">check_circle</span>
-                    <span id="files-count-text" style="font-weight: 600;">0 archivos seleccionados</span>
-                </div>
-                <button type="button" class="btn btn-primary" id="btn-submit-manual" onclick="submitManualBatch()">
-                    <span>Subir y Procesar Lote para Canastilla #{{ active_plant_id }}</span>
-                </button>
+            <div id="usb-scan-results" style="display: flex; flex-direction: column; gap: 8px; min-height: 40px;">
+                <p style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 10px; margin: 0;">
+                    Haz clic en <strong>"Escanear Memorias USB"</strong> para buscar las carpetas guardadas en la memoria.
+                </p>
             </div>
-        </form>
-    </div>
-
-    <!-- BARRA DE PROGRESO DE PROCESAMIENTO (0% A 100%) -->
-    <div id="processing-status-bar" style="margin-top: 16px; display: none; background: #09211a; padding: 16px 20px; border-radius: 12px; border: 1px solid #134e3d; color: #ffffff;">
-        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px;">
-            <span id="status-message" style="font-weight: 600; color: #10b981;">Iniciando algoritmos de visión artificial OpenCV/PlantCV...</span>
-            <span id="status-percent" style="font-weight: 700; color: #10b981; font-size: 15px;">0%</span>
         </div>
-        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden;">
-            <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.3s ease;"></div>
+
+        <!-- MODO 2: ARRASTRAR Y SOLTAR ARCHIVOS / ZIP (DRAG & DROP) -->
+        <div id="import-mode-drag-container" style="margin-top: 14px; display: none;">
+            <form id="upload-form" enctype="multipart/form-data">
+                <div id="drop-zone" style="border: 2px dashed var(--accent-success); border-radius: 10px; padding: 28px 20px; text-align: center; background: rgba(5, 150, 105, 0.03); cursor: pointer; transition: var(--transition-fast);">
+                    <span class="material-icons-round" style="font-size: 40px; color: var(--accent-success); margin-bottom: 6px;">cloud_upload</span>
+                    <h4 style="margin-bottom: 4px; font-size: 14px; font-weight: 700; color: var(--text-heading);">Arrastra aquí el archivo .ZIP o las imágenes de la fecha seleccionada</h4>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Soporta archivos .ZIP con subcarpetas de turnos (mañana, mediodía, tarde) o fotos directas</p>
+                    <input type="file" id="file-input" name="images" multiple accept="image/*,.zip" style="display: none;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('file-input').click();">
+                        <span class="material-icons-round">folder_open</span>
+                        <span>Seleccionar Archivo .ZIP o Imágenes</span>
+                    </button>
+                </div>
+                
+                <div id="selected-files-summary" style="margin-top: 12px; font-size: 12.5px; color: var(--accent-success); display: none; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round" style="font-size: 18px;">check_circle</span>
+                        <span id="files-count-text" style="font-weight: 600;">0 archivos seleccionados</span>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-submit-manual" onclick="submitManualBatch()">
+                        <span>Subir y Procesar Lote para Canastilla #{{ active_plant_id }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- BARRA DE PROGRESO DE PROCESAMIENTO (0% A 100%) -->
+        <div id="processing-status-bar" style="margin-top: 14px; display: none; background: #09211a; padding: 14px 18px; border-radius: 10px; border: 1px solid #134e3d; color: #ffffff;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                <span id="status-message" style="font-weight: 600; color: #10b981;">Iniciando algoritmos de visión artificial OpenCV/PlantCV...</span>
+                <span id="status-percent" style="font-weight: 700; color: #10b981; font-size: 14px;">0%</span>
+            </div>
+            <div style="width: 100%; height: 7px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden;">
+                <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.3s ease;"></div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- GRID DE GRÁFICAS BIOMÉTRICAS DETALLADAS (ANÁLISIS DE IMAGEN) -->
-<div class="analytics-grid-2x2">
-    <div class="widget-card">
-        <div class="widget-header">
+<!-- GRID DE GRÁFICAS BIOMÉTRICAS DETALLADAS (CUADRÍCULA 2X2 AJUSTADA A UNA SOLA PANTALLA) -->
+<div class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 14px;">
+    
+    <!-- Gráfica 1: Área Foliar -->
+    <div class="widget-card" style="padding: 12px 14px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 6px; padding-bottom: 4px;">
             <div class="widget-header-title">
-                <h3>Área Foliar Estimada (cm²)</h3>
-                <p>Evolución morfológica en Canastilla #{{ active_plant_id }}</p>
+                <h3 style="font-size: 13px;">Área Foliar Estimada (cm²)</h3>
+                <p style="font-size: 11px;">Evolución morfológica en Canastilla #{{ active_plant_id }}</p>
             </div>
-            <span class="badge badge-success">ExG + Otsu</span>
+            <span class="badge badge-success" style="font-size: 10px;">ExG + Otsu</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 185px; margin-bottom: 0;">
             <canvas id="foliarAreaChart"></canvas>
         </div>
     </div>
 
-    <div class="widget-card">
-        <div class="widget-header">
+    <!-- Gráfica 2: Altura de Planta -->
+    <div class="widget-card" style="padding: 12px 14px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 6px; padding-bottom: 4px;">
             <div class="widget-header-title">
-                <h3>Altura Estimada de la Planta (cm)</h3>
-                <p>Calibración lateral vertical en Canastilla #{{ active_plant_id }}</p>
+                <h3 style="font-size: 13px;">Altura Estimada de la Planta (cm)</h3>
+                <p style="font-size: 11px;">Calibración lateral vertical en Canastilla #{{ active_plant_id }}</p>
             </div>
-            <span class="badge badge-primary">Cámara Lateral</span>
+            <span class="badge badge-primary" style="font-size: 10px;">Cámara Lateral</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 185px; margin-bottom: 0;">
             <canvas id="plantHeightChart"></canvas>
         </div>
     </div>
 
-    <div class="widget-card">
-        <div class="widget-header">
+    <!-- Gráfica 3: Diámetro del Tallo -->
+    <div class="widget-card" style="padding: 12px 14px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 6px; padding-bottom: 4px;">
             <div class="widget-header-title">
-                <h3>Diámetro del Tallo Basal (mm)</h3>
-                <p>Espesor promedio en Canastilla #{{ active_plant_id }}</p>
+                <h3 style="font-size: 13px;">Diámetro del Tallo Basal (mm)</h3>
+                <p style="font-size: 11px;">Espesor promedio en Canastilla #{{ active_plant_id }}</p>
             </div>
-            <span class="badge badge-warning">Calibración Basal</span>
+            <span class="badge badge-warning" style="font-size: 10px;">Calibración Basal</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 185px; margin-bottom: 0;">
             <canvas id="stemDiameterChart"></canvas>
         </div>
     </div>
 
-    <div class="widget-card">
-        <div class="widget-header">
+    <!-- Gráfica 4: Salud Foliar -->
+    <div class="widget-card" style="padding: 12px 14px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 6px; padding-bottom: 4px;">
             <div class="widget-header-title">
-                <h3>Índice de Salud Foliar (%)</h3>
-                <p>Proporción de clorofila activa en Canastilla #{{ active_plant_id }}</p>
+                <h3 style="font-size: 13px;">Índice de Salud Foliar (%)</h3>
+                <p style="font-size: 11px;">Proporción de clorofila activa en Canastilla #{{ active_plant_id }}</p>
             </div>
-            <span class="badge badge-danger">Vigor Vegetal</span>
+            <span class="badge badge-danger" style="font-size: 10px;">Vigor Vegetal</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 185px; margin-bottom: 0;">
             <canvas id="healthIndexChart"></canvas>
         </div>
     </div>
 </div>
 
 <!-- COMPARADOR DE MÁSCARA Y DETALLE DE LA ÚLTIMA SESIÓN -->
-<div class="dashboard-grid-2col" style="margin-top: 24px;">
+<div class="dashboard-grid-2col" style="margin-top: 14px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
     <!-- Vista Previa de Segmentación -->
-    <div class="widget-card">
-        <div class="widget-header">
+    <div class="widget-card" style="padding: 12px 14px;">
+        <div class="widget-header" style="margin-bottom: 8px; padding-bottom: 4px;">
             <div class="widget-header-title">
-                <h3>Última Segmentación Biométrica</h3>
-                <p>Máscaras generadas por OpenCV</p>
+                <h3 style="font-size: 13px;">Última Segmentación Biométrica</h3>
+                <p style="font-size: 11px;">Máscaras generadas por OpenCV</p>
             </div>
-            <span class="badge badge-success">Procesada</span>
+            <span class="badge badge-success" style="font-size: 10px;">Procesada</span>
         </div>
         
         {% if latest_session and latest_metric %}
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
                 <span>Muestreo: <strong style="color: var(--accent-success);">{{ latest_session.period.upper() }}</strong></span>
                 <span>Especie: <strong>{{ selected_profile.display_name if selected_profile else latest_session.crop_type }}</strong></span>
                 <span>Hora: <strong>{{ latest_session.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong></span>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); position: relative; height: 180px; background: #000;">
-                    <img src="{{ url_for('static', filename=latest_metric.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 700; color: #10b981;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative; height: 180px; background: #090d16; display: flex; align-items: center; justify-content: center;">
+                    <img src="{{ url_for('static', filename=latest_metric.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div style="position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.75); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #10b981;">
                         CENITAL (Máscara)
                     </div>
                 </div>
-                <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); position: relative; height: 180px; background: #000;">
-                    <img src="{{ url_for('static', filename=latest_metric.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 700; color: #3b82f6;">
+                <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative; height: 180px; background: #090d16; display: flex; align-items: center; justify-content: center;">
+                    <img src="{{ url_for('static', filename=latest_metric.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div style="position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.75); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #3b82f6;">
                         LATERAL (Calibración)
                     </div>
                 </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; text-align: center;">
-                <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
-                    <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Índice de Compacidad</p>
-                    <p style="font-weight: 700; font-size: 18px; margin-top: 4px; color: var(--accent-success);">{{ latest_metric.compacity_index }}</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12.5px; text-align: center;">
+                <div style="background: var(--bg-card-subtle); padding: 8px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Índice de Compacidad</p>
+                    <p style="font-weight: 700; font-size: 16px; margin: 0; color: var(--accent-success);">{{ latest_metric.compacity_index }}</p>
                 </div>
-                <div style="background: var(--bg-card-subtle); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
-                    <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Índice de Salud Foliar</p>
-                    <p style="font-weight: 700; font-size: 18px; margin-top: 4px; color: var(--accent-primary);">{{ latest_metric.health_index }}%</p>
+                <div style="background: var(--bg-card-subtle); padding: 8px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Índice de Salud Foliar</p>
+                    <p style="font-weight: 700; font-size: 16px; margin: 0; color: var(--accent-primary);">{{ latest_metric.health_index }}%</p>
                 </div>
             </div>
         </div>
         {% else %}
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 240px; color: var(--text-muted); text-align: center;">
-            <span class="material-icons-round" style="font-size: 48px; margin-bottom: 10px; color: var(--text-dim);">photo_camera</span>
-            <p style="font-weight: 600;">No hay muestreos registrados para la <strong>Canastilla #{{ active_plant_id }}</strong>.</p>
-            <p style="font-size: 12px; margin-top: 4px;">Selecciona la fecha en el calendario arriba y procesa fotos desde la USB o sube el ZIP.</p>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--text-muted); text-align: center;">
+            <span class="material-icons-round" style="font-size: 40px; margin-bottom: 8px; color: var(--text-dim);">photo_camera</span>
+            <p style="font-weight: 600; font-size: 13px;">No hay muestreos registrados para la <strong>Canastilla #{{ active_plant_id }}</strong>.</p>
+            <p style="font-size: 11.5px; margin-top: 2px;">Selecciona la fecha en el calendario arriba y procesa fotos desde la USB o sube el ZIP.</p>
         </div>
         {% endif %}
     </div>
 
     <!-- Historial de Muestreos -->
-    <div class="widget-card">
-        <div class="widget-header">
+    <div class="widget-card" style="padding: 12px 14px;">
+        <div class="widget-header" style="margin-bottom: 8px; padding-bottom: 4px;">
             <div class="widget-header-title">
-                <h3>Historial de Muestreo</h3>
-                <p>Canastilla #{{ active_plant_id }}</p>
+                <h3 style="font-size: 13px;">Historial de Muestreo</h3>
+                <p style="font-size: 11px;">Canastilla #{{ active_plant_id }}</p>
             </div>
         </div>
         
-        <div class="table-responsive" style="max-height: 280px; margin-bottom: 0;">
-            <table class="table">
+        <div class="table-responsive" style="max-height: 235px; margin-bottom: 0;">
+            <table class="table" style="font-size: 12px;">
                 <thead>
                     <tr>
                         <th>Fecha / Hora</th>
@@ -271,9 +284,9 @@
                             {% if session.metrics %}
                             {% set metric = session.metrics[0] %}
                             <tr>
-                                <td style="font-size: 12px;">{{ session.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td style="font-size: 11.5px;">{{ session.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td>
-                                    <span class="badge badge-success">
+                                    <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">
                                         {{ session.period.upper() }}
                                     </span>
                                 </td>
@@ -285,7 +298,7 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
                                 Sin datos registrados aún.
                             </td>
                         </tr>
@@ -304,7 +317,33 @@
     const activePlantId = {{ active_plant_id }};
     const processedDates = {{ processed_periods | tojson | safe }};
 
+    function toggleCollapsibleSection(bodyId, iconId, textId) {
+        const body = document.getElementById(bodyId);
+        const icon = document.getElementById(iconId);
+        const txt = document.getElementById(textId);
+        if (!body) return;
+        
+        if (body.style.display === 'none' || body.style.display === '') {
+            body.style.display = 'block';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+            if (txt) {
+                if (textId === 'btn-lots-text') txt.innerText = 'Ocultar Panel de Lotes';
+            }
+        } else {
+            body.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+            if (txt) {
+                if (textId === 'btn-lots-text') txt.innerText = 'Ver Lotes y Fechas / Importar';
+            }
+        }
+    }
+
     function switchImportMode(mode) {
+        const lotsBody = document.getElementById('section-lots-body');
+        if (lotsBody && (lotsBody.style.display === 'none' || lotsBody.style.display === '')) {
+            toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text');
+        }
+
         if (mode === 'usb') {
             document.getElementById('import-mode-usb-container').style.display = 'block';
             document.getElementById('import-mode-drag-container').style.display = 'none';
@@ -515,6 +554,11 @@
     }
 
     async function processSingleBatch(folderPath, periodStr) {
+        const lotsBody = document.getElementById('section-lots-body');
+        if (lotsBody && (lotsBody.style.display === 'none' || lotsBody.style.display === '')) {
+            toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text');
+        }
+
         const calDate = document.getElementById('calendar-date-picker').value;
         const pBar = document.getElementById('processing-status-bar');
         const pFill = document.getElementById('progress-bar-fill');
@@ -549,6 +593,11 @@
     }
 
     async function processAllUSBBatches() {
+        const lotsBody = document.getElementById('section-lots-body');
+        if (lotsBody && (lotsBody.style.display === 'none' || lotsBody.style.display === '')) {
+            toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text');
+        }
+
         const calDate = document.getElementById('calendar-date-picker').value;
         const pBar = document.getElementById('processing-status-bar');
         const pFill = document.getElementById('progress-bar-fill');
@@ -582,6 +631,11 @@
     }
 
     async function submitManualBatch() {
+        const lotsBody = document.getElementById('section-lots-body');
+        if (lotsBody && (lotsBody.style.display === 'none' || lotsBody.style.display === '')) {
+            toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text');
+        }
+
         const fileInput = document.getElementById('file-input');
         const calDate = document.getElementById('calendar-date-picker').value;
         if (!fileInput.files || fileInput.files.length === 0) {

@@ -47,9 +47,9 @@
                     {% set s = g.session %}
                     {% set m = g.avg_metric %}
                     <div class="capture-thumb-card" data-period="{{ s.period }}" data-session-id="{{ s.id }}" onclick="selectSession({{ s.id }})" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; cursor: pointer; min-width: 170px; box-shadow: var(--shadow-sm); transition: var(--transition-fast);">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-radius: 8px; overflow: hidden; height: 75px; background: #000; margin-bottom: 8px;">
-                            <img src="{{ url_for('static', filename=m.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                            <img src="{{ url_for('static', filename=m.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-radius: 8px; overflow: hidden; height: 75px; background: #090d16; margin-bottom: 8px; border: 1px solid #1e293b;">
+                            <img src="{{ url_for('static', filename=m.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                            <img src="{{ url_for('static', filename=m.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: contain;">
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             <span style="font-size: 11.5px; font-weight: 700; color: var(--text-heading);">{{ s.timestamp.strftime('%d/%m %H:%M') }}</span>
@@ -147,10 +147,10 @@
                     </div>
 
                     <!-- TARJETAS DE COMPARACIÓN DE IMÁGENES -->
-                    <div class="analytics-grid-2x2">
+                    <div class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px;">
                         
                         <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR) -->
-                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm);">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span class="material-icons-round" style="color: var(--accent-success);">camera</span>
@@ -159,22 +159,22 @@
                                 <span class="badge badge-success">Área Foliar</span>
                             </div>
                             
-                            <div style="position: relative; height: 260px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #000;">
+                            <div style="position: relative; width: 100%; height: 320px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;">
-                                    <div style="position: relative; border-right: 1px solid #333;">
-                                        <img id="img-cenital-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">ORIGINAL</div>
+                                    <div style="position: relative; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; background: #090d16;">
+                                        <img id="img-cenital-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">ORIGINAL</div>
                                     </div>
-                                    <div style="position: relative;">
-                                        <img id="img-cenital-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.85); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">MÁSCARA ExG</div>
+                                    <div style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16;">
+                                        <img id="img-cenital-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">MÁSCARA ExG</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- COMPARADOR 2: CÁMARA LATERAL (ALTURA Y TALLO) -->
-                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm);">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span class="material-icons-round" style="color: var(--accent-primary);">photo_camera_front</span>
@@ -183,15 +183,15 @@
                                 <span class="badge badge-primary">Altura & Tallo</span>
                             </div>
                             
-                            <div style="position: relative; height: 260px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #000;">
+                            <div style="position: relative; width: 100%; height: 320px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;">
-                                    <div style="position: relative; border-right: 1px solid #333;">
-                                        <img id="img-lateral-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">ORIGINAL</div>
+                                    <div style="position: relative; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; background: #090d16;">
+                                        <img id="img-lateral-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">ORIGINAL</div>
                                     </div>
-                                    <div style="position: relative;">
-                                        <img id="img-lateral-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(37,99,235,0.85); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; font-weight: 600;">CALIBRACIÓN</div>
+                                    <div style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16;">
+                                        <img id="img-lateral-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(37,99,235,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">CALIBRACIÓN</div>
                                     </div>
                                 </div>
                             </div>

@@ -1,12 +1,19 @@
 {
-  "server_url": "http://192.168.0.3:5000",
   "plant_id": 1,
+  "crop_type": "cebollin",
+  "capture_mode": "interval",
+  "interval_minutes": 60,
   "scheduled_times": [
     "07:05",
     "12:05",
     "17:05"
   ],
-  "photos_per_period": 5,
-  "capture_interval_sec": 2,
+  "photos_per_session": 3,
+  "interval_between_photos_sec": 5,
+  "boot_delay_sec": 10,
+  "capture_on_boot": true,
+  "cenital_camera_index": 0,
+  "lateral_camera_index": 1,
+  "server_url": "http://192.168.0.3:5000",
   "safe_shutdown_enabled": false
 }

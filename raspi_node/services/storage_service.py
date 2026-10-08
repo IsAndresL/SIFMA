@@ -49,6 +49,7 @@ class OfflineStorageService:
                         possible_usb_roots.append(drive)
         else: # Linux / Raspberry Pi OS
             possible_usb_roots = [
+                "/media/nodo1",
                 "/media/computo1",
                 "/media/pi",
                 "/media",

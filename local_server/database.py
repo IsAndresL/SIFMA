@@ -10,7 +10,8 @@ from domain.models import (
     SensorReading,
     CaptureSession,
     BiometricMetric,
-    AgronomicConclusion
+    AgronomicConclusion,
+    User
 )
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "SensorReading",
     "CaptureSession",
     "BiometricMetric",
-    "AgronomicConclusion"
+    "AgronomicConclusion",
+    "User"
 ]

@@ -1,0 +1,17 @@
+[Unit]
+Description=Panel de Control Tactil SIFMA Raspberry Pi (Web en puerto 8080)
+After=network.target sifma-capture.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=nodo1
+WorkingDirectory=/home/nodo1/raspi_node
+ExecStart=/usr/bin/python3 /home/nodo1/raspi_node/panel_app.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

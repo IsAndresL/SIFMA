@@ -23,25 +23,25 @@ class ExgSegmentationStrategy:
         b, g, r = cv2.split(image.astype(np.float32))
         exg = 2.0 * g - r - b
         
-        # En vista lateral se incrementa ligeramente la selectividad de ExG
-        exg_thresh = 12.0 if is_lateral else 10.0
+        # En vista lateral se usa un umbral ExG más sensible para captar tallos finos basales
+        exg_thresh = 6.0 if is_lateral else 10.0
         exg_mask = (exg > exg_thresh).astype(np.uint8) * 255
         
         # 2. Umbralizado en espacio HSV para clorofila
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         if is_lateral:
-            h_min = max(28, int(getattr(profile, 'lat_h_min', 32)))
-            h_max = min(92, int(getattr(profile, 'lat_h_max', 86)))
-            s_min = max(35, int(getattr(profile, 'lat_s_min', 40)))
+            h_min = max(20, int(getattr(profile, 'lat_h_min', 22)))
+            h_max = min(96, int(getattr(profile, 'lat_h_max', 92)))
+            s_min = max(20, int(getattr(profile, 'lat_s_min', 25)))
             s_max = int(getattr(profile, 'lat_s_max', 255))
-            v_min = max(30, int(getattr(profile, 'lat_v_min', 35)))
+            v_min = max(20, int(getattr(profile, 'lat_v_min', 25)))
             v_max = int(getattr(profile, 'lat_v_max', 255))
             
-            l_min = max(15, int(getattr(profile, 'lat_l_min', 25)))
+            l_min = max(10, int(getattr(profile, 'lat_l_min', 15)))
             l_max = int(getattr(profile, 'lat_l_max', 255))
-            # Canal A < 119 discrimina con precisión el plástico blanco y la tierra
-            a_max = min(119, int(getattr(profile, 'lat_a_max', 118)))
-            b_min = max(120, int(getattr(profile, 'lat_b_min', 125)))
+            # Canal A < 122 discrimina el fondo blanco sin cortar tallos
+            a_max = min(124, int(getattr(profile, 'lat_a_max', 122)))
+            b_min = max(115, int(getattr(profile, 'lat_b_min', 118)))
         else:
             h_min = max(24, int(getattr(profile, 'h_min', 28)))
             h_max = min(96, int(getattr(profile, 'h_max', 90)))

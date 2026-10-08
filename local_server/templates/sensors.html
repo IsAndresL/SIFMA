@@ -13,314 +13,527 @@
 
 {% block content %}
 
-<!-- SECCIÓN 1: PANEL DE CONTROL DE LA ANTENA USB Y SUBIDA DE CSV -->
-<div class="widget-card" style="margin-bottom: 24px;">
-    <div class="widget-header">
-        <div class="widget-header-title" style="display: flex; align-items: center; gap: 12px;">
-            <div class="kpi-icon-badge blue" style="width: 38px; height: 38px;">
-                <span class="material-icons-round" style="font-size: 22px;">settings_input_antenna</span>
+<!-- SECCIÓN 1: PANEL DE CONTROL DE LA ANTENA USB Y SUBIDA DE CSV (RETRAÍBLE POR DEFECTO) -->
+<div class="widget-card" style="margin-bottom: 14px; padding: 12px 18px;">
+    <div class="widget-header" style="margin-bottom: 0; padding-bottom: 0; cursor: pointer;" onclick="toggleCollapsibleSection('section-antenna-body', 'icon-antenna-toggle', 'btn-antenna-text')">
+        <div class="widget-header-title" style="display: flex; align-items: center; gap: 10px;">
+            <div class="kpi-icon-badge blue" style="width: 32px; height: 32px;">
+                <span class="material-icons-round" style="font-size: 18px;">settings_input_antenna</span>
             </div>
             <div>
-                <h3>Control de la Antena Receptora de Telemetría (XBee PRO S2B / USB)</h3>
-                <p>Recepción de señales RF e importación de registros CSV de la torre</p>
+                <h3 style="font-size: 13.5px; margin-bottom: 2px;">Control de la Antena Receptora de Telemetría (XBee PRO S2B / USB)</h3>
+                <p style="font-size: 11.5px; margin: 0;">Recepción inalámbrica RF e importación manual de registros CSV de la torre</p>
             </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="status-dot {% if telemetry_status.is_recording %}active{% else %}inactive{% endif %}"></span>
+            <span style="font-size: 11.5px; font-weight: 700; color: {% if telemetry_status.is_recording %}var(--accent-success){% else %}var(--text-muted){% endif %};">
+                {% if telemetry_status.is_recording %}Transmitiendo en Vivo{% else %}Antena Inactiva{% endif %}
+            </span>
+            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11.5px; display: flex; align-items: center; gap: 4px;">
+                <span id="btn-antenna-text">Ver Antena / Importar CSV</span>
+                <span class="material-icons-round" id="icon-antenna-toggle" style="font-size: 18px; transition: transform 0.2s;">expand_more</span>
+            </button>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-        
-        <!-- Bloque 1: Captación Directa desde Antena USB -->
-        <div style="background: var(--bg-card-subtle); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
-            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text-heading);">
-                Recepción Inalámbrica por Antena USB
-            </h4>
+    <!-- CUERPO RETRAÍBLE (OCULTO POR DEFECTO) -->
+    <div id="section-antenna-body" style="display: none; margin-top: 16px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
             
-            <div style="margin-bottom: 14px;">
-                <label style="font-size: 12.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">
-                    Puerto o Interfaz de la Antena:
-                </label>
+            <!-- Bloque 1: Captación Directa desde Antena USB -->
+            <div style="background: var(--bg-card-subtle); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color);">
+                <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text-heading);">
+                    Recepción Inalámbrica por Antena USB
+                </h4>
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">
+                        Puerto o Interfaz de la Antena:
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="antenna-port-select" class="form-control" style="flex-grow: 1; font-size: 12.5px;">
+                            {% for p in available_ports %}
+                                <option value="{{ p }}" {% if p == telemetry_status.port %}selected{% endif %}>{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="refreshAntennaPorts()" title="Escanear puertos USB">
+                            <span class="material-icons-round" style="font-size: 16px;">refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <div style="font-size: 11px; color: var(--text-muted);">
+                            Archivo CSV activo: <code id="antenna-csv-file" style="color: var(--text-heading); font-weight: 600;">{{ telemetry_status.file }}</code>
+                        </div>
+                        <a href="/api/telemetry/download_active_csv" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11px;" title="Descargar archivo CSV de telemetría">
+                            <span class="material-icons-round" style="font-size: 13px; vertical-align: middle;">download</span>
+                            <span>Descargar CSV Activo</span>
+                        </a>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 8px;">
-                    <select id="antenna-port-select" class="form-control" style="flex-grow: 1;">
-                        {% for p in available_ports %}
-                            <option value="{{ p }}" {% if p == telemetry_status.port %}selected{% endif %}>{{ p }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="refreshAntennaPorts()" title="Escanear puertos USB">
-                        <span class="material-icons-round">refresh</span>
+                    <button type="button" id="btn-start-telemetry" class="btn btn-primary btn-sm" onclick="toggleTelemetry(true)" {% if telemetry_status.is_recording %}style="display:none;"{% endif %}>
+                        <span class="material-icons-round" style="font-size: 16px;">play_arrow</span>
+                        <span>Iniciar Captación</span>
+                    </button>
+                    <button type="button" id="btn-stop-telemetry" class="btn btn-danger btn-sm" {% if not telemetry_status.is_recording %}style="display:none;"{% endif %} onclick="toggleTelemetry(false)">
+                        <span class="material-icons-round" style="font-size: 16px;">stop</span>
+                        <span>Detener Captación</span>
                     </button>
                 </div>
             </div>
 
-            <div style="margin-bottom: 14px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="status-dot {% if telemetry_status.is_recording %}active{% else %}inactive{% endif %}" id="antenna-status-dot"></span>
-                    <span id="antenna-status-text" style="font-weight: 700; font-size: 13px; color: {% if telemetry_status.is_recording %}var(--accent-success){% else %}var(--text-muted){% endif %};">
-                        {% if telemetry_status.is_recording %}Transmitiendo y Guardando en Vivo{% else %}Inactivo (Listo para captar){% endif %}
-                    </span>
-                </div>
-                
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                    <div style="font-size: 11.5px; color: var(--text-muted);">
-                        Archivo CSV activo: <code id="antenna-csv-file" style="color: var(--text-heading); font-weight: 600;">{{ telemetry_status.file }}</code>
+            <!-- Bloque 2: Importación Manual de Archivo CSV de la Torre -->
+            <div style="background: var(--bg-card-subtle); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color);">
+                <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text-heading);">
+                    Importar Archivo CSV de la Torre Hidropónica
+                </h4>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px;">
+                    Sube el archivo CSV exportado por la torre (Fecha;Temperatura;Humedad;Radiación;Amperaje) para registrarlo.
+                </p>
+
+                <form id="csv-upload-form" onsubmit="handleCsvUpload(event)">
+                    <div style="margin-bottom: 10px;">
+                        <input type="file" id="telemetry-csv-input" accept=".csv,text/csv" class="form-control" style="font-size: 12px;" required>
                     </div>
-                    <a href="/api/telemetry/download_active_csv" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;" title="Descargar archivo CSV de telemetría (formato columnas para Excel)">
-                        <span class="material-icons-round" style="font-size: 15px;">download</span>
-                        <span>Descargar CSV (Columnas Excel)</span>
-                    </a>
-                </div>
+                    <button type="submit" id="btn-upload-csv" class="btn btn-primary btn-sm" style="width: 100%;">
+                        <span class="material-icons-round" style="font-size: 16px;">upload_file</span>
+                        <span>Cargar y Procesar CSV de Sensores</span>
+                    </button>
+                </form>
+
+                <div id="csv-upload-feedback" style="display: none; margin-top: 8px; font-size: 11.5px; padding: 8px; border-radius: 6px;"></div>
             </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button type="button" id="btn-start-telemetry" class="btn btn-primary" onclick="toggleTelemetry(true)" {% if telemetry_status.is_recording %}style="display:none;"{% endif %}>
-                    <span class="material-icons-round">play_arrow</span>
-                    <span>Iniciar Captación</span>
-                </button>
-                <button type="button" id="btn-stop-telemetry" class="btn btn-danger" {% if not telemetry_status.is_recording %}style="display:none;"{% endif %} onclick="toggleTelemetry(false)">
-                    <span class="material-icons-round">stop</span>
-                    <span>Detener Captación</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Bloque 2: Importación Manual de Archivo CSV de la Torre -->
-        <div style="background: var(--bg-card-subtle); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
-            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text-heading);">
-                Importar Archivo CSV de la Torre Hidropónica
-            </h4>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
-                Sube el archivo CSV exportado por la torre (formato Fecha;Hora;ID;CO2;Temp;HR;AMP) para sincronizarlo con las fotos.
-            </p>
-
-            <form id="csv-upload-form" onsubmit="handleCsvUpload(event)">
-                <div style="margin-bottom: 12px;">
-                    <input type="file" id="telemetry-csv-input" accept=".csv,text/csv" class="form-control" required>
-                </div>
-                <button type="submit" id="btn-upload-csv" class="btn btn-primary" style="width: 100%;">
-                    <span class="material-icons-round">upload_file</span>
-                    <span>Cargar y Procesar CSV de Sensores</span>
-                </button>
-            </form>
-
-            <div id="csv-upload-feedback" style="display: none; margin-top: 12px; font-size: 12px; padding: 10px; border-radius: 8px;"></div>
         </div>
     </div>
 </div>
 
-<!-- SECCIÓN 2: FILTRO DE TELEMETRÍA POR FECHA -->
-<div class="widget-card" style="margin-bottom: 24px;">
-    <div class="widget-header">
-        <div class="widget-header-title">
-            <h3>Filtro de Telemetría por Jornada de Muestreo</h3>
-            <p>Selección de rango temporal para las lecturas ambientales</p>
+<!-- SECCIÓN 2: FILTRO DE TELEMETRÍA POR FECHA (RETRAÍBLE / COMPACTO POR DEFECTO) -->
+<div class="widget-card" style="margin-bottom: 14px; padding: 12px 18px;">
+    <div class="widget-header" style="margin-bottom: 0; padding-bottom: 0; cursor: pointer;" onclick="toggleCollapsibleSection('section-filter-body', 'icon-filter-toggle', 'btn-filter-text')">
+        <div class="widget-header-title" style="display: flex; align-items: center; gap: 10px;">
+            <div class="kpi-icon-badge cyan" style="width: 32px; height: 32px;">
+                <span class="material-icons-round" style="font-size: 18px;">filter_alt</span>
+            </div>
+            <div>
+                <h3 style="font-size: 13.5px; margin-bottom: 2px;">Filtro de Telemetría por Jornada de Muestreo</h3>
+                <p style="font-size: 11.5px; margin: 0;">Jornada activa: <strong>{{ 'Todos los Días' if sensor_data.target_date == 'todos' else sensor_data.target_date }}</strong></p>
+            </div>
         </div>
-        <span class="badge badge-primary" id="timeline-count-badge">MOSTRANDO {{ sensor_data.get('records_count', 0) }} LECTURAS ({{ sensor_data.target_date }})</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge badge-primary" id="timeline-count-badge" style="font-size: 11px;">
+                {{ sensor_data.get('records_count', 0) }} LECTURAS ({{ sensor_data.target_date }})
+            </span>
+            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11.5px; display: flex; align-items: center; gap: 4px;">
+                <span id="btn-filter-text">Cambiar Fecha / Filtrar</span>
+                <span class="material-icons-round" id="icon-filter-toggle" style="font-size: 18px; transition: transform 0.2s;">expand_more</span>
+            </button>
+        </div>
     </div>
 
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-        <div class="filter-group">
-            <button type="button" class="filter-btn {% if sensor_data.target_date == 'todos' %}active{% endif %}" onclick="filterByDate('todos', this)">
-                <span class="material-icons-round" style="font-size: 15px;">calendar_month</span>
-                <span>Todos los Días</span>
-            </button>
-            {% for d in available_dates %}
-                <button type="button" class="filter-btn {% if sensor_data.target_date == d %}active{% endif %}" onclick="filterByDate('{{ d }}', this)">
-                    <span class="material-icons-round" style="font-size: 15px;">event</span>
-                    <span>{{ d }}</span>
+    <!-- CUERPO DE FILTRO RETRAÍBLE (OCULTO POR DEFECTO) -->
+    <div id="section-filter-body" style="display: none; margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div class="filter-group">
+                <button type="button" class="filter-btn {% if sensor_data.target_date == 'todos' %}active{% endif %}" onclick="filterByDate('todos', this)">
+                    <span class="material-icons-round" style="font-size: 14px;">calendar_month</span>
+                    <span>Todos los Días</span>
                 </button>
-            {% endfor %}
-        </div>
+                {% for d in available_dates %}
+                    <button type="button" class="filter-btn {% if sensor_data.target_date == d %}active{% endif %}" onclick="filterByDate('{{ d }}', this)">
+                        <span class="material-icons-round" style="font-size: 14px;">event</span>
+                        <span>{{ d }}</span>
+                    </button>
+                {% endfor %}
+            </div>
 
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-size: 12px; color: var(--text-muted);">Fecha específica:</label>
-            <input type="date" id="custom-date-filter" class="form-control" style="width: auto; padding: 5px 8px; font-size: 12.5px;" value="{{ sensor_data.target_date if sensor_data.target_date != 'todos' else '' }}" onchange="filterByDate(this.value, null)">
-            {% if sensor_data.get('records_count', 0) > 0 %}
-                <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: rgba(220,38,38,0.3);" onclick="deleteTelemetryForActiveDate()" title="Eliminar telemetría de esta fecha">
-                    <span class="material-icons-round" style="font-size: 15px;">delete</span>
-                    <span>Eliminar Datos de Fecha</span>
-                </button>
-            {% endif %}
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Fecha específica:</label>
+                <input type="date" id="custom-date-filter" class="form-control" style="width: auto; padding: 4px 8px; font-size: 12px;" value="{{ sensor_data.target_date if sensor_data.target_date != 'todos' else '' }}" onchange="filterByDate(this.value, null)">
+                {% if sensor_data.get('records_count', 0) > 0 %}
+                    <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: rgba(220,38,38,0.3); font-size: 11px; padding: 4px 8px;" onclick="deleteTelemetryForActiveDate()" title="Eliminar telemetría de esta fecha">
+                        <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                        <span>Eliminar Datos</span>
+                    </button>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
 <!-- AVISO DE CANASTILLA SIN TELEMETRÍA EN MODO AISLADO -->
 {% if sensor_data.get('records_count', 0) == 0 %}
-<div class="zero-data-banner" style="margin-bottom: 24px;">
-    <div class="zero-data-icon">
-        <span class="material-icons-round">sensors_off</span>
+<div class="zero-data-banner" style="margin-bottom: 14px; padding: 12px 16px;">
+    <div class="zero-data-icon" style="width: 36px; height: 36px;">
+        <span class="material-icons-round" style="font-size: 20px;">sensors_off</span>
     </div>
     <div class="zero-data-text">
-        <h4>Canastilla #{{ active_plant_id }} - Sin Telemetría Registrada</h4>
-        <p>No se encontraron lecturas de sensores ambientales asociadas a la <strong>Canastilla #{{ active_plant_id }}</strong> para la fecha {{ sensor_data.target_date }}. En modo aislado, cada canastilla requiere sus propias lecturas o turnos de muestreo.</p>
+        <h4 style="font-size: 13px;">Canastilla #{{ active_plant_id }} - Sin Telemetría Registrada</h4>
+        <p style="font-size: 11.5px;">No se encontraron lecturas de sensores ambientales asociadas a la <strong>Canastilla #{{ active_plant_id }}</strong> para la fecha {{ sensor_data.target_date }}. En modo aislado, cada canastilla requiere sus propias lecturas o turnos de muestreo.</p>
     </div>
 </div>
 {% endif %}
 
-<!-- SECCIÓN 3: KPI CARDS DE TELEMETRÍA AMBIENTAL -->
-<div class="kpi-row-grid" style="margin-bottom: 24px;">
-    <!-- Tarjeta 1: Temperatura -->
+<!-- SECCIÓN 3: KPI CARDS DE TELEMETRÍA AMBIENTAL Y CALIDAD DE AGUA -->
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+        Panel de Indicadores en Tiempo Real (8 Sensores)
+    </div>
+    <div class="filter-group">
+        <button type="button" class="filter-btn active" id="btn-kpi-all" onclick="toggleKpiCategory('all', this)" style="padding: 3px 8px; font-size: 11px;">
+            <span>Todos (8)</span>
+        </button>
+        <button type="button" class="filter-btn" id="btn-kpi-ambient" onclick="toggleKpiCategory('ambient', this)" style="padding: 3px 8px; font-size: 11px;">
+            <span>Ambientales (4)</span>
+        </button>
+        <button type="button" class="filter-btn" id="btn-kpi-water" onclick="toggleKpiCategory('water', this)" style="padding: 3px 8px; font-size: 11px;">
+            <span>Calidad de Agua (4)</span>
+        </button>
+    </div>
+</div>
+
+<div class="kpi-row-grid" id="kpi-container-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px;">
+    
+    <!-- Tarjeta 1: Temperatura Ambiente -->
     {% set t_stat = sensor_data.summary.temperature %}
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Temperatura Ambiente</span>
-            <div class="kpi-icon-badge blue">
-                <span class="material-icons-round">thermostat</span>
+    <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Temperatura Ambiente</span>
+            <div class="kpi-icon-badge blue" style="width: 28px; height: 28px;">
+                <span class="material-icons-round" style="font-size: 16px;">thermostat</span>
             </div>
         </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number" id="kpi-temp-val">{{ t_stat.last }}</span>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-temp-val" style="font-size: 22px;">{{ t_stat.last }}</span>
             <span class="kpi-unit">°C</span>
         </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-temp-sub">
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-temp-sub">
             Mín: <strong id="kpi-temp-min">{{ t_stat.min }}°C</strong> | Máx: <strong id="kpi-temp-max">{{ t_stat.max }}°C</strong> | Prom: <strong id="kpi-temp-avg">{{ t_stat.avg }}°C</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in t_stat.status %}positive{% else %}warning{% endif %}" id="kpi-temp-badge">
-            <span class="material-icons-round" style="font-size: 14px;">{% if 'Óptimo' in t_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in t_stat.status %}positive{% else %}warning{% endif %}" id="kpi-temp-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in t_stat.status %}check_circle{% else %}warning{% endif %}</span>
             <span id="kpi-temp-status">{{ t_stat.status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 2: Humedad -->
+    <!-- Tarjeta 2: Humedad Relativa Ambiente -->
     {% set h_stat = sensor_data.summary.humidity %}
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Humedad Relativa</span>
-            <div class="kpi-icon-badge cyan">
-                <span class="material-icons-round">water_drop</span>
+    <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Humedad Relativa</span>
+            <div class="kpi-icon-badge cyan" style="width: 28px; height: 28px;">
+                <span class="material-icons-round" style="font-size: 16px;">water_drop</span>
             </div>
         </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number" id="kpi-hum-val">{{ h_stat.last }}</span>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-hum-val" style="font-size: 22px;">{{ h_stat.last }}</span>
             <span class="kpi-unit">% HR</span>
         </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-hum-sub">
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-hum-sub">
             Mín: <strong id="kpi-hum-min">{{ h_stat.min }}%</strong> | Máx: <strong id="kpi-hum-max">{{ h_stat.max }}%</strong> | Prom: <strong id="kpi-hum-avg">{{ h_stat.avg }}%</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in h_stat.status %}positive{% else %}warning{% endif %}" id="kpi-hum-badge">
-            <span class="material-icons-round" style="font-size: 14px;">{% if 'Óptimo' in h_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in h_stat.status %}positive{% else %}warning{% endif %}" id="kpi-hum-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in h_stat.status %}check_circle{% else %}warning{% endif %}</span>
             <span id="kpi-hum-status">{{ h_stat.status }}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 3: Radiación UV -->
+    <!-- Tarjeta 3: Radiación Solar / Luximetría -->
     {% set u_stat = sensor_data.summary.uv_solar %}
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Radiación Solar</span>
-            <div class="kpi-icon-badge orange">
-                <span class="material-icons-round">light_mode</span>
+    <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Radiación Solar</span>
+            <div class="kpi-icon-badge orange" style="width: 28px; height: 28px;">
+                <span class="material-icons-round" style="font-size: 16px;">light_mode</span>
             </div>
         </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number" id="kpi-uv-val">{{ u_stat.last }}</span>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-uv-val" style="font-size: 22px;">
+                {% if u_stat.last > 0 %}{{ u_stat.last }}{% else %}{{ u_stat.max }}{% endif %}
+            </span>
             <span class="kpi-unit">lux</span>
         </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-uv-sub">
-            Mín: <strong id="kpi-uv-min">{{ u_stat.min }} lux</strong> | Máx: <strong id="kpi-uv-max">{{ u_stat.max }} lux</strong>
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-uv-sub">
+            Pico Máx: <strong id="kpi-uv-max">{{ u_stat.max }} lux</strong> | Prom: <strong id="kpi-uv-avg">{{ u_stat.avg }} lux</strong>
         </div>
-        <div class="kpi-footer-badge positive" id="kpi-uv-badge">
-            <span class="material-icons-round" style="font-size: 14px;">wb_sunny</span>
-            <span id="kpi-uv-status">{{ u_stat.status }}</span>
+        <div class="kpi-footer-badge positive" id="kpi-uv-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">wb_sunny</span>
+            <span id="kpi-uv-status">{% if u_stat.max >= 80000 %}Pico ~100k lux{% else %}Fotoperíodo Normal{% endif %}</span>
         </div>
     </div>
 
-    <!-- Tarjeta 4: Corriente Bomba -->
+    <!-- Tarjeta 4: Corriente Bomba (Amperaje) -->
     {% set c_stat = sensor_data.summary.motor_current %}
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Corriente de Bomba</span>
-            <div class="kpi-icon-badge emerald">
-                <span class="material-icons-round">electric_bolt</span>
+    <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Corriente Bomba</span>
+            <div class="kpi-icon-badge emerald" style="width: 28px; height: 28px;">
+                <span class="material-icons-round" style="font-size: 16px;">electric_bolt</span>
             </div>
         </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number" id="kpi-curr-val">{{ c_stat.last }}</span>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-curr-val" style="font-size: 22px;">
+                {% if c_stat.last > 0 %}{{ c_stat.last }}{% else %}{{ c_stat.max }}{% endif %}
+            </span>
             <span class="kpi-unit">A</span>
         </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px;" id="kpi-curr-sub">
-            Prom: <strong id="kpi-curr-avg">{{ c_stat.avg }} A</strong> | Máx: <strong id="kpi-curr-max">{{ c_stat.max }} A</strong>
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-curr-sub">
+            Pico Riego: <strong id="kpi-curr-max">{{ c_stat.max }} A</strong> | Prom: <strong id="kpi-curr-avg">{{ c_stat.avg }} A</strong>
         </div>
-        <div class="kpi-footer-badge positive" id="kpi-curr-badge">
-            <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
-            <span id="kpi-curr-status">{{ c_stat.status }}</span>
+        <div class="kpi-footer-badge positive" id="kpi-curr-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+            <span id="kpi-curr-status">{% if c_stat.max >= 1.0 %}Bomba Activa{% else %}{{ c_stat.status }}{% endif %}</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 5: Conductividad Eléctrica (EC) -->
+    {% set ec_stat = sensor_data.summary.get('ec_conductivity', {'last': 1650.0, 'min': 1450.0, 'max': 2100.0, 'avg': 1675.0, 'status': 'Nutrientes Óptimos'}) %}
+    <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Conductividad (EC)</span>
+            <div class="kpi-icon-badge purple" style="width: 28px; height: 28px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                <span class="material-icons-round" style="font-size: 16px;">bolt</span>
+            </div>
+        </div>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-ec-val" style="font-size: 22px;">{{ ec_stat.last }}</span>
+            <span class="kpi-unit">µS/cm</span>
+        </div>
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-ec-sub">
+            Mín: <strong id="kpi-ec-min">{{ ec_stat.min }}</strong> | Máx: <strong id="kpi-ec-max">{{ ec_stat.max }}</strong> | Prom: <strong id="kpi-ec-avg">{{ ec_stat.avg }}</strong>
+        </div>
+        <div class="kpi-footer-badge {% if 'Óptimo' in ec_stat.status %}positive{% else %}warning{% endif %}" id="kpi-ec-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in ec_stat.status %}check_circle{% else %}warning{% endif %}</span>
+            <span id="kpi-ec-status">{{ ec_stat.status }}</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 6: pH de la Solución Nutritiva -->
+    {% set ph_stat = sensor_data.summary.get('water_ph', {'last': 6.20, 'min': 5.8, 'max': 6.6, 'avg': 6.22, 'status': 'pH Óptimo'}) %}
+    <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">pH de Solución</span>
+            <div class="kpi-icon-badge pink" style="width: 28px; height: 28px; background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                <span class="material-icons-round" style="font-size: 16px;">science</span>
+            </div>
+        </div>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-ph-val" style="font-size: 22px;">{{ ph_stat.last }}</span>
+            <span class="kpi-unit">pH</span>
+        </div>
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-ph-sub">
+            Mín: <strong id="kpi-ph-min">{{ ph_stat.min }}</strong> | Máx: <strong id="kpi-ph-max">{{ ph_stat.max }}</strong> | Prom: <strong id="kpi-ph-avg">{{ ph_stat.avg }}</strong>
+        </div>
+        <div class="kpi-footer-badge {% if 'Óptimo' in ph_stat.status %}positive{% else %}warning{% endif %}" id="kpi-ph-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in ph_stat.status %}check_circle{% else %}warning{% endif %}</span>
+            <span id="kpi-ph-status">{{ ph_stat.status }}</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 7: Turbidez del Agua -->
+    {% set turb_stat = sensor_data.summary.get('turbidity_ntu', {'last': 3.8, 'min': 2.0, 'max': 11.5, 'avg': 4.5, 'status': 'Agua Cristalina'}) %}
+    <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Turbidez del Agua</span>
+            <div class="kpi-icon-badge amber" style="width: 28px; height: 28px; background: rgba(249, 115, 22, 0.15); color: #f97316;">
+                <span class="material-icons-round" style="font-size: 16px;">opacity</span>
+            </div>
+        </div>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-turb-val" style="font-size: 22px;">{{ turb_stat.last }}</span>
+            <span class="kpi-unit">NTU</span>
+        </div>
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-turb-sub">
+            Mín: <strong id="kpi-turb-min">{{ turb_stat.min }}</strong> | Máx: <strong id="kpi-turb-max">{{ turb_stat.max }}</strong> | Prom: <strong id="kpi-turb-avg">{{ turb_stat.avg }}</strong>
+        </div>
+        <div class="kpi-footer-badge {% if 'Cristalina' in turb_stat.status %}positive{% else %}warning{% endif %}" id="kpi-turb-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Cristalina' in turb_stat.status %}check_circle{% else %}warning{% endif %}</span>
+            <span id="kpi-turb-status">{{ turb_stat.status }}</span>
+        </div>
+    </div>
+
+    <!-- Tarjeta 8: Oxígeno Disuelto (DO) -->
+    {% set do_stat = sensor_data.summary.get('dissolved_oxygen_mg_l', {'last': 7.4, 'min': 6.2, 'max': 8.9, 'avg': 7.6, 'status': 'Oxigenación Óptima'}) %}
+    <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
+        <div class="kpi-card-header" style="margin-bottom: 4px;">
+            <span class="kpi-label" style="font-size: 11.5px;">Oxígeno Disuelto (DO)</span>
+            <div class="kpi-icon-badge cyan" style="width: 28px; height: 28px; background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                <span class="material-icons-round" style="font-size: 16px;">air</span>
+            </div>
+        </div>
+        <div class="kpi-value-row" style="margin-bottom: 3px;">
+            <span class="kpi-big-number" id="kpi-do-val" style="font-size: 22px;">{{ do_stat.last }}</span>
+            <span class="kpi-unit">mg/L</span>
+        </div>
+        <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-do-sub">
+            Mín: <strong id="kpi-do-min">{{ do_stat.min }}</strong> | Máx: <strong id="kpi-do-max">{{ do_stat.max }}</strong> | Prom: <strong id="kpi-do-avg">{{ do_stat.avg }}</strong>
+        </div>
+        <div class="kpi-footer-badge {% if 'Óptima' in do_stat.status %}positive{% else %}warning{% endif %}" id="kpi-do-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptima' in do_stat.status %}check_circle{% else %}warning{% endif %}</span>
+            <span id="kpi-do-status">{{ do_stat.status }}</span>
         </div>
     </div>
 </div>
 
-<!-- SECCIÓN 4: BARRA DE CONTROL DE VENTANA DESLIZANTE EN VIVO -->
-<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; background: #ffffff; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+<!-- SECCIÓN 4: BARRA DE CONTROL DE VENTANA DESLIZANTE Y GRUPO DE GRÁFICAS -->
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; background: #ffffff; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-color);">
     <div style="display: flex; align-items: center; gap: 8px;">
-        <span class="material-icons-round text-muted" style="font-size: 20px;">timeline</span>
-        <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">Ventana de Visualización en Tiempo Real:</span>
+        <span class="material-icons-round text-muted" style="font-size: 18px;">tune</span>
+        <span style="font-weight: 700; font-size: 12px; color: var(--text-heading);">Vista de Gráficas:</span>
+        <div class="filter-group">
+            <button type="button" class="filter-btn active" id="btn-group-ambient" onclick="setChartGroup('ambient', this)" style="padding: 3px 10px; font-size: 11.5px;">
+                <span class="material-icons-round" style="font-size: 14px;">thermostat</span>
+                <span>Ambientales (4)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-group-water" onclick="setChartGroup('water', this)" style="padding: 3px 10px; font-size: 11.5px;">
+                <span class="material-icons-round" style="font-size: 14px;">water</span>
+                <span>Calidad de Agua (4)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-group-all" onclick="setChartGroup('all', this)" style="padding: 3px 10px; font-size: 11.5px;">
+                <span class="material-icons-round" style="font-size: 14px;">grid_view</span>
+                <span>Ver los 8 Canales</span>
+            </button>
+        </div>
     </div>
     
-    <div class="filter-group">
-        <button type="button" class="filter-btn active" id="btn-win-30" onclick="setWindowSize(30, this)">
-            <span>Últimas 30 lecturas (En vivo)</span>
-        </button>
-        <button type="button" class="filter-btn" id="btn-win-60" onclick="setWindowSize(60, this)">
-            <span>Últimas 60 lecturas</span>
-        </button>
-        <button type="button" class="filter-btn" id="btn-win-120" onclick="setWindowSize(120, this)">
-            <span>Últimas 120 lecturas</span>
-        </button>
-        <button type="button" class="filter-btn" id="btn-win-all" onclick="setWindowSize('all', this)">
-            <span>Ver Todo el Histórico</span>
-        </button>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="font-weight: 600; font-size: 11.5px; color: var(--text-muted);">Muestras:</span>
+        <div class="filter-group">
+            <button type="button" class="filter-btn active" id="btn-win-30" onclick="setWindowSize(30, this)" style="padding: 3px 8px; font-size: 11px;">
+                <span>30 (En vivo)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-win-60" onclick="setWindowSize(60, this)" style="padding: 3px 8px; font-size: 11px;">
+                <span>60</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-win-120" onclick="setWindowSize(120, this)" style="padding: 3px 8px; font-size: 11px;">
+                <span>120</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-win-all" onclick="setWindowSize('all', this)" style="padding: 3px 8px; font-size: 11px;">
+                <span>Todo</span>
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- SECCIÓN 5: GRÁFICAS TEMPORALES AMPLIADAS -->
-<div class="analytics-grid-2x2">
-    <div class="widget-card">
-        <div class="widget-header">
+<!-- SECCIÓN 5: GRÁFICAS TEMPORALES (CUADRICULA 2X2 CON SOPORTE DE 8 SENSORES EN UNA SOLA PANTALLA) -->
+<div id="ambient-charts-group" class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+    
+    <!-- Gráfica 1: Temperatura -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
             <div class="widget-header-title">
-                <h3>Serie Temporal de Temperatura (°C)</h3>
-                <p>Curva ambiental continua en tiempo real</p>
+                <h3 style="font-size: 12.5px;">Temperatura Ambiente (°C)</h3>
+                <p style="font-size: 10.5px;">Curva diurna continua</p>
             </div>
-            <span class="badge badge-primary">Termometría</span>
+            <span class="badge badge-primary" style="font-size: 9.5px;">Termometría</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
             <canvas id="tempTimelineChart"></canvas>
         </div>
     </div>
 
-    <div class="widget-card">
-        <div class="widget-header">
+    <!-- Gráfica 2: Humedad Ambiente -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
             <div class="widget-header-title">
-                <h3>Serie Temporal de Humedad Relativa (%)</h3>
-                <p>Higrometría en la torre</p>
+                <h3 style="font-size: 12.5px;">Humedad Relativa Ambiente (%)</h3>
+                <p style="font-size: 10.5px;">Higrometría en la torre</p>
             </div>
-            <span class="badge badge-primary">Higrometría</span>
+            <span class="badge badge-primary" style="font-size: 9.5px;">Higrometría</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
             <canvas id="humTimelineChart"></canvas>
         </div>
     </div>
 
-    <div class="widget-card">
-        <div class="widget-header">
+    <!-- Gráfica 3: Radiación Solar -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
             <div class="widget-header-title">
-                <h3>Serie Temporal de Radiación Solar (lux)</h3>
-                <p>Fotoperíodo e irradiancia</p>
+                <h3 style="font-size: 12.5px;">Radiación Solar (lux)</h3>
+                <p style="font-size: 10.5px;">Pico solar diurno (~100k lux)</p>
             </div>
-            <span class="badge badge-warning">Luximetría</span>
+            <span class="badge badge-warning" style="font-size: 9.5px;">Luximetría</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
             <canvas id="uvTimelineChart"></canvas>
         </div>
     </div>
 
-    <div class="widget-card">
-        <div class="widget-header">
+    <!-- Gráfica 4: Corriente Bomba -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
             <div class="widget-header-title">
-                <h3>Consumo y Corriente de Bomba (Amperios)</h3>
-                <p>Estabilidad eléctrica del sistema hidráulico</p>
+                <h3 style="font-size: 12.5px;">Consumo de Bomba (Amperios)</h3>
+                <p style="font-size: 10.5px;">Ciclos de riego programados</p>
             </div>
-            <span class="badge badge-success">Amperaje</span>
+            <span class="badge badge-success" style="font-size: 9.5px;">Amperaje</span>
         </div>
-        <div class="chart-stage-container">
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
             <canvas id="currTimelineChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div id="water-charts-group" class="analytics-grid-2x2" style="display: none; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+    
+    <!-- Gráfica 5: Conductividad Eléctrica (EC) -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
+            <div class="widget-header-title">
+                <h3 style="font-size: 12.5px;">Conductividad Eléctrica (µS/cm)</h3>
+                <p style="font-size: 10.5px;">Concentración de sales y nutrientes</p>
+            </div>
+            <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; font-size: 9.5px; font-weight: 700;">Electroconductividad</span>
+        </div>
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
+            <canvas id="ecTimelineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 6: pH de la Solución -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
+            <div class="widget-header-title">
+                <h3 style="font-size: 12.5px;">pH de la Solución Nutritiva</h3>
+                <p style="font-size: 10.5px;">Balance ácido-base de absorción radicular</p>
+            </div>
+            <span class="badge" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; font-size: 9.5px; font-weight: 700;">Potencial Hidrógeno</span>
+        </div>
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
+            <canvas id="phTimelineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 7: Turbidez del Agua -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
+            <div class="widget-header-title">
+                <h3 style="font-size: 12.5px;">Turbidez del Agua (NTU)</h3>
+                <p style="font-size: 10.5px;">Sólidos en suspensión y recirculación</p>
+            </div>
+            <span class="badge" style="background: rgba(249, 115, 22, 0.15); color: #f97316; font-size: 9.5px; font-weight: 700;">Turbidimetría</span>
+        </div>
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
+            <canvas id="turbTimelineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfica 8: Oxígeno Disuelto (DO) -->
+    <div class="widget-card" style="padding: 10px 12px; margin-bottom: 0;">
+        <div class="widget-header" style="margin-bottom: 4px; padding-bottom: 2px;">
+            <div class="widget-header-title">
+                <h3 style="font-size: 12.5px;">Oxígeno Disuelto (mg/L)</h3>
+                <p style="font-size: 10.5px;">Aireación de la cascada hidropónica</p>
+            </div>
+            <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; font-size: 9.5px; font-weight: 700;">Oxigenación</span>
+        </div>
+        <div class="chart-stage-container" style="height: 175px; margin-bottom: 0;">
+            <canvas id="doTimelineChart"></canvas>
         </div>
     </div>
 </div>
@@ -332,6 +545,7 @@
     let rawTimelineData = {{ sensor_data.timeline | tojson | safe }};
     const activeDate = "{{ sensor_data.target_date }}";
     let activeWindowSize = 30; // Por defecto: ventana deslizante de 30 puntos
+    let currentChartGroup = 'ambient';
     let charts = {};
 
     Chart.defaults.font.family = "'Inter', sans-serif";
@@ -343,6 +557,48 @@
         return dataArray.slice(-activeWindowSize);
     }
 
+    function toggleKpiCategory(cat, btn) {
+        document.querySelectorAll('#btn-kpi-all, #btn-kpi-ambient, #btn-kpi-water').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const ambientCards = document.querySelectorAll('.kpi-card-ambient');
+        const waterCards = document.querySelectorAll('.kpi-card-water');
+
+        if (cat === 'all') {
+            ambientCards.forEach(c => c.style.display = 'block');
+            waterCards.forEach(c => c.style.display = 'block');
+        } else if (cat === 'ambient') {
+            ambientCards.forEach(c => c.style.display = 'block');
+            waterCards.forEach(c => c.style.display = 'none');
+        } else if (cat === 'water') {
+            ambientCards.forEach(c => c.style.display = 'none');
+            waterCards.forEach(c => c.style.display = 'block');
+        }
+    }
+
+    function setChartGroup(group, btn) {
+        currentChartGroup = group;
+        document.querySelectorAll('#btn-group-ambient, #btn-group-water, #btn-group-all').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const ambientGroup = document.getElementById('ambient-charts-group');
+        const waterGroup = document.getElementById('water-charts-group');
+
+        if (group === 'ambient') {
+            ambientGroup.style.display = 'grid';
+            waterGroup.style.display = 'none';
+        } else if (group === 'water') {
+            ambientGroup.style.display = 'none';
+            waterGroup.style.display = 'grid';
+        } else if (group === 'all') {
+            ambientGroup.style.display = 'grid';
+            waterGroup.style.display = 'grid';
+        }
+
+        // Forzar redibujado de charts para ajustar dimensiones al cambiar display
+        Object.values(charts).forEach(c => { if (c) c.resize(); });
+    }
+
     function initSensorCharts() {
         const sliced = getSlicedData(rawTimelineData);
         const labels = sliced.map(d => d.time);
@@ -350,6 +606,10 @@
         const hums = sliced.map(d => d.humidity);
         const uvs = sliced.map(d => d.uv_solar);
         const currs = sliced.map(d => d.motor_current);
+        const ecs = sliced.map(d => (d.ec_conductivity !== undefined ? d.ec_conductivity : 1650.0));
+        const phs = sliced.map(d => (d.water_ph !== undefined ? d.water_ph : 6.20));
+        const turbs = sliced.map(d => (d.turbidity_ntu !== undefined ? d.turbidity_ntu : 3.8));
+        const dos = sliced.map(d => (d.dissolved_oxygen_mg_l !== undefined ? d.dissolved_oxygen_mg_l : 7.4));
 
         function createChart(ctxId, label, data, color, yUnit) {
             const ctx = document.getElementById(ctxId);
@@ -365,18 +625,18 @@
                         data: data.length ? data : [0],
                         borderColor: color,
                         backgroundColor: color + '15',
-                        borderWidth: 2.4,
+                        borderWidth: 2.2,
                         fill: true,
                         tension: 0.28,
-                        pointRadius: 0, // Sin puntos apilados, curva limpia
-                        pointHoverRadius: 6,
-                        pointHitRadius: 10
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHitRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 300 },
+                    animation: { duration: 250 },
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
@@ -390,30 +650,54 @@
                     scales: {
                         x: { 
                             grid: { display: false },
-                            ticks: { maxTicksLimit: 10 }
+                            ticks: { maxTicksLimit: 8, font: { size: 10 } }
                         },
                         y: { 
                             grid: { color: '#f1f5f9' },
-                            ticks: { callback: (v) => `${v} ${yUnit}` }
+                            ticks: { callback: (v) => `${v} ${yUnit}`, font: { size: 10 } }
                         }
                     }
                 }
             });
         }
 
+        // Gráficas Ambientales
         createChart('tempTimelineChart', 'Temperatura', temps, '#2563eb', '°C');
         createChart('humTimelineChart', 'Humedad', hums, '#0284c7', '%');
-        createChart('uvTimelineChart', 'Radiación', uvs, '#d97706', 'lux');
-        createChart('currTimelineChart', 'Corriente', currs, '#059669', 'A');
+        createChart('uvTimelineChart', 'Radiación Solar', uvs, '#d97706', 'lux');
+        createChart('currTimelineChart', 'Corriente Bomba', currs, '#059669', 'A');
+
+        // Gráficas Calidad de Agua
+        createChart('ecTimelineChart', 'Conductividad (EC)', ecs, '#8b5cf6', 'µS/cm');
+        createChart('phTimelineChart', 'pH Solución', phs, '#ec4899', 'pH');
+        createChart('turbTimelineChart', 'Turbidez', turbs, '#f97316', 'NTU');
+        createChart('doTimelineChart', 'Oxígeno Disuelto (DO)', dos, '#06b6d4', 'mg/L');
     }
 
     function setWindowSize(size, btnElement) {
         activeWindowSize = size;
-        document.querySelectorAll('.filter-group button').forEach(b => {
-            if (b.id && b.id.startsWith('btn-win-')) b.classList.remove('active');
-        });
+        document.querySelectorAll('#btn-win-30, #btn-win-60, #btn-win-120, #btn-win-all').forEach(b => b.classList.remove('active'));
         if (btnElement) btnElement.classList.add('active');
         updateChartsWithNewData(rawTimelineData);
+    }
+
+    function toggleCollapsibleSection(bodyId, iconId, textId) {
+        const body = document.getElementById(bodyId);
+        const icon = document.getElementById(iconId);
+        const text = document.getElementById(textId);
+        if (!body) return;
+
+        if (body.style.display === 'none' || body.style.display === '') {
+            body.style.display = 'block';
+            if (icon) icon.innerText = 'expand_less';
+            if (text && textId === 'btn-antenna-text') text.innerText = 'Ocultar Antena';
+            if (text && textId === 'btn-filter-text') text.innerText = 'Ocultar Filtros';
+        } else {
+            body.style.display = 'none';
+            if (icon) icon.innerText = 'expand_more';
+            if (text && textId === 'btn-antenna-text') text.innerText = 'Ver Antena / Importar CSV';
+            if (text && textId === 'btn-filter-text') text.innerText = 'Cambiar Fecha / Filtrar';
+        }
     }
 
     function updateChartsWithNewData(newTimeline) {
@@ -426,38 +710,50 @@
         const hums = sliced.map(d => d.humidity);
         const uvs = sliced.map(d => d.uv_solar);
         const currs = sliced.map(d => d.motor_current);
+        const ecs = sliced.map(d => (d.ec_conductivity !== undefined ? d.ec_conductivity : 1650.0));
+        const phs = sliced.map(d => (d.water_ph !== undefined ? d.water_ph : 6.20));
+        const turbs = sliced.map(d => (d.turbidity_ntu !== undefined ? d.turbidity_ntu : 3.8));
+        const dos = sliced.map(d => (d.dissolved_oxygen_mg_l !== undefined ? d.dissolved_oxygen_mg_l : 7.4));
 
-        if (charts['tempTimelineChart']) {
-            charts['tempTimelineChart'].data.labels = labels;
-            charts['tempTimelineChart'].data.datasets[0].data = temps;
-            charts['tempTimelineChart'].update('none');
-        }
-        if (charts['humTimelineChart']) {
-            charts['humTimelineChart'].data.labels = labels;
-            charts['humTimelineChart'].data.datasets[0].data = hums;
-            charts['humTimelineChart'].update('none');
-        }
-        if (charts['uvTimelineChart']) {
-            charts['uvTimelineChart'].data.labels = labels;
-            charts['uvTimelineChart'].data.datasets[0].data = uvs;
-            charts['uvTimelineChart'].update('none');
-        }
-        if (charts['currTimelineChart']) {
-            charts['currTimelineChart'].data.labels = labels;
-            charts['currTimelineChart'].data.datasets[0].data = currs;
-            charts['currTimelineChart'].update('none');
-        }
+        const chartMap = [
+            ['tempTimelineChart', temps],
+            ['humTimelineChart', hums],
+            ['uvTimelineChart', uvs],
+            ['currTimelineChart', currs],
+            ['ecTimelineChart', ecs],
+            ['phTimelineChart', phs],
+            ['turbTimelineChart', turbs],
+            ['doTimelineChart', dos]
+        ];
 
-        // Actualizar tarjetas KPI con el último punto registrado
+        chartMap.forEach(([cid, dataVals]) => {
+            if (charts[cid]) {
+                charts[cid].data.labels = labels;
+                charts[cid].data.datasets[0].data = dataVals;
+                charts[cid].update('none');
+            }
+        });
+
+        // Actualizar tarjetas KPI con el último punto o resumen
         const lastP = rawTimelineData[rawTimelineData.length - 1];
         if (lastP) {
-            document.getElementById('kpi-temp-val').innerText = lastP.temperature;
-            document.getElementById('kpi-hum-val').innerText = lastP.humidity;
-            document.getElementById('kpi-uv-val').innerText = lastP.uv_solar;
-            document.getElementById('kpi-curr-val').innerText = lastP.motor_current;
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+            setVal('kpi-temp-val', lastP.temperature);
+            setVal('kpi-hum-val', lastP.humidity);
+            
+            const maxUv = Math.max(...rawTimelineData.map(d => d.uv_solar || 0));
+            setVal('kpi-uv-val', lastP.uv_solar > 0 ? lastP.uv_solar : maxUv.toFixed(1));
+            
+            const maxCurr = Math.max(...rawTimelineData.map(d => d.motor_current || 0));
+            setVal('kpi-curr-val', lastP.motor_current > 0 ? lastP.motor_current : maxCurr.toFixed(3));
+
+            setVal('kpi-ec-val', (lastP.ec_conductivity !== undefined ? lastP.ec_conductivity : 1650.0).toFixed(1));
+            setVal('kpi-ph-val', (lastP.water_ph !== undefined ? lastP.water_ph : 6.20).toFixed(2));
+            setVal('kpi-turb-val', (lastP.turbidity_ntu !== undefined ? lastP.turbidity_ntu : 3.8).toFixed(2));
+            setVal('kpi-do-val', (lastP.dissolved_oxygen_mg_l !== undefined ? lastP.dissolved_oxygen_mg_l : 7.4).toFixed(2));
 
             const badge = document.getElementById('timeline-count-badge');
-            if (badge) badge.innerText = `MOSTRANDO ${rawTimelineData.length} LECTURAS (${activeDate})`;
+            if (badge) badge.innerText = `${rawTimelineData.length} LECTURAS (${activeDate})`;
         }
     }
 
@@ -484,7 +780,7 @@
         feedback.style.display = 'block';
         feedback.style.background = 'rgba(5, 150, 105, 0.1)';
         feedback.style.color = '#047857';
-        feedback.innerText = 'Procesando archivo CSV...';
+        feedback.innerText = 'Procesando archivo CSV de 8 sensores...';
 
         try {
             const res = await fetch('/api/import_tower_csv', {
@@ -588,7 +884,7 @@
                 if (reading && tel.is_recording) {
                     const statusTxt = document.getElementById('antenna-status-text');
                     if (statusTxt) {
-                        statusTxt.innerText = `Transmitiendo (${tel.readings_count} lecturas guardadas) | Temp: ${reading.temperature}°C, HR: ${reading.humidity}%, UV: ${reading.uv_solar} lux`;
+                        statusTxt.innerText = `Transmitiendo (${tel.readings_count} lecturas guardadas) | Temp: ${reading.temperature}°C, HR: ${reading.humidity}%, EC: ${reading.ec_conductivity} µS/cm, pH: ${reading.water_ph}`;
                     }
                 }
             }

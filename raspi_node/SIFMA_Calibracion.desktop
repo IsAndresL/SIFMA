@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=SIFMA Calibración de Cámaras CSI
+Comment=Herramienta de Enfoque en Tiempo Real y Alineación de Cámaras Arducam
+Exec=/usr/bin/python3 /home/nodo1/raspi_node/calibrate_cameras.py
+Icon=camera-video
+Terminal=false
+Type=Application
+Categories=Utility;Application;
+StartupNotify=true

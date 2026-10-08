@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SIFMA - Centro de Control Raspberry Pi</title>
+    <style>
+        :root {
+            --bg-base: #0a0f18;
+            --bg-card: #111a2e;
+            --bg-card-hover: #17233d;
+            --border-color: #1e2d4d;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --primary-glow: rgba(16, 185, 129, 0.25);
+            --secondary: #3b82f6;
+            --secondary-hover: #2563eb;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+
+        /* Top Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 14px 20px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: #fff;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-status-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #1e293b;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .badge.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .badge.active .badge-dot {
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .badge.usb-active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .badge.usb-active .badge-dot {
+            background: #3b82f6;
+            box-shadow: 0 0 8px #3b82f6;
+        }
+
+        .clock-display {
+            font-family: monospace;
+            font-size: 1rem;
+            color: #cbd5e1;
+            padding-left: 8px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        /* Main Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            flex: 1;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-badge {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: #0f172a;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* 1-Click Presets */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .preset-btn {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 10px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+        }
+
+        .preset-btn:active, .preset-btn.selected {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.3));
+            border-color: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+            transform: scale(0.98);
+        }
+
+        .preset-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        .preset-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+
+        /* Chips & Button Groups */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .control-label span {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex: 1 1 auto;
+            text-align: center;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chip:active, .chip.active {
+            background: var(--primary);
+            color: #000;
+            font-weight: 700;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .chip-blue.active {
+            background: var(--secondary);
+            color: #fff;
+            border-color: var(--secondary);
+        }
+
+        /* Steppers */
+        .stepper-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stepper-btn {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            width: 50px;
+            height: 46px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stepper-btn:active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .stepper-value {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            height: 46px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #34d399;
+            font-family: monospace;
+        }
+
+        /* Scheduled Hours Matrix */
+        .hours-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .hour-chip {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 4px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            font-family: monospace;
+        }
+
+        .hour-chip.active {
+            background: #059669;
+            color: #fff;
+            border-color: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Action Buttons */
+        .btn-action-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px var(--primary-glow);
+            transition: all 0.15s ease;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-action-primary:active {
+            transform: scale(0.98);
+            background: #047857;
+        }
+
+        .btn-action-secondary {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: #f1f5f9;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+
+        .btn-action-secondary:active {
+            background: #334155;
+        }
+
+        /* Camera Live Preview Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 650px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        .preview-img-container {
+            width: 100%;
+            height: 340px;
+            background: #000;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .preview-img-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Status Toast Banner */
+        #toastBanner {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            border: 1px solid var(--primary);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            display: none;
+            z-index: 2000;
+        }
+
+        .status-feed {
+            background: #0a0f18;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .status-feed-highlight {
+            color: #34d399;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Barra Superior -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-icon">S</div>
+            <div>
+                <div class="brand-title">SIFMA</div>
+                <div class="brand-subtitle">Panel Operativo Raspberry Pi 5</div>
+            </div>
+        </div>
+
+        <div class="header-status-group">
+            <div class="badge active" id="daemonBadge">
+                <span class="badge-dot"></span>
+                <span id="daemonBadgeText">Demonio Activo</span>
+            </div>
+            <div class="badge usb-active" id="usbBadge">
+                <span class="badge-dot"></span>
+                <span id="usbBadgeText">USB: Detectada</span>
+            </div>
+            <div class="clock-display" id="liveClock">--:--:--</div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-grid">
+
+        <!-- Columna Izquierda: Presets y Programación de Captura -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">1. Modo y Frecuencia de Captura</div>
+                <div class="card-badge">Touch Friendly</div>
+            </div>
+
+            <!-- Presets Rápidos -->
+            <div class="control-group">
+                <div class="control-label">Ajustes Rápidos Predefinidos</div>
+                <div class="preset-grid">
+                    <button class="preset-btn" onclick="applyPreset('exhibicion')">
+                        <div class="preset-name">Exhibición</div>
+                        <div class="preset-desc">Cada 1 hora / 3 fotos rápidas (5s)</div>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('exhibicion_rapida')">
+                        <div class="preset-name">Demo Rápida</div>
+                        <div class="preset-desc">Cada 15 min / 2 fotos instantáneas</div>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('agronomico')">
+                        <div class="preset-name">Agronómico</div>
+                        <div class="preset-desc">3 jornadas (07, 12, 17h) / 5 fotos</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selector de Modo -->
+            <div class="control-group">
+                <div class="control-label">Tipo de Temporizador</div>
+                <div class="chip-group">
+                    <div class="chip" id="modeInterval" onclick="setCaptureMode('interval')">Intervalo Periódico</div>
+                    <div class="chip" id="modeScheduled" onclick="setCaptureMode('scheduled')">Horas Programadas</div>
+                </div>
+            </div>
+
+            <!-- Opciones Modo Intervalo -->
+            <div id="intervalContainer" class="control-group">
+                <div class="control-label">Frecuencia de Captura: <span id="intervalDisplay">60 min (1 hora)</span></div>
+                <div class="chip-group">
+                    <div class="chip" onclick="setIntervalMin(5)">5 min</div>
+                    <div class="chip" onclick="setIntervalMin(15)">15 min</div>
+                    <div class="chip" onclick="setIntervalMin(30)">30 min</div>
+                    <div class="chip" onclick="setIntervalMin(60)">1 hora</div>
+                    <div class="chip" onclick="setIntervalMin(120)">2 horas</div>
+                    <div class="chip" onclick="setIntervalMin(240)">4 horas</div>
+                </div>
+                <div class="stepper-container" style="margin-top: 6px;">
+                    <button class="stepper-btn" onclick="stepInterval(-15)">-</button>
+                    <div class="stepper-value" id="stepperIntervalVal">60 min</div>
+                    <button class="stepper-btn" onclick="stepInterval(15)">+</button>
+                </div>
+            </div>
+
+            <!-- Opciones Modo Horas Programadas -->
+            <div id="scheduledContainer" class="control-group" style="display: none;">
+                <div class="control-label">Horas Activas de Captura (Clic para Alternar)</div>
+                <div class="hours-grid" id="hoursGrid">
+                    <!-- Generado dinámicamente con JS -->
+                </div>
+            </div>
+
+            <!-- Configuración de Fotos por Sesión -->
+            <div class="control-group">
+                <div class="control-label">Rango de Fotos por Sesión: <span id="photosCountDisplay">3 fotos</span></div>
+                <div class="chip-group">
+                    <div class="chip" onclick="setPhotosCount(1)">1 foto</div>
+                    <div class="chip" onclick="setPhotosCount(2)">2 fotos</div>
+                    <div class="chip" onclick="setPhotosCount(3)">3 fotos</div>
+                    <div class="chip" onclick="setPhotosCount(5)">5 fotos</div>
+                    <div class="chip" onclick="setPhotosCount(8)">8 fotos</div>
+                    <div class="chip" onclick="setPhotosCount(10)">10 fotos</div>
+                </div>
+                <div class="stepper-container" style="margin-top: 6px;">
+                    <button class="stepper-btn" onclick="stepPhotosCount(-1)">-</button>
+                    <div class="stepper-value" id="stepperPhotosVal">3 fotos</div>
+                    <button class="stepper-btn" onclick="stepPhotosCount(1)">+</button>
+                </div>
+            </div>
+
+            <!-- Espaciado entre Fotos -->
+            <div class="control-group">
+                <div class="control-label">Espaciado entre Tomas: <span id="spacingDisplay">5 segundos</span></div>
+                <div class="chip-group">
+                    <div class="chip" onclick="setPhotoSpacing(3)">3s</div>
+                    <div class="chip" onclick="setPhotoSpacing(5)">5s</div>
+                    <div class="chip" onclick="setPhotoSpacing(10)">10s</div>
+                    <div class="chip" onclick="setPhotoSpacing(30)">30s</div>
+                    <div class="chip" onclick="setPhotoSpacing(60)">1 min</div>
+                    <div class="chip" onclick="setPhotoSpacing(300)">5 min</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Acciones, Canastilla, Calibración de Cámaras y Estado -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">2. Acciones y Calibración en Vivo</div>
+                <div class="card-badge">Control Hardware</div>
+            </div>
+
+            <!-- Botón Disparo Inmediato -->
+            <button class="btn-action-primary" onclick="triggerImmediateCapture()">
+                Disparar Captura Inmediata Ahora
+            </button>
+
+            <!-- Previsualización / Calibración de Cámaras -->
+            <div class="control-group">
+                <div class="control-label">Calibración y Enfoque de Cámaras</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn-action-secondary" onclick="openCameraPreview(0)">
+                        Probar Cámara Cenital (ID 0)
+                    </button>
+                    <button class="btn-action-secondary" onclick="openCameraPreview(1)">
+                        Probar Cámara Lateral (ID 1)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canastilla y Cultivo -->
+            <div class="control-group">
+                <div class="control-label">Canastilla / Planta Asignada</div>
+                <div class="chip-group">
+                    <div class="chip" onclick="setPlantId(1)" id="plant1">Planta 1</div>
+                    <div class="chip" onclick="setPlantId(2)" id="plant2">Planta 2</div>
+                    <div class="chip" onclick="setPlantId(3)" id="plant3">Planta 3</div>
+                    <div class="chip" onclick="setPlantId(4)" id="plant4">Planta 4</div>
+                </div>
+            </div>
+
+            <!-- Captura al Encender -->
+            <div class="control-group">
+                <div class="control-label">Captura Inmediata al Encender Nodo</div>
+                <div class="chip-group">
+                    <div class="chip" id="bootCaptureOn" onclick="setBootCapture(true)">Activada (Exhibición)</div>
+                    <div class="chip" id="bootCaptureOff" onclick="setBootCapture(false)">Desactivada</div>
+                </div>
+            </div>
+
+            <!-- Estado Operativo en Vivo -->
+            <div class="control-group">
+                <div class="control-label">Estado del Demonio del Sistema</div>
+                <div class="status-feed">
+                    <div>Estado: <span class="status-feed-highlight" id="daemonStatusText">Cargando...</span></div>
+                    <div>Próxima Toma: <span id="daemonNextCapture">--</span></div>
+                    <div>Último Lote: <span id="daemonLastCapture">Ninguno registrado</span></div>
+                    <div>Destino Almacenamiento: <span id="storagePathText">Buscando USB...</span></div>
+                </div>
+            </div>
+
+            <!-- Controles del Demonio -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: auto;">
+                <button class="btn-action-secondary" style="color: #34d399;" onclick="controlDaemon('start')">Iniciar</button>
+                <button class="btn-action-secondary" style="color: #ef4444;" onclick="controlDaemon('stop')">Detener</button>
+                <button class="btn-action-secondary" style="color: #60a5fa;" onclick="controlDaemon('restart')">Reiniciar</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal de Previsualización de Cámara -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 700; font-size: 1.1rem; color: #fff;" id="modalCamTitle">Vista Previa de Cámara</div>
+                <button class="btn-action-secondary" style="padding: 6px 14px;" onclick="closePreviewModal()">Cerrar</button>
+            </div>
+            <div class="preview-img-container" id="previewImgContainer">
+                <div id="previewLoadingText" style="color: var(--text-muted); font-size: 0.9rem;">Capturando frame de prueba...</div>
+                <img id="previewImg" style="display: none;" alt="Preview">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);" id="previewTimestamp">--</div>
+                <button class="btn-action-primary" style="padding: 10px 20px; font-size: 0.9rem;" onclick="refreshCurrentPreview()">Actualizar Frame</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toastBanner">Configuración guardada</div>
+
+    <script>
+        let currentConfig = {};
+        let activePreviewCam = 0;
+
+        const defaultHours = [
+            "06:00", "07:05", "08:00", "09:00", "10:00",
+            "11:00", "12:05", "13:00", "14:00", "15:00",
+            "16:00", "17:05", "18:00", "19:00", "20:00"
+        ];
+
+        function showToast(msg) {
+            const t = document.getElementById("toastBanner");
+            t.textContent = msg;
+            t.style.display = "block";
+            setTimeout(() => { t.style.display = "none"; }, 2500);
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch("/api/status");
+                const data = await res.json();
+                if (data.status === "ok") {
+                    currentConfig = data.config;
+                    updateUIFromConfig(data.config);
+                    updateDaemonAndStorageUI(data);
+                }
+            } catch (e) {
+                console.error("Error consultando estado:", e);
+            }
+        }
+
+        function updateUIFromConfig(cfg) {
+            // Modo
+            const isInterval = cfg.capture_mode === "interval";
+            document.getElementById("modeInterval").classList.toggle("active", isInterval);
+            document.getElementById("modeScheduled").classList.toggle("active", !isInterval);
+            document.getElementById("intervalContainer").style.display = isInterval ? "flex" : "none";
+            document.getElementById("scheduledContainer").style.display = !isInterval ? "flex" : "none";
+
+            // Intervalo
+            const min = cfg.interval_minutes || 60;
+            document.getElementById("intervalDisplay").textContent = `${min} min (${(min/60).toFixed(1)}h)`;
+            document.getElementById("stepperIntervalVal").textContent = `${min} min`;
+
+            // Fotos por sesión
+            const photos = cfg.photos_per_session || 3;
+            document.getElementById("photosCountDisplay").textContent = `${photos} fotos`;
+            document.getElementById("stepperPhotosVal").textContent = `${photos} fotos`;
+
+            // Espaciado
+            const spacing = cfg.interval_between_photos_sec || 5;
+            document.getElementById("spacingDisplay").textContent = spacing >= 60 ? `${spacing/60} min` : `${spacing} segundos`;
+
+            // Canastilla
+            const pid = cfg.plant_id || 1;
+            [1, 2, 3, 4].forEach(id => {
+                const el = document.getElementById(`plant${id}`);
+                if (el) el.classList.toggle("active", id === pid);
+            });
+
+            // Captura al encender
+            const bootCap = cfg.capture_on_boot !== false;
+            document.getElementById("bootCaptureOn").classList.toggle("active", bootCap);
+            document.getElementById("bootCaptureOff").classList.toggle("active", !bootCap);
+
+            // Horas programadas
+            renderHoursGrid(cfg.scheduled_times || ["07:05", "12:05", "17:05"]);
+        }
+
+        function renderHoursGrid(activeTimes) {
+            const grid = document.getElementById("hoursGrid");
+            grid.innerHTML = "";
+            defaultHours.forEach(h => {
+                const chip = document.createElement("div");
+                chip.className = "hour-chip" + (activeTimes.includes(h) ? " active" : "");
+                chip.textContent = h;
+                chip.onclick = () => toggleScheduledHour(h);
+                grid.appendChild(chip);
+            });
+        }
+
+        function updateDaemonAndStorageUI(data) {
+            // Reloj
+            document.getElementById("liveClock").textContent = data.server_time || "--:--:--";
+
+            // Demonio
+            const daemon = data.daemon || {};
+            const isRunning = daemon.is_running;
+            const badge = document.getElementById("daemonBadge");
+            const badgeText = document.getElementById("daemonBadgeText");
+            
+            badge.className = "badge" + (isRunning ? " active" : "");
+            badgeText.textContent = isRunning ? "Demonio Activo" : "Demonio Detenido";
+
+            document.getElementById("daemonStatusText").textContent = daemon.status || "En espera";
+            document.getElementById("daemonNextCapture").textContent = daemon.next_capture_human || daemon.next_capture || "--";
+
+            if (daemon.last_capture) {
+                document.getElementById("daemonLastCapture").textContent = 
+                    `${daemon.last_capture.timestamp} (${daemon.last_capture.photos_count} fotos en ${daemon.last_capture.period})`;
+            }
+
+            // USB
+            const storage = data.storage || {};
+            const usbBadge = document.getElementById("usbBadge");
+            const usbText = document.getElementById("usbBadgeText");
+            if (storage.is_usb_mounted) {
+                usbBadge.className = "badge usb-active";
+                usbText.textContent = `USB: ${storage.free_gb}GB libres`;
+            } else {
+                usbBadge.className = "badge";
+                usbText.textContent = "Almacenamiento Local";
+            }
+            document.getElementById("storagePathText").textContent = `${storage.label} (${storage.target_path})`;
+        }
+
+        async function saveConfig(updates) {
+            try {
+                const res = await fetch("/api/config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updates)
+                });
+                const data = await res.json();
+                if (data.status === "ok") {
+                    showToast("Configuración actualizada y sincronizada");
+                    fetchStatus();
+                } else {
+                    alert("Error guardando configuracion: " + data.message);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function setCaptureMode(mode) {
+            saveConfig({ capture_mode: mode });
+        }
+
+        function setIntervalMin(min) {
+            saveConfig({ interval_minutes: min });
+        }
+
+        function stepInterval(delta) {
+            let cur = currentConfig.interval_minutes || 60;
+            cur = Math.max(1, cur + delta);
+            saveConfig({ interval_minutes: cur });
+        }
+
+        function setPhotosCount(count) {
+            saveConfig({ photos_per_session: count });
+        }
+
+        function stepPhotosCount(delta) {
+            let cur = currentConfig.photos_per_session || 3;
+            cur = Math.max(1, Math.min(20, cur + delta));
+            saveConfig({ photos_per_session: cur });
+        }
+
+        function setPhotoSpacing(sec) {
+            saveConfig({ interval_between_photos_sec: sec });
+        }
+
+        function setPlantId(id) {
+            saveConfig({ plant_id: id });
+        }
+
+        function setBootCapture(enable) {
+            saveConfig({ capture_on_boot: enable });
+        }
+
+        function toggleScheduledHour(hour) {
+            let times = currentConfig.scheduled_times || ["07:05", "12:05", "17:05"];
+            if (times.includes(hour)) {
+                times = times.filter(t => t !== hour);
+            } else {
+                times.push(hour);
+            }
+            saveConfig({ scheduled_times: times });
+        }
+
+        async function applyPreset(presetName) {
+            try {
+                const res = await fetch("/api/preset", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ preset: presetName })
+                });
+                const data = await res.json();
+                if (data.status === "ok") {
+                    showToast(`Preset '${presetName}' aplicado`);
+                    fetchStatus();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function triggerImmediateCapture() {
+            if (!confirm("¿Desea iniciar una secuencia de captura fotográfica ahora mismo?")) return;
+            try {
+                const res = await fetch("/api/trigger_capture", { method: "POST" });
+                const data = await res.json();
+                showToast(data.message);
+                fetchStatus();
+            } catch (e) {
+                alert("Error al disparar captura: " + e);
+            }
+        }
+
+        async function openCameraPreview(camIdx) {
+            activePreviewCam = camIdx;
+            document.getElementById("modalCamTitle").textContent = `Vista Previa - Cámara ${camIdx === 0 ? 'Cenital' : 'Lateral'} (ID ${camIdx})`;
+            document.getElementById("previewModal").style.display = "flex";
+            document.getElementById("previewLoadingText").style.display = "block";
+            document.getElementById("previewImg").style.display = "none";
+            document.getElementById("previewTimestamp").textContent = "Tomando frame...";
+
+            try {
+                const res = await fetch(`/api/preview_camera/${camIdx}`);
+                const data = await res.json();
+                if (data.status === "ok") {
+                    document.getElementById("previewLoadingText").style.display = "none";
+                    const img = document.getElementById("previewImg");
+                    img.src = data.image_b64;
+                    img.style.display = "block";
+                    document.getElementById("previewTimestamp").textContent = `Capturado a las: ${data.timestamp}`;
+                } else {
+                    document.getElementById("previewLoadingText").textContent = data.message || "Error al capturar.";
+                }
+            } catch (e) {
+                document.getElementById("previewLoadingText").textContent = "Error de conexión con la cámara.";
+            }
+        }
+
+        function refreshCurrentPreview() {
+            openCameraPreview(activePreviewCam);
+        }
+
+        function closePreviewModal() {
+            document.getElementById("previewModal").style.display = "none";
+        }
+
+        async function controlDaemon(action) {
+            try {
+                const res = await fetch(`/api/daemon/${action}`, { method: "POST" });
+                const data = await res.json();
+                showToast(data.message);
+                setTimeout(fetchStatus, 1500);
+            } catch (e) {
+                alert("Error controlando demonio: " + e);
+            }
+        }
+
+        // Carga inicial y bucle de refresco continuo cada 3 segundos
+        fetchStatus();
+        setInterval(fetchStatus, 3000);
+    </script>
+</body>
+</html>

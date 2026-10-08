@@ -230,6 +230,10 @@
                 <option value="humidity_rh">Humedad Relativa (% HR)</option>
                 <option value="uv_solar_lux">Radiación Solar / UV (lux)</option>
                 <option value="motor_current_a">Corriente de Bomba (A)</option>
+                <option value="ec_conductivity">Conductividad Eléctrica (µS/cm)</option>
+                <option value="water_ph">pH de la Solución (pH)</option>
+                <option value="turbidity_ntu">Turbidez del Agua (NTU)</option>
+                <option value="dissolved_oxygen_mg_l">Oxígeno Disuelto (mg/L)</option>
             </select>
         </div>
 
@@ -743,7 +747,11 @@
         temperature_c: { label: 'Temperatura Ambiente', unit: '°C', color: '#2563eb', type: 'sensor' },
         humidity_rh: { label: 'Humedad Relativa', unit: '% HR', color: '#0284c7', type: 'sensor' },
         uv_solar_lux: { label: 'Radiación Solar', unit: 'lux', color: '#d97706', type: 'sensor' },
-        motor_current_a: { label: 'Corriente Bomba', unit: 'A', color: '#059669', type: 'sensor' }
+        motor_current_a: { label: 'Corriente Bomba', unit: 'A', color: '#059669', type: 'sensor' },
+        ec_conductivity: { label: 'Conductividad Eléctrica', unit: 'µS/cm', color: '#8b5cf6', type: 'sensor' },
+        water_ph: { label: 'pH de la Solución', unit: 'pH', color: '#ec4899', type: 'sensor' },
+        turbidity_ntu: { label: 'Turbidez del Agua', unit: 'NTU', color: '#f97316', type: 'sensor' },
+        dissolved_oxygen_mg_l: { label: 'Oxígeno Disuelto', unit: 'mg/L', color: '#06b6d4', type: 'sensor' }
     };
 
     function getFilteredCrossData() {

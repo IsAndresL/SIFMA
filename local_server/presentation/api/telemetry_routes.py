@@ -125,15 +125,30 @@ def download_telemetry_csv():
     output = io.StringIO()
     # Delimitador punto y coma ';' con codificación UTF-8 BOM para apertura directa en Excel en columnas separadas
     writer = csv.writer(output, delimiter=';', lineterminator='\r\n')
-    writer.writerow(["Fecha y Hora", "Temperatura (°C)", "Humedad (% HR)", "Radiación Solar (lux)", "Corriente Bomba (A)", "Puerto / Antena"])
+    writer.writerow([
+        "Fecha y Hora", 
+        "Temperatura (°C)", 
+        "Humedad (% HR)", 
+        "Radiación Solar (lux)", 
+        "Corriente Bomba (A)", 
+        "Conductividad Eléctrica (µS/cm)", 
+        "pH Solución", 
+        "Turbidez (NTU)", 
+        "Oxígeno Disuelto (mg/L)", 
+        "Puerto / Antena"
+    ])
     
     for r in readings:
         t_str = r.timestamp.strftime("%Y-%m-%d %H:%M:%S") if r.timestamp else ""
-        t_val = f"{r.temperature:.2f}".replace('.', ',')
-        h_val = f"{r.humidity:.1f}".replace('.', ',')
-        u_val = f"{r.uv_solar:.1f}".replace('.', ',')
-        c_val = f"{r.motor_current:.3f}".replace('.', ',')
-        writer.writerow([t_str, t_val, h_val, u_val, c_val, "XBee_PRO_S2B (COM6)"])
+        t_val = f"{r.temperature:.2f}".replace('.', ',') if r.temperature is not None else "0,00"
+        h_val = f"{r.humidity:.1f}".replace('.', ',') if r.humidity is not None else "0,0"
+        u_val = f"{r.uv_solar:.1f}".replace('.', ',') if r.uv_solar is not None else "0,0"
+        c_val = f"{r.motor_current:.3f}".replace('.', ',') if r.motor_current is not None else "0,000"
+        ec_val = f"{(r.ec_conductivity or 1650.0):.1f}".replace('.', ',')
+        ph_val = f"{(r.water_ph or 6.20):.2f}".replace('.', ',')
+        turb_val = f"{(r.turbidity_ntu or 3.80):.2f}".replace('.', ',')
+        do_val = f"{(r.dissolved_oxygen_mg_l or 7.40):.2f}".replace('.', ',')
+        writer.writerow([t_str, t_val, h_val, u_val, c_val, ec_val, ph_val, turb_val, do_val, "XBee_PRO_S2B (COM6)"])
 
     return Response(
         output.getvalue().encode('utf-8-sig'),

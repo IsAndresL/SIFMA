@@ -7,6 +7,9 @@ SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 if SERVER_DIR not in sys.path:
     sys.path.insert(0, SERVER_DIR)
 
+from core.dependencies import ensure_dependencies
+ensure_dependencies()
+
 from core.config import config
 from core.logger import logger
 from infrastructure.database import db, init_db_data
