@@ -28,14 +28,16 @@ class SerialTelemetryAdapter:
         self.active_port: Optional[str] = None
         self.fallback_mock = MockTelemetryAdapter()
         self.last_valid_sample = {
-            "temperature": 28.5,
-            "humidity": 68.0,
+            "water_ph": 6.12,
+            "ec_conductivity": 1649.6,
+            "turbidity_ntu": 4.06,
+            "dissolved_oxygen_mg_l": 7.6,
+            "water_temp": 20.0,
+            "temperature": 25.49,
+            "humidity": 83.2,
+            "motor_state": 1,
+            "motor_current": 1.0,
             "uv_solar": 0.0,
-            "motor_current": 0.0,
-            "ec_conductivity": 1650.0,
-            "water_ph": 6.2,
-            "turbidity_ntu": 3.8,
-            "dissolved_oxygen_mg_l": 7.4,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
@@ -122,11 +124,17 @@ class SerialTelemetryAdapter:
 
     def read_sample(self) -> Dict[str, Any]:
         """
-        Lee y decodifica una muestra real desde la antena XBee.
-        Soporta tramas posicionales (4 u 8 parámetros) y tramas clave-valor (T:, H:, UV:, I:, EC:, PH:, TURB:, DO:).
-        Ejemplos:
-          - '0.0,33.6,64.9,1.65,1680.0,6.20,4.2,7.6'
-          - 'T:33.6,H:64.9,UV:0.0,I:1.65,EC:1680,PH:6.2,TURB:4.2,DO:7.6'
+        Lee y decodifica la trama real transmitida por la antena en formato posicional o clave-valor.
+        Estructura Oficial SIFMA ($...#):
+          Pos 1: pH Solución (pH)
+          Pos 2: Conductividad Eléctrica (µS/cm)
+          Pos 3: Turbidez (NTU)
+          Pos 4: Oxígeno Disuelto (mg/L)
+          Pos 5: Temperatura del Agua (°C)
+          Pos 6: Temperatura Exterior (°C)
+          Pos 7: Humedad Relativa Exterior (% HR)
+          Pos 8: Estado Motor (1-0)
+        Ejemplo real: '$7.75,1000.0,2.7,0.00,23.9,25.5,60.2,0,0,0#'
         """
         if self.port == "SIMULADOR_ANTENA_TEST":
             return self.fallback_mock.read_sample()
@@ -135,9 +143,10 @@ class SerialTelemetryAdapter:
             try:
                 raw_line = self.serial_conn.readline().decode('utf-8', errors='ignore').strip()
                 if raw_line:
-                    # Delimitador coma o punto y coma
-                    delim = ';' if ';' in raw_line else ','
-                    parts = [p.strip() for p in raw_line.split(delim)]
+                    # Limpiar delimitadores envolventes $ y #
+                    cleaned_line = raw_line.strip().strip('$#').strip()
+                    delim = ';' if ';' in cleaned_line else ','
+                    parts = [p.strip() for p in cleaned_line.split(delim)]
                     
                     sample_dict = dict(self.last_valid_sample)
                     parsed_any = False
@@ -150,23 +159,11 @@ class SerialTelemetryAdapter:
                                 k = k.strip().upper()
                                 try:
                                     v_num = float(v.replace(',', '.').strip())
-                                    if k in ['T', 'TEMP', 'TEMPERATURA']:
-                                        sample_dict['temperature'] = round(v_num, 2)
-                                        parsed_any = True
-                                    elif k in ['H', 'HUM', 'HUMEDAD', 'HR']:
-                                        sample_dict['humidity'] = round(min(100.0, max(0.0, v_num)), 1)
-                                        parsed_any = True
-                                    elif k in ['UV', 'RAD', 'SOLAR', 'LUX']:
-                                        sample_dict['uv_solar'] = round(max(0.0, v_num), 1)
-                                        parsed_any = True
-                                    elif k in ['I', 'CURR', 'AMP', 'CORRIENTE', 'BOMBA']:
-                                        sample_dict['motor_current'] = round(abs(v_num), 3)
+                                    if k in ['PH', 'ACIDEZ']:
+                                        sample_dict['water_ph'] = round(min(14.0, max(0.0, v_num)), 2)
                                         parsed_any = True
                                     elif k in ['EC', 'COND', 'CONDUCTIVIDAD']:
                                         sample_dict['ec_conductivity'] = round(max(0.0, v_num), 1)
-                                        parsed_any = True
-                                    elif k in ['PH', 'ACIDEZ']:
-                                        sample_dict['water_ph'] = round(min(14.0, max(0.0, v_num)), 2)
                                         parsed_any = True
                                     elif k in ['TURB', 'TURBIDEZ', 'NTU']:
                                         sample_dict['turbidity_ntu'] = round(max(0.0, v_num), 2)
@@ -174,10 +171,26 @@ class SerialTelemetryAdapter:
                                     elif k in ['DO', 'OD', 'OXIGENO', 'MG/L']:
                                         sample_dict['dissolved_oxygen_mg_l'] = round(max(0.0, v_num), 2)
                                         parsed_any = True
+                                    elif k in ['TW', 'TAGUA', 'TEMPWATER', 'TEMP_AGUA']:
+                                        sample_dict['water_temp'] = round(v_num, 2)
+                                        parsed_any = True
+                                    elif k in ['T', 'TEMP', 'TEMPERATURA', 'TEXT', 'TEMP_EXT']:
+                                        sample_dict['temperature'] = round(v_num, 2)
+                                        parsed_any = True
+                                    elif k in ['H', 'HUM', 'HUMEDAD', 'HR']:
+                                        sample_dict['humidity'] = round(min(100.0, max(0.0, v_num)), 1)
+                                        parsed_any = True
+                                    elif k in ['M', 'MOT', 'MOTOR', 'BOMBA', 'ESTADO_MOTOR', 'I', 'CURR']:
+                                        sample_dict['motor_state'] = 1 if v_num >= 0.5 else 0
+                                        sample_dict['motor_current'] = round(abs(v_num), 3)
+                                        parsed_any = True
+                                    elif k in ['UV', 'RAD', 'SOLAR', 'LUX']:
+                                        sample_dict['uv_solar'] = round(max(0.0, v_num), 1)
+                                        parsed_any = True
                                 except ValueError:
                                     pass
                     
-                    # 2. Modo Posicional
+                    # 2. Modo Posicional Oficial SIFMA
                     elif len(parts) >= 4:
                         try:
                             p_nums = []
@@ -186,43 +199,46 @@ class SerialTelemetryAdapter:
                                     p_nums.append(float(p.replace(',', '.').strip()))
                                 except ValueError:
                                     pass
+                                    
                             if len(p_nums) >= 4:
-                                # Si primer valor es grande (>100) es UV, si es <60 es Temperatura
-                                if p_nums[0] > 60.0 and p_nums[1] < 60.0:
-                                    sample_dict['uv_solar'] = round(max(0.0, p_nums[0]), 1)
-                                    sample_dict['temperature'] = round(p_nums[1], 2)
-                                    sample_dict['humidity'] = round(min(100.0, max(0.0, p_nums[2])), 1)
-                                    sample_dict['motor_current'] = round(abs(p_nums[3]), 3)
-                                else:
-                                    sample_dict['temperature'] = round(p_nums[0], 2)
-                                    sample_dict['humidity'] = round(min(100.0, max(0.0, p_nums[1])), 1)
-                                    sample_dict['uv_solar'] = round(max(0.0, p_nums[2]), 1)
-                                    sample_dict['motor_current'] = round(abs(p_nums[3]), 3)
+                                # Pos 1: pH Solución
+                                sample_dict['water_ph'] = round(min(14.0, max(0.0, p_nums[0])), 2)
+                                # Pos 2: Conductividad Eléctrica µS/cm
+                                sample_dict['ec_conductivity'] = round(max(0.0, p_nums[1]), 1)
+                                # Pos 3: Turbidez NTU
+                                sample_dict['turbidity_ntu'] = round(max(0.0, p_nums[2]), 2)
+                                # Pos 4: Oxígeno Disuelto mg/L
+                                sample_dict['dissolved_oxygen_mg_l'] = round(max(0.0, p_nums[3]), 2)
                                 
+                                # Pos 5: Temperatura del Agua (°C)
                                 if len(p_nums) >= 5:
-                                    sample_dict['ec_conductivity'] = round(max(0.0, p_nums[4]), 1)
+                                    sample_dict['water_temp'] = round(p_nums[4], 2)
+                                # Pos 6: Temperatura Exterior (°C)
                                 if len(p_nums) >= 6:
-                                    sample_dict['water_ph'] = round(min(14.0, max(0.0, p_nums[5])), 2)
+                                    sample_dict['temperature'] = round(p_nums[5], 2)
+                                # Pos 7: Humedad Relativa Exterior (% HR)
                                 if len(p_nums) >= 7:
-                                    sample_dict['turbidity_ntu'] = round(max(0.0, p_nums[6]), 2)
+                                    sample_dict['humidity'] = round(min(100.0, max(0.0, p_nums[6])), 1)
+                                # Pos 8: Estado Motor (1-0)
                                 if len(p_nums) >= 8:
-                                    sample_dict['dissolved_oxygen_mg_l'] = round(max(0.0, p_nums[7]), 2)
+                                    sample_dict['motor_state'] = 1 if p_nums[7] >= 0.5 else 0
+                                    sample_dict['motor_current'] = round(p_nums[7], 2)
                                     
                                 parsed_any = True
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"Error parseando trama posicional: {e}")
                             
                     if parsed_any:
                         sample_dict["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         sample_dict["raw"] = raw_line
-                        sample_dict["source"] = f"XBee ({self.active_port})"
+                        sample_dict["source"] = f"Antena ({self.active_port})"
                         self.last_valid_sample = sample_dict
                         return sample_dict
             except Exception as e:
                 logger.warning(f"[SIFMA] Error de lectura en antena: {e}")
                 self._disconnect()
 
-        # Si no hubo lectura válida del puerto físico, retornar última muestra válida o mock
+        # Si no hubo lectura válida del puerto físico, retornar última muestra válida
         if self.last_valid_sample:
             sample = dict(self.last_valid_sample)
             sample["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

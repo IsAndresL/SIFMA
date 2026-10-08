@@ -89,19 +89,27 @@ class TowerCsvImporter:
         
         col_fecha = next((i for i, h in enumerate(header) if any(k in h for k in ['fecha', 'date', 'timestamp', 'tiempo'])), 0)
         col_hora = next((i for i, h in enumerate(header) if any(k in h for k in ['hora', 'time'])), None)
-        col_temp = next((i for i, h in enumerate(header) if any(k in h for k in ['temp', 'temperatura'])), None)
-        col_hr = next((i for i, h in enumerate(header) if any(k in h for k in ['hr', 'hum', 'humedad'])), None)
         
-        # Priorizar columna de radiación solar sobre co2 si ambas existen
-        col_rad = next((i for i, h in enumerate(header) if any(k in h for k in ['rad', 'solar', 'uv', 'lux', 'luz', 'irradiancia'])), None)
-        if col_rad is None:
-            col_rad = next((i for i, h in enumerate(header) if 'co2' in h), None)
-            
-        col_amp = next((i for i, h in enumerate(header) if any(k in h for k in ['amp', 'curr', 'corr', 'motor', 'bomba', 'corriente'])), None)
-        col_ec = next((i for i, h in enumerate(header) if any(k in h for k in ['ec', 'conductividad', 'electroconductividad', 'conductivity', 'us/cm', 'ms/cm'])), None)
-        col_ph = next((i for i, h in enumerate(header) if any(k in h for k in ['ph', 'acidez', 'ph_agua', 'ph_solucion'])), None)
+        # 1. pH Solución
+        col_ph = next((i for i, h in enumerate(header) if any(k in h for k in ['ph', 'acidez', 'ph_solucion', 'ph solucion', 'ph_agua'])), None)
+        # 2. Turbidez (NTU)
         col_turb = next((i for i, h in enumerate(header) if any(k in h for k in ['turb', 'turbidez', 'turbiedad', 'ntu'])), None)
-        col_do = next((i for i, h in enumerate(header) if any(k in h for k in ['do', 'oxigeno', 'oxigeno_disuelto', 'dissolved_oxygen', 'od', 'mg/l'])), None)
+        # 3. Conductividad Eléctrica (µS/cm)
+        col_ec = next((i for i, h in enumerate(header) if any(k in h for k in ['conductividad', 'electroconductividad', 'ec', 'conductivity', 'us/cm', 'ms/cm'])), None)
+        # 4. Oxígeno Disuelto (mg/L)
+        col_do = next((i for i, h in enumerate(header) if any(k in h for k in ['oxigeno', 'oxigeno disuelto', 'oxigeno_disuelto', 'dissolved_oxygen', 'od', 'mg/l', 'do'])), None)
+        # 5. Temperatura de agua
+        col_water_temp = next((i for i, h in enumerate(header) if any(k in h for k in ['temperatura de agua', 'temp agua', 'temp_agua', 'water_temp', 'tagua'])), None)
+        # 6. Estado motor: 1-0
+        col_amp = next((i for i, h in enumerate(header) if any(k in h for k in ['estado motor', 'motor', 'bomba', 'amp', 'curr', 'corr', 'corriente'])), None)
+        # 7. Temperatura exterior (°C)
+        col_temp = next((i for i, h in enumerate(header) if any(k in h for k in ['temperatura exterior', 'temp ext', 'temp_ext', 'exterior'])), None)
+        if col_temp is None:
+            col_temp = next((i for i, h in enumerate(header) if any(k in h for k in ['temp', 'temperatura']) and i != col_water_temp), None)
+        # 8. Humedad relativa exterior (% HR)
+        col_hr = next((i for i, h in enumerate(header) if any(k in h for k in ['humedad relativa exterior', 'humedad exterior', 'hr', 'hum', 'humedad'])), None)
+        
+        col_rad = next((i for i, h in enumerate(header) if any(k in h for k in ['rad', 'solar', 'uv', 'lux', 'luz', 'irradiancia'])), None)
 
         imported_count = 0
         readings_batch = []
@@ -143,14 +151,16 @@ class TowerCsvImporter:
 
                 dates_seen.add(d.strftime("%Y-%m-%d"))
 
-                temp_val = safe_float(row[col_temp], 28.0) if col_temp is not None and col_temp < len(row) else 28.0
-                hr_val = safe_float(row[col_hr], 65.0) if col_hr is not None and col_hr < len(row) else 65.0
+                temp_val = safe_float(row[col_temp], 25.49) if col_temp is not None and col_temp < len(row) else 25.49
+                hr_val = safe_float(row[col_hr], 83.2) if col_hr is not None and col_hr < len(row) else 83.2
                 rad_val = safe_float(row[col_rad], 0.0) if col_rad is not None and col_rad < len(row) else 0.0
                 amp_val = safe_float(row[col_amp], 0.0) if col_amp is not None and col_amp < len(row) else 0.0
-                ec_val = safe_float(row[col_ec], 1650.0) if col_ec is not None and col_ec < len(row) else 1650.0
-                ph_val = safe_float(row[col_ph], 6.20) if col_ph is not None and col_ph < len(row) else 6.20
-                turb_val = safe_float(row[col_turb], 3.8) if col_turb is not None and col_turb < len(row) else 3.8
-                do_val = safe_float(row[col_do], 7.4) if col_do is not None and col_do < len(row) else 7.4
+                motor_st = 1 if amp_val >= 0.5 else 0
+                ec_val = safe_float(row[col_ec], 1649.6) if col_ec is not None and col_ec < len(row) else 1649.6
+                ph_val = safe_float(row[col_ph], 6.12) if col_ph is not None and col_ph < len(row) else 6.12
+                turb_val = safe_float(row[col_turb], 4.06) if col_turb is not None and col_turb < len(row) else 4.06
+                do_val = safe_float(row[col_do], 7.6) if col_do is not None and col_do < len(row) else 7.6
+                water_t_val = safe_float(row[col_water_temp], 20.0) if col_water_temp is not None and col_water_temp < len(row) else 20.0
 
                 readings_batch.append(SensorReading(
                     timestamp=dt,
@@ -158,10 +168,12 @@ class TowerCsvImporter:
                     humidity=hr_val,
                     uv_solar=rad_val,
                     motor_current=amp_val,
+                    motor_state=motor_st,
                     ec_conductivity=ec_val,
                     water_ph=ph_val,
                     turbidity_ntu=turb_val,
-                    dissolved_oxygen_mg_l=do_val
+                    dissolved_oxygen_mg_l=do_val,
+                    water_temp=water_t_val
                 ))
                 imported_count += 1
 

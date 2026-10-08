@@ -1,4 +1,5 @@
-# Dependencias para el PC Local Windows (local_server)
+# Dependencias del Servidor Local SIFMA
+# Compatible con Python 3.10, 3.11, 3.12 y 3.13 en Windows / Linux
 
 Flask>=3.0.0
 Flask-SQLAlchemy>=3.1.0
@@ -11,3 +12,5 @@ pandas>=2.2.0
 scipy>=1.11.0
 pyserial>=3.5
 requests>=2.31.0
+Pillow>=10.0.0
+Werkzeug>=3.0.0

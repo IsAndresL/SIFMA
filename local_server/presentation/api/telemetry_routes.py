@@ -116,39 +116,53 @@ def download_telemetry_csv():
     from datetime import datetime
 
     target_date = request.args.get('date') or datetime.now().strftime("%Y-%m-%d")
-    filename = f"telemetria_sensores_{target_date}.csv"
+    filename = f"telemetria_actualizada_{target_date}.csv"
 
     readings = sensor_repo.get_by_date(target_date)
     if not readings:
         readings = sensor_repo.get_by_date("todos")
 
     output = io.StringIO()
-    # Delimitador punto y coma ';' con codificación UTF-8 BOM para apertura directa en Excel en columnas separadas
+    # Delimitador punto y coma ';' con codificación UTF-8 BOM para apertura directa en Excel en columnas nativas
     writer = csv.writer(output, delimiter=';', lineterminator='\r\n')
     writer.writerow([
-        "Fecha y Hora", 
-        "Temperatura (°C)", 
-        "Humedad (% HR)", 
-        "Radiación Solar (lux)", 
-        "Corriente Bomba (A)", 
-        "Conductividad Eléctrica (µS/cm)", 
-        "pH Solución", 
-        "Turbidez (NTU)", 
-        "Oxígeno Disuelto (mg/L)", 
-        "Puerto / Antena"
+        "Fecha",
+        "Hora",
+        "pH Solución",
+        "Turbidez (NTU)",
+        "Conductividad Eléctrica (µS/cm)",
+        "Oxigeno Disuelto (mg/L)",
+        "temperatura de agua",
+        "estado motor: 1-0",
+        "Temperatura exterior (°C)",
+        "Humedad relativa exterior (% HR)"
     ])
     
     for r in readings:
-        t_str = r.timestamp.strftime("%Y-%m-%d %H:%M:%S") if r.timestamp else ""
-        t_val = f"{r.temperature:.2f}".replace('.', ',') if r.temperature is not None else "0,00"
-        h_val = f"{r.humidity:.1f}".replace('.', ',') if r.humidity is not None else "0,0"
-        u_val = f"{r.uv_solar:.1f}".replace('.', ',') if r.uv_solar is not None else "0,0"
-        c_val = f"{r.motor_current:.3f}".replace('.', ',') if r.motor_current is not None else "0,000"
-        ec_val = f"{(r.ec_conductivity or 1650.0):.1f}".replace('.', ',')
-        ph_val = f"{(r.water_ph or 6.20):.2f}".replace('.', ',')
-        turb_val = f"{(r.turbidity_ntu or 3.80):.2f}".replace('.', ',')
-        do_val = f"{(r.dissolved_oxygen_mg_l or 7.40):.2f}".replace('.', ',')
-        writer.writerow([t_str, t_val, h_val, u_val, c_val, ec_val, ph_val, turb_val, do_val, "XBee_PRO_S2B (COM6)"])
+        fecha_str = r.timestamp.strftime("%d/%m/%Y") if r.timestamp else ""
+        hora_str = r.timestamp.strftime("%I:%M:%S %p") if r.timestamp else ""
+        
+        ph_val = f"{(r.water_ph if r.water_ph is not None else 6.12):.2f}".replace('.', ',')
+        turb_val = f"{(r.turbidity_ntu if r.turbidity_ntu is not None else 4.06):.2f}".replace('.', ',')
+        ec_val = f"{(r.ec_conductivity if r.ec_conductivity is not None else 1649.6):.1f}".replace('.', ',')
+        do_val = f"{(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.60):.2f}".replace('.', ',')
+        water_t_val = f"{(getattr(r, 'water_temp', 20.0) if getattr(r, 'water_temp', None) is not None else 20.0):.1f}".replace('.', ',')
+        motor_st_val = int(getattr(r, 'motor_state', 1) if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0))
+        temp_val = f"{(r.temperature if r.temperature is not None else 25.49):.2f}".replace('.', ',')
+        hum_val = f"{(r.humidity if r.humidity is not None else 83.2):.1f}".replace('.', ',')
+
+        writer.writerow([
+            fecha_str,
+            hora_str,
+            ph_val,
+            turb_val,
+            ec_val,
+            do_val,
+            water_t_val,
+            motor_st_val,
+            temp_val,
+            hum_val
+        ])
 
     return Response(
         output.getvalue().encode('utf-8-sig'),

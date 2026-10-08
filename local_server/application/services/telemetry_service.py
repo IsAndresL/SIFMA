@@ -64,7 +64,12 @@ class TelemetryApplicationService:
         if not os.path.exists(self.current_csv_file):
             with open(self.current_csv_file, mode='w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(["timestamp", "temperatura_c", "humedad_rh", "radiacion_uv_lux", "corriente_motor_a", "puerto_antena"])
+                writer.writerow([
+                    "Fecha", "Hora", "pH Solución", "Turbidez (NTU)", 
+                    "Conductividad Eléctrica (µS/cm)", "Oxigeno Disuelto (mg/L)", 
+                    "temperatura de agua", "estado motor: 1-0", 
+                    "Temperatura exterior (°C)", "Humedad relativa exterior (% HR)"
+                ])
 
         self.thread = threading.Thread(target=self._telemetry_worker, args=(app,), daemon=True)
         self.thread.start()
@@ -104,27 +109,54 @@ class TelemetryApplicationService:
                 sample = self.adapter.read_sample()
                 self.latest_reading = sample
 
-                now_str = sample.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                t_val = sample.get("temperature", 0.0)
-                h_val = sample.get("humidity", 0.0)
-                uv_val = sample.get("uv_solar", 0.0)
-                curr_val = sample.get("motor_current", 0.0)
+                now_dt = datetime.now()
+                now_str = sample.get("timestamp", now_dt.strftime("%Y-%m-%d %H:%M:%S"))
+                try:
+                    dt_obj = datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    dt_obj = now_dt
 
-                # 1. Guardar en archivo CSV continuo
+                ph_val = sample.get("water_ph", 6.12)
+                turb_val = sample.get("turbidity_ntu", 4.06)
+                ec_val = sample.get("ec_conductivity", 1649.6)
+                do_val = sample.get("dissolved_oxygen_mg_l", 7.6)
+                water_t_val = sample.get("water_temp", 20.0)
+                mot_st_val = sample.get("motor_state", 1)
+                temp_val = sample.get("temperature", 25.49)
+                hum_val = sample.get("humidity", 83.2)
+
+                # 1. Guardar en archivo CSV continuo con el orden exacto oficial SIFMA
                 if self.current_csv_file:
                     with open(self.current_csv_file, mode='a', newline='', encoding='utf-8') as f:
                         writer = csv.writer(f)
-                        writer.writerow([now_str, t_val, h_val, uv_val, curr_val, self.selected_port])
+                        writer.writerow([
+                            dt_obj.strftime("%d/%m/%Y"),
+                            dt_obj.strftime("%I:%M:%S %p"),
+                            ph_val,
+                            turb_val,
+                            ec_val,
+                            do_val,
+                            water_t_val,
+                            mot_st_val,
+                            temp_val,
+                            hum_val
+                        ])
 
                 # 2. Guardar en SQLite si app_context está activo
                 if app:
                     with app.app_context():
                         reading = SensorReading(
-                            timestamp=datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S"),
-                            temperature=t_val,
-                            humidity=h_val,
-                            uv_solar=uv_val,
-                            motor_current=curr_val
+                            timestamp=dt_obj,
+                            water_ph=ph_val,
+                            turbidity_ntu=turb_val,
+                            ec_conductivity=ec_val,
+                            dissolved_oxygen_mg_l=do_val,
+                            water_temp=water_t_val,
+                            motor_state=mot_st_val,
+                            motor_current=float(mot_st_val),
+                            temperature=temp_val,
+                            humidity=hum_val,
+                            uv_solar=0.0
                         )
                         db.session.add(reading)
                         db.session.commit()
@@ -132,5 +164,5 @@ class TelemetryApplicationService:
                 self.readings_count += 1
                 time.sleep(2.0)
 
-            except Exception:
+            except Exception as e:
                 time.sleep(2.0)

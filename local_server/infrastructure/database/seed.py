@@ -26,6 +26,8 @@ def init_db_data(app):
                 "ALTER TABLE config ADD COLUMN plant_4_crop VARCHAR(50) DEFAULT 'fresa'",
                 "ALTER TABLE config ADD COLUMN shared_telemetry BOOLEAN DEFAULT 1",
                 "ALTER TABLE config ADD COLUMN telemetry_mode VARCHAR(50) DEFAULT 'shared_tower'",
+                "ALTER TABLE sensor_reading ADD COLUMN motor_state INTEGER DEFAULT 0",
+                "ALTER TABLE sensor_reading ADD COLUMN water_temp FLOAT DEFAULT 20.0",
                 "ALTER TABLE crop_profile ADD COLUMN lat_h_min INTEGER DEFAULT 26",
                 "ALTER TABLE crop_profile ADD COLUMN lat_h_max INTEGER DEFAULT 92",
                 "ALTER TABLE crop_profile ADD COLUMN lat_s_min INTEGER DEFAULT 35",

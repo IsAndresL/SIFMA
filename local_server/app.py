@@ -51,7 +51,7 @@ app = create_app()
 if __name__ == '__main__':
     # Inicializar tablas y datos por defecto
     init_db_data(app)
-    
+
     logger.info("==============================================")
     logger.info("Servidor Local SIFMA - Arquitectura Refactorizada")
     logger.info("Dashboard Web en: http://127.0.0.1:5000")

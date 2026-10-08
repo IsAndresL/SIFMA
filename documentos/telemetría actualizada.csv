@@ -1,5 +1,5 @@
-﻿Fecha; Hora;Temperatura exterior (°C);Humedad relativa exterior (% HR);pH Solución;Turbidez (NTU);Conductividad Eléctrica (µS/cm);Oxígeno Disuelto (mg/L);temperatura de agua ;estado motor: 1-0
-1/09/2026 0:00;1/09/2026 6:00;25,49;83,2;6,12;4,06;1649,6;7,6;;
+﻿Fecha; Hora;pH Solución;Turbidez (NTU);Conductividad Eléctrica (µS/cm);Oxígeno Disuelto (mg/L);temperatura de agua ;estado motor: 1-0;Temperatura exterior (°C);Humedad relativa exterior (% HR)
+8/10/2026 0:00;6:00:00 a. m.;6,12;4,06;1649,6;7,6;20;1;25,49;83,2
 ;;;;;;;;;
 ;;;;;;;;;
 ;;;;;;;;;

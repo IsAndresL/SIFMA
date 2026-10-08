@@ -696,49 +696,14 @@ class AnalyticsApplicationService:
 
         temps = [r.temperature for r in readings]
         hums = [r.humidity for r in readings]
-        uvs = [r.uv_solar for r in readings]
-        currs = [r.motor_current for r in readings]
+        water_temps = [(r.water_temp if getattr(r, 'water_temp', None) is not None else 20.0) for r in readings]
+        motor_states = [(r.motor_state if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0)) for r in readings]
         ecs = [(r.ec_conductivity if r.ec_conductivity is not None else 1650.0) for r in readings]
         phs = [(r.water_ph if r.water_ph is not None else 6.20) for r in readings]
         turbs = [(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings]
         dos = [(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings]
 
         summary = {
-            "temperature": {
-                "avg": round(float(np.mean(temps)), 1),
-                "min": round(float(np.min(temps)), 1),
-                "max": round(float(np.max(temps)), 1),
-                "last": round(temps[-1], 1),
-                "status": "Óptimo" if 18.0 <= np.mean(temps) <= 26.0 else "Fuera de Rango"
-            },
-            "humidity": {
-                "avg": round(float(np.mean(hums)), 1),
-                "min": round(float(np.min(hums)), 1),
-                "max": round(float(np.max(hums)), 1),
-                "last": round(hums[-1], 1),
-                "status": "Óptimo" if 55.0 <= np.mean(hums) <= 75.0 else "Alerta Humedad"
-            },
-            "uv_solar": {
-                "avg": round(float(np.mean(uvs)), 1),
-                "min": round(float(np.min(uvs)), 1),
-                "max": round(float(np.max(uvs)), 1),
-                "last": round(uvs[-1], 1),
-                "status": "Normal"
-            },
-            "motor_current": {
-                "avg": round(float(np.mean(currs)), 3),
-                "min": round(float(np.min(currs)), 3),
-                "max": round(float(np.max(currs)), 3),
-                "last": round(currs[-1], 3),
-                "status": "Normal (Bomba Activa)" if np.mean(currs) >= 0.3 else "Bomba Inactiva"
-            },
-            "ec_conductivity": {
-                "avg": round(float(np.mean(ecs)), 1),
-                "min": round(float(np.min(ecs)), 1),
-                "max": round(float(np.max(ecs)), 1),
-                "last": round(ecs[-1], 1),
-                "status": "Nutrientes Óptimos" if 1200.0 <= np.mean(ecs) <= 2400.0 else "Ajustar EC"
-            },
             "water_ph": {
                 "avg": round(float(np.mean(phs)), 2),
                 "min": round(float(np.min(phs)), 2),
@@ -753,12 +718,47 @@ class AnalyticsApplicationService:
                 "last": round(turbs[-1], 2),
                 "status": "Agua Cristalina" if np.mean(turbs) <= 12.0 else "Turbidez Alta"
             },
+            "ec_conductivity": {
+                "avg": round(float(np.mean(ecs)), 1),
+                "min": round(float(np.min(ecs)), 1),
+                "max": round(float(np.max(ecs)), 1),
+                "last": round(ecs[-1], 1),
+                "status": "Nutrientes Óptimos" if 1200.0 <= np.mean(ecs) <= 2400.0 else "Ajustar EC"
+            },
             "dissolved_oxygen_mg_l": {
                 "avg": round(float(np.mean(dos)), 2),
                 "min": round(float(np.min(dos)), 2),
                 "max": round(float(np.max(dos)), 2),
                 "last": round(dos[-1], 2),
                 "status": "Oxigenación Óptima" if np.mean(dos) >= 6.0 else "Bajo Oxígeno"
+            },
+            "water_temp": {
+                "avg": round(float(np.mean(water_temps)), 1),
+                "min": round(float(np.min(water_temps)), 1),
+                "max": round(float(np.max(water_temps)), 1),
+                "last": round(water_temps[-1], 1),
+                "status": "Óptima" if 18.0 <= np.mean(water_temps) <= 24.0 else "Revisar Temp Agua"
+            },
+            "motor_state": {
+                "avg": round(float(np.mean(motor_states)), 2),
+                "min": int(np.min(motor_states)),
+                "max": int(np.max(motor_states)),
+                "last": int(motor_states[-1]),
+                "status": "Motor Encendido (1)" if motor_states[-1] == 1 else "Motor Apagado (0)"
+            },
+            "temperature": {
+                "avg": round(float(np.mean(temps)), 1),
+                "min": round(float(np.min(temps)), 1),
+                "max": round(float(np.max(temps)), 1),
+                "last": round(temps[-1], 1),
+                "status": "Óptimo" if 18.0 <= np.mean(temps) <= 28.0 else "Fuera de Rango"
+            },
+            "humidity": {
+                "avg": round(float(np.mean(hums)), 1),
+                "min": round(float(np.min(hums)), 1),
+                "max": round(float(np.max(hums)), 1),
+                "last": round(hums[-1], 1),
+                "status": "Óptimo" if 50.0 <= np.mean(hums) <= 85.0 else "Alerta Humedad"
             }
         }
 
@@ -774,14 +774,14 @@ class AnalyticsApplicationService:
             timeline.append({
                 "time": time_label,
                 "timestamp": r.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                "temperature": round(r.temperature, 2),
-                "humidity": round(r.humidity, 1),
-                "uv_solar": round(r.uv_solar, 1),
-                "motor_current": round(r.motor_current, 3),
-                "ec_conductivity": round(r.ec_conductivity if r.ec_conductivity is not None else 1650.0, 1),
                 "water_ph": round(r.water_ph if r.water_ph is not None else 6.20, 2),
                 "turbidity_ntu": round(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8, 2),
-                "dissolved_oxygen_mg_l": round(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4, 2)
+                "ec_conductivity": round(r.ec_conductivity if r.ec_conductivity is not None else 1650.0, 1),
+                "dissolved_oxygen_mg_l": round(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4, 2),
+                "water_temp": round(getattr(r, 'water_temp', 20.0) if getattr(r, 'water_temp', None) is not None else 20.0, 1),
+                "motor_state": int(getattr(r, 'motor_state', 0) if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0)),
+                "temperature": round(r.temperature, 2),
+                "humidity": round(r.humidity, 1)
             })
 
         return {
