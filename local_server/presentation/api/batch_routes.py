@@ -42,16 +42,52 @@ def process_usb_path():
         return jsonify({"status": "error", "message": f"Ruta no válida o no encontrada: {folder_path}"}), 400
         
     try:
-        res = vision_service.process_folder_batch(
-            folder_path, 
-            crop_type=crop_type, 
-            period=period,
-            plant_id=int(plant_id)
-        )
+        # Detectar si la carpeta seleccionada contiene subcarpetas de turnos (mañana, mediodía, tarde)
+        subdirs_with_images = []
+        for r_dir, _, f_list in os.walk(folder_path):
+            imgs = [img for img in f_list if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            if imgs and r_dir != folder_path:
+                subdirs_with_images.append((r_dir, imgs))
+
+        processed_results = []
+        if subdirs_with_images:
+            # Procesar cada turno de ese día de forma individual y ordenada
+            for sub_dir, _ in subdirs_with_images:
+                sub_name = os.path.basename(sub_dir).lower()
+                if 'manana' in sub_name or 'mañana' in sub_name:
+                    turn_label = "Mañana"
+                elif 'medio_dia' in sub_name or 'mediodia' in sub_name or 'medio-dia' in sub_name:
+                    turn_label = "Mediodía"
+                elif 'tarde' in sub_name:
+                    turn_label = "Tarde"
+                else:
+                    turn_label = sub_name.replace('_', ' ').title()
+
+                day_label = os.path.basename(folder_path)
+                full_turn_period = f"{day_label} - {turn_label}" if re.match(r'^\d{4}[-_]\d{2}[-_]\d{2}$', day_label) else turn_label
+                
+                r = vision_service.process_folder_batch(
+                    sub_dir,
+                    crop_type=crop_type,
+                    period=full_turn_period,
+                    plant_id=int(plant_id)
+                )
+                processed_results.append(r)
+        else:
+            # Procesar directamente las imágenes de la carpeta
+            res = vision_service.process_folder_batch(
+                folder_path, 
+                crop_type=crop_type, 
+                period=period,
+                plant_id=int(plant_id)
+            )
+            processed_results.append(res)
+
         return jsonify({
             "status": "success",
-            "message": f"Lote procesado con éxito para Canastilla #{plant_id} ({period})",
-            "data": res
+            "message": f"Día procesado con éxito para Canastilla #{plant_id} ({len(processed_results)} turnos procesados)",
+            "data": processed_results[0] if len(processed_results) == 1 else processed_results,
+            "processed_batches": processed_results
         })
     except Exception as e:
         return jsonify({"status": "error", "message": f"Error al procesar lote USB: {e}"}), 500

@@ -510,43 +510,47 @@
             if (data.status === 'success' && batches.length > 0) {
                 let html = '';
                 
-                // Botón general para procesar todos los lotes encontrados
+                // Banner general
                 html += `
-                    <div style="background: #09211a; color: #ffffff; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <div style="background: #09211a; color: #ffffff; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                         <div>
-                            <div style="font-weight: 700; font-size: 14px; color: #10b981;">Unidad USB Detectada (${batches.length} turnos listos)</div>
-                            <div style="font-size: 12px; color: #94a3b8;">Ubicación: ${batches[0].drive_root || 'USB'}</div>
+                            <div style="font-weight: 700; font-size: 14px; color: #10b981; display: flex; align-items: center; gap: 6px;">
+                                <span class="material-icons-round" style="font-size: 18px;">usb</span>
+                                <span>Memoria USB Detectada (${batches.length} día(s) de muestreo encontrados)</span>
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Carpeta: SIFMA_CAPTURES &bull; Ubicación: ${batches[0].drive_root || 'USB'}</div>
                         </div>
                         <button class="btn btn-primary btn-sm" style="background: #10b981; color: #09211a; font-weight: 700;" onclick="processAllUSBBatches()">
-                            <span class="material-icons-round">play_circle</span>
-                            <span>Procesar Toda la Memoria USB</span>
+                            <span class="material-icons-round">playlist_play</span>
+                            <span>Procesar Todo el Historial USB</span>
                         </button>
                     </div>
                 `;
 
-                batches.forEach((b, idx) => {
+                batches.forEach((b) => {
                     const cleanPath = b.path.replace(/\\/g, '\\\\');
                     html += `
-                        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 9px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="background: #ffffff; border: 1.5px solid var(--border-color); border-left: 4px solid var(--accent-success); border-radius: 9px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                             <div>
-                                <div style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">
-                                    <span class="material-icons-round" style="font-size: 16px; vertical-align: middle; color: var(--accent-success);">folder</span>
-                                    ${b.date_str ? b.date_str + ' - ' : ''}${b.period_str || 'Muestreo'}
+                                <div style="font-weight: 800; font-size: 14.5px; color: var(--text-heading); display: flex; align-items: center; gap: 8px;">
+                                    <span class="material-icons-round" style="font-size: 20px; color: var(--accent-success);">calendar_today</span>
+                                    <span>Jornada: ${b.date_str || 'Día de Muestreo'}</span>
+                                    <span class="badge badge-success" style="font-size: 11px;">${b.turns_count || 1} Turnos (${b.period_str || 'Muestreo'})</span>
                                 </div>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                                    ${b.images_count} imágenes detectadas | Ruta: <code style="font-size: 11px;">${b.path}</code>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                                    <strong>${b.images_count} imágenes</strong> captadas por la torre | Carpeta: <code style="font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">SIFMA_CAPTURES/${b.date_str}</code>
                                 </div>
                             </div>
-                            <button class="btn btn-primary btn-sm" onclick="processSingleBatch('${cleanPath}', '${b.period_str}')">
+                            <button class="btn btn-primary btn-sm" style="font-weight: 700;" onclick="processSingleBatch('${cleanPath}', '${b.date_str}')">
                                 <span class="material-icons-round">play_arrow</span>
-                                <span>Procesar Este Turno</span>
+                                <span>Procesar Este Día Completo</span>
                             </button>
                         </div>
                     `;
                 });
                 resBox.innerHTML = html;
             } else {
-                resBox.innerHTML = '<p style="text-align: center; color: var(--accent-warning); font-size: 13px; font-weight: 600;">No se detectaron memorias USB con datos de fenotipado. Inserta la USB y haz clic en "Escanear Memorias USB" o usa el modo "Subir ZIP o Fotos".</p>';
+                resBox.innerHTML = '<p style="text-align: center; color: var(--accent-warning); font-size: 13px; font-weight: 600; padding: 12px 0;">No se encontró la carpeta <code>SIFMA_CAPTURES</code> en la memoria USB conectada. Asegúrate de que la Raspberry Pi haya guardado fotos en la memoria o usa el modo "Subir ZIP o Fotos".</p>';
             }
         } catch (e) {
             resBox.innerHTML = '<p style="text-align: center; color: var(--accent-danger); font-size: 13px;">Error al consultar memorias USB.</p>';

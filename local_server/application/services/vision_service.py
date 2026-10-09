@@ -39,8 +39,12 @@ class VisionApplicationService:
         self.pipeline = pipeline or VisionPipelineManager()
 
     def detect_connected_usb_drives(self) -> List[Dict[str, Any]]:
-        """Escanea unidades USB y extrae carpetas con fotos clasificadas por fecha y período."""
-        usb_batches = []
+        """
+        Escanea unidades USB externas buscando exclusivamente la carpeta oficial 'SIFMA_CAPTURES'
+        y agrupa los lotes de forma limpia por DÍA (YYYY-MM-DD) con sus respectivos turnos.
+        Ignora cualquier otra carpeta del disco duro o de la memoria USB.
+        """
+        usb_days = []
         system = platform.system()
         possible_roots = []
         
@@ -58,52 +62,82 @@ class VisionApplicationService:
             if not os.path.exists(root):
                 continue
                 
-            for root_dir, dirs, files in os.walk(root):
-                dirs[:] = [d for d in dirs if not d.startswith('$') and d not in ['System Volume Information', 'Recovery', '__pycache__', 'AppData']]
-                
-                image_files = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-                if not image_files:
-                    continue
+            # 1. Localizar la carpeta raíz SIFMA_CAPTURES
+            target_sifma_dir = None
+            if os.path.exists(os.path.join(root, "SIFMA_CAPTURES")):
+                target_sifma_dir = os.path.join(root, "SIFMA_CAPTURES")
+            else:
+                # Buscar en subdirectorios directos (ej. /media/pi/USB_NAME/SIFMA_CAPTURES)
+                try:
+                    for d in os.listdir(root):
+                        sub = os.path.join(root, d)
+                        if os.path.isdir(sub):
+                            cand = os.path.join(sub, "SIFMA_CAPTURES")
+                            if os.path.exists(cand):
+                                target_sifma_dir = cand
+                                break
+                except Exception:
+                    pass
+
+            # Si no hay carpeta SIFMA_CAPTURES en esta unidad, ignorar completamente esta USB
+            if not target_sifma_dir or not os.path.exists(target_sifma_dir):
+                continue
+
+            # 2. Escanear exclusivamente las carpetas por fecha YYYY-MM-DD dentro de SIFMA_CAPTURES
+            try:
+                date_entries = sorted(os.listdir(target_sifma_dir))
+                for entry in date_entries:
+                    day_path = os.path.join(target_sifma_dir, entry)
+                    if not os.path.isdir(day_path):
+                        continue
+
+                    # Validar si tiene formato de fecha YYYY-MM-DD
+                    is_date = bool(re.match(r'^\d{4}[-_]\d{2}[-_]\d{2}$', entry) or re.match(r'^\d{2}[-_]\d{2}[-_]\d{4}$', entry))
+                    date_label = entry.replace('_', '-') if is_date else entry
+
+                    # Contar fotos y recopilar los turnos internos (mañana, mediodía, tarde)
+                    turns_found = []
+                    total_images = 0
                     
-                normalized_path = os.path.normpath(root_dir)
-                path_parts = normalized_path.split(os.sep)
-                
-                date_str = ""
-                period_str = ""
-                
-                for part in path_parts:
-                    if re.match(r'^\d{4}[-_]\d{2}[-_]\d{2}$', part) or re.match(r'^\d{2}[-_]\d{2}[-_]\d{4}$', part):
-                        date_str = part.replace('_', '-')
-                        break
+                    for sub_root, _, f_list in os.walk(day_path):
+                        imgs = [f for f in f_list if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                        if imgs:
+                            total_images += len(imgs)
+                            folder_name = os.path.basename(sub_root).lower()
+                            if 'manana' in folder_name or 'mañana' in folder_name:
+                                turn_name = "Mañana"
+                            elif 'medio_dia' in folder_name or 'mediodia' in folder_name or 'medio-dia' in folder_name:
+                                turn_name = "Mediodía"
+                            elif 'tarde' in folder_name:
+                                turn_name = "Tarde"
+                            else:
+                                turn_name = folder_name.replace('_', ' ').title()
+                            
+                            turns_found.append({
+                                "period": turn_name,
+                                "path": sub_root,
+                                "images_count": len(imgs)
+                            })
+
+                    if total_images > 0:
+                        turns_labels = [t["period"] for t in turns_found]
+                        summary_turns = ", ".join(turns_labels) if turns_labels else "Muestreos"
                         
-                folder_name = os.path.basename(normalized_path).lower()
-                if 'manana' in folder_name or 'mañana' in folder_name or 'morning' in folder_name or '07' in folder_name:
-                    period_str = "Mañana"
-                elif 'medio_dia' in folder_name or 'mediodia' in folder_name or 'medio-dia' in folder_name or 'noon' in folder_name or '12' in folder_name:
-                    period_str = "Mediodía"
-                elif 'tarde' in folder_name or 'afternoon' in folder_name or 'noche' in folder_name or '17' in folder_name:
-                    period_str = "Tarde"
-                else:
-                    period_str = folder_name.replace('_', ' ').title()
+                        usb_days.append({
+                            "batch_name": f"{date_label} ({len(turns_found)} turnos - {total_images} fotos)",
+                            "date_str": date_label,
+                            "period_str": summary_turns,
+                            "images_count": total_images,
+                            "turns_count": len(turns_found),
+                            "turns": turns_found,
+                            "path": day_path,
+                            "drive_root": root
+                        })
+            except Exception as e:
+                pass
 
-                if date_str and period_str:
-                    batch_name = f"{date_str} - {period_str} ({len(image_files)} fotos)"
-                elif date_str:
-                    batch_name = f"{date_str} ({len(image_files)} fotos)"
-                else:
-                    batch_name = f"{period_str} ({len(image_files)} fotos)"
-
-                usb_batches.append({
-                    "batch_name": batch_name,
-                    "date_str": date_str,
-                    "period_str": period_str,
-                    "images_count": len(image_files),
-                    "path": normalized_path,
-                    "drive_root": root
-                })
-
-        usb_batches.sort(key=lambda x: (x.get("date_str", ""), x.get("period_str", "")))
-        return usb_batches
+        usb_days.sort(key=lambda x: x.get("date_str", ""), reverse=True)
+        return usb_days
 
     def process_folder_batch(
         self, 
