@@ -67,89 +67,7 @@ class AnalyticsApplicationService:
         sessions = self.session_repo.get_by_date_and_plant(target_date, plant_id)
         has_plant_data = len(sessions) > 0
 
-        # 2. Si la canastilla no tiene muestras fotográficas o si estamos en modo aislado sin muestras:
-        if not has_plant_data:
-            return {
-                "target_date": target_date,
-                "available_dates": available_dates,
-                "has_data": False,
-                "has_plant_data": False,
-                "has_sensor_data": False,
-                "kpis": {
-                    "foliar_area_cm2": 0.0,
-                    "foliar_area_diff": 0.0,
-                    "temperature_c": 0.0,
-                    "temperature_status": f"Sin datos en Canastilla #{plant_id}",
-                    "humidity_rh": 0.0,
-                    "humidity_status": f"Sin datos en Canastilla #{plant_id}",
-                    "uv_solar_lux": 0.0,
-                    "uv_solar_status": f"Sin datos en Canastilla #{plant_id}",
-                    "health_index": 0.0,
-                    "health_status": f"Sin fenotipado en Canastilla #{plant_id}",
-                    "plant_height_cm": 0.0,
-                    "stem_diameter_mm": 0.0,
-                    "compacity_index": 0.0
-                },
-                "periods": {
-                    "manana": {"area": 0.0, "height": 0.0, "diameter": 0.0, "health": 0.0, "has_data": False},
-                    "medio_dia": {"area": 0.0, "height": 0.0, "diameter": 0.0, "health": 0.0, "has_data": False},
-                    "tarde": {"area": 0.0, "height": 0.0, "diameter": 0.0, "health": 0.0, "has_data": False}
-                },
-                "thermal_curve": {
-                    "max_temp": 0.0,
-                    "min_temp": 0.0,
-                    "amplitude": 0.0,
-                    "regime": "Sin registros",
-                    "labels": ["07:00", "10:00", "13:00", "16:00", "19:00"],
-                    "temps": [0.0, 0.0, 0.0, 0.0, 0.0],
-                    "min_band": [0.0, 0.0, 0.0, 0.0, 0.0],
-                    "max_band": [0.0, 0.0, 0.0, 0.0, 0.0]
-                },
-                "latest_capture": {
-                    "has_images": False,
-                    "timestamp_str": "Sin capturas",
-                    "period": "Sin datos",
-                    "cenital_orig": "",
-                    "cenital_proc": "",
-                    "lateral_orig": "",
-                    "lateral_proc": "",
-                    "foliar_area_cm2": 0.0,
-                    "plant_height_cm": 0.0,
-                    "stem_diameter_mm": 0.0,
-                    "health_index": 0.0
-                },
-                "growth_chart": {
-                    "labels": ["Mañana", "Mediodía", "Tarde"],
-                    "areas": [0.0, 0.0, 0.0],
-                    "best_period": "Sin registros",
-                    "avg_height": 0.0,
-                    "avg_diameter": 0.0
-                },
-                "motor_chart": {
-                    "labels": ["07:00", "10:00", "13:00", "16:00", "19:00"],
-                    "states": [0, 0, 0, 0, 0],
-                    "current_state": 0,
-                    "current_state_label": "0 (APAGADO)",
-                    "active_pct": 0.0,
-                    "cycles_count": 0,
-                    "status": "Inactiva / Sin telemetría"
-                },
-                "pump_chart": {
-                    "avg_current": 0.0,
-                    "max_current": 0.0,
-                    "status": "Inactiva",
-                    "labels": ["07:00", "10:00", "13:00", "16:00", "19:00"],
-                    "currents": [0.0, 0.0, 0.0, 0.0, 0.0]
-                },
-                "solar_chart": {
-                    "avg_uv": 0.0,
-                    "max_uv": 0.0,
-                    "labels": ["07:00", "09:00", "11:00", "13:00", "15:00", "17:00", "19:00"],
-                    "uv_values": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-                }
-            }
-
-        # Si hay muestras para esta canastilla:
+        # Obtener lecturas de sensores de la fecha (telemetría compartida o aislada)
         if not shared_telemetry:
             session_readings = [s.sensor_reading for s in sessions if s.sensor_reading]
             readings = session_readings
@@ -158,7 +76,7 @@ class AnalyticsApplicationService:
 
         has_sensor_data = len(readings) > 0
 
-        # 2. Si no hay datos de fenotipado ni lecturas para este día
+        # 2. Si no hay datos de fenotipado ni lecturas de sensores para este día
         if not has_plant_data and not has_sensor_data:
             return {
                 "target_date": target_date,
@@ -170,11 +88,11 @@ class AnalyticsApplicationService:
                     "foliar_area_cm2": 0.0,
                     "foliar_area_diff": 0.0,
                     "temperature_c": 0.0,
-                    "temperature_status": f"Sin datos en Canastilla #{plant_id}",
+                    "temperature_status": f"Sin telemetría",
                     "humidity_rh": 0.0,
-                    "humidity_status": f"Sin datos en Canastilla #{plant_id}",
+                    "humidity_status": f"Sin telemetría",
                     "uv_solar_lux": 0.0,
-                    "uv_solar_status": f"Sin datos en Canastilla #{plant_id}",
+                    "uv_solar_status": f"Sin telemetría",
                     "health_index": 0.0,
                     "health_status": f"Sin fenotipado en Canastilla #{plant_id}",
                     "plant_height_cm": 0.0,
