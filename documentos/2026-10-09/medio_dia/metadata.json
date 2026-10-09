@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-10-09 12:05:00",
+  "date": "2026-10-09",
+  "exact_time": "12:05:00",
+  "period": "medio_dia",
+  "crop_type": "cebollin",
+  "plant_id": 1,
+  "images_count": 10,
+  "session_start": "2026-10-09 12:05:00",
+  "session_end": "2026-10-09 12:25:00",
+  "photos": [
+    {
+      "photo_index": 1,
+      "timestamp": "2026-10-09 12:05:00",
+      "exact_time": "12:05:00",
+      "cenital_file": "cenital_1.png",
+      "lateral_file": "lateral_1.png",
+      "cenital_ok": true,
+      "lateral_ok": true
+    },
+    {
+      "photo_index": 2,
+      "timestamp": "2026-10-09 12:10:00",
+      "exact_time": "12:10:00",
+      "cenital_file": "cenital_2.png",
+      "lateral_file": "lateral_2.png",
+      "cenital_ok": true,
+      "lateral_ok": true
+    },
+    {
+      "photo_index": 3,
+      "timestamp": "2026-10-09 12:15:00",
+      "exact_time": "12:15:00",
+      "cenital_file": "cenital_3.png",
+      "lateral_file": "lateral_3.png",
+      "cenital_ok": true,
+      "lateral_ok": true
+    },
+    {
+      "photo_index": 4,
+      "timestamp": "2026-10-09 12:20:00",
+      "exact_time": "12:20:00",
+      "cenital_file": "cenital_4.png",
+      "lateral_file": "lateral_4.png",
+      "cenital_ok": true,
+      "lateral_ok": true
+    },
+    {
+      "photo_index": 5,
+      "timestamp": "2026-10-09 12:25:00",
+      "exact_time": "12:25:00",
+      "cenital_file": "cenital_5.png",
+      "lateral_file": "lateral_5.png",
+      "cenital_ok": true,
+      "lateral_ok": true
+    }
+  ]
+}
