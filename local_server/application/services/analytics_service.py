@@ -105,12 +105,34 @@ class AnalyticsApplicationService:
                     "min_band": [0.0, 0.0, 0.0, 0.0, 0.0],
                     "max_band": [0.0, 0.0, 0.0, 0.0, 0.0]
                 },
+                "latest_capture": {
+                    "has_images": False,
+                    "timestamp_str": "Sin capturas",
+                    "period": "Sin datos",
+                    "cenital_orig": "",
+                    "cenital_proc": "",
+                    "lateral_orig": "",
+                    "lateral_proc": "",
+                    "foliar_area_cm2": 0.0,
+                    "plant_height_cm": 0.0,
+                    "stem_diameter_mm": 0.0,
+                    "health_index": 0.0
+                },
                 "growth_chart": {
                     "labels": ["Mañana", "Mediodía", "Tarde"],
                     "areas": [0.0, 0.0, 0.0],
                     "best_period": "Sin registros",
                     "avg_height": 0.0,
                     "avg_diameter": 0.0
+                },
+                "motor_chart": {
+                    "labels": ["07:00", "10:00", "13:00", "16:00", "19:00"],
+                    "states": [0, 0, 0, 0, 0],
+                    "current_state": 0,
+                    "current_state_label": "0 (APAGADO)",
+                    "active_pct": 0.0,
+                    "cycles_count": 0,
+                    "status": "Inactiva / Sin telemetría"
                 },
                 "pump_chart": {
                     "avg_current": 0.0,
@@ -174,12 +196,34 @@ class AnalyticsApplicationService:
                     "min_band": [0.0, 0.0, 0.0, 0.0, 0.0],
                     "max_band": [0.0, 0.0, 0.0, 0.0, 0.0]
                 },
+                "latest_capture": {
+                    "has_images": False,
+                    "timestamp_str": "Sin capturas",
+                    "period": "Sin datos",
+                    "cenital_orig": "",
+                    "cenital_proc": "",
+                    "lateral_orig": "",
+                    "lateral_proc": "",
+                    "foliar_area_cm2": 0.0,
+                    "plant_height_cm": 0.0,
+                    "stem_diameter_mm": 0.0,
+                    "health_index": 0.0
+                },
                 "growth_chart": {
                     "labels": ["Mañana", "Mediodía", "Tarde"],
                     "areas": [0.0, 0.0, 0.0],
                     "best_period": "Sin registros",
                     "avg_height": 0.0,
                     "avg_diameter": 0.0
+                },
+                "motor_chart": {
+                    "labels": ["07:00", "10:00", "13:00", "16:00", "19:00"],
+                    "states": [0, 0, 0, 0, 0],
+                    "current_state": 0,
+                    "current_state_label": "0 (APAGADO)",
+                    "active_pct": 0.0,
+                    "cycles_count": 0,
+                    "status": "Inactiva / Sin telemetría"
                 },
                 "pump_chart": {
                     "avg_current": 0.0,
@@ -238,6 +282,8 @@ class AnalyticsApplicationService:
         phs = [(r.water_ph if r.water_ph is not None else 6.20) for r in readings] if readings else [6.20]
         turbs = [(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings] if readings else [3.8]
         dos = [(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings] if readings else [7.4]
+        water_temps = [(r.water_temp if getattr(r, 'water_temp', None) is not None else 20.0) for r in readings] if readings else [20.0]
+        motor_states = [(r.motor_state if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0)) for r in readings] if readings else [0]
 
         mean_area = round(float(np.mean(areas_list)), 2) if areas_list else 0.0
         mean_height = round(float(np.mean(heights_list)), 2) if heights_list else 0.0
@@ -258,6 +304,8 @@ class AnalyticsApplicationService:
         mean_ph = round(float(np.mean(phs)), 2) if readings else 6.20
         mean_turb = round(float(np.mean(turbs)), 2) if readings else 3.80
         mean_do = round(float(np.mean(dos)), 2) if readings else 7.40
+        mean_water_temp = round(float(np.mean(water_temps)), 1) if readings else 20.0
+        motor_active_pct = round((sum(motor_states) / max(len(motor_states), 1)) * 100.0, 1) if readings else 0.0
 
         # Comparación con jornada anterior de esta misma canastilla
         area_diff = 0.0
@@ -277,6 +325,8 @@ class AnalyticsApplicationService:
         thermal_temps = []
         thermal_min_band = []
         thermal_max_band = []
+        motor_labels = []
+        motor_states_series = []
         pump_labels = []
         pump_currents = []
         solar_labels = []
@@ -292,6 +342,10 @@ class AnalyticsApplicationService:
                 thermal_min_band.append(round(min_temp, 1))
                 thermal_max_band.append(round(max_temp, 1))
 
+                m_state = int(r.motor_state if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0))
+                motor_labels.append(t_label)
+                motor_states_series.append(m_state)
+
                 pump_labels.append(t_label)
                 pump_currents.append(round(r.motor_current, 3))
 
@@ -302,10 +356,54 @@ class AnalyticsApplicationService:
             thermal_temps = [0.0] * 5
             thermal_min_band = [0.0] * 5
             thermal_max_band = [0.0] * 5
+            motor_labels = thermal_labels
+            motor_states_series = [0] * 5
             pump_labels = thermal_labels
             pump_currents = [0.0] * 5
             solar_labels = thermal_labels
             solar_uvs = [0.0] * 5
+
+        # Conteo de ciclos de encendido del motor
+        motor_cycles = 0
+        for i in range(1, len(motor_states)):
+            if motor_states[i-1] == 0 and motor_states[i] == 1:
+                motor_cycles += 1
+        if motor_cycles == 0 and sum(motor_states) > 0:
+            motor_cycles = 1
+
+        current_motor_state = int(motor_states[-1]) if motor_states else 0
+
+        # Última toma de fenotipado para visualización directa en Dashboard
+        latest_capture = {
+            "has_images": False,
+            "timestamp_str": "Sin capturas",
+            "period": "Sin datos",
+            "cenital_orig": "",
+            "cenital_proc": "",
+            "lateral_orig": "",
+            "lateral_proc": "",
+            "foliar_area_cm2": 0.0,
+            "plant_height_cm": 0.0,
+            "stem_diameter_mm": 0.0,
+            "health_index": 0.0
+        }
+        if sessions:
+            last_s = sessions[-1]
+            last_avg = last_s.get_average_metric()
+            if last_avg:
+                latest_capture = {
+                    "has_images": bool(last_avg.image_path_cenital_proc or last_avg.image_path_cenital_orig or last_avg.image_path_lateral_proc),
+                    "timestamp_str": last_s.timestamp.strftime("%d/%m/%Y a las %H:%M") if last_s.timestamp else "",
+                    "period": last_s.period,
+                    "cenital_orig": last_avg.image_path_cenital_orig or "",
+                    "cenital_proc": last_avg.image_path_cenital_proc or last_avg.image_path_cenital_orig or "",
+                    "lateral_orig": last_avg.image_path_lateral_orig or "",
+                    "lateral_proc": last_avg.image_path_lateral_proc or last_avg.image_path_lateral_orig or "",
+                    "foliar_area_cm2": round(last_avg.foliar_area_cm2, 2),
+                    "plant_height_cm": round(last_avg.plant_height_cm, 2),
+                    "stem_diameter_mm": round(last_avg.stem_diameter_mm, 2),
+                    "health_index": round(last_avg.health_index, 1)
+                }
 
         # Período de mayor vigor
         best_p = "Sin registros"
@@ -325,6 +423,7 @@ class AnalyticsApplicationService:
             "has_data": has_plant_data,
             "has_plant_data": has_plant_data,
             "has_sensor_data": has_sensor_data,
+            "latest_capture": latest_capture,
             "kpis": {
                 "foliar_area_cm2": mean_area,
                 "foliar_area_diff": area_diff,
@@ -346,7 +445,11 @@ class AnalyticsApplicationService:
                 "turbidity_ntu": mean_turb,
                 "turbidity_status": "Agua Cristalina" if (mean_turb <= 12.0 and has_sensor_data) else ("Turbidez Alta" if has_sensor_data else "Sin telemetría"),
                 "dissolved_oxygen_mg_l": mean_do,
-                "do_status": "Oxigenación Óptima" if (mean_do >= 6.0 and has_sensor_data) else ("Baja Oxigenación" if has_sensor_data else "Sin telemetría")
+                "do_status": "Oxigenación Óptima" if (mean_do >= 6.0 and has_sensor_data) else ("Baja Oxigenación" if has_sensor_data else "Sin telemetría"),
+                "water_temp_c": mean_water_temp,
+                "water_temp_status": "Temperatura Agua Óptima" if (18.0 <= mean_water_temp <= 22.5 and has_sensor_data) else ("Alerta Temp Agua" if has_sensor_data else "Sin telemetría"),
+                "motor_state_pct": motor_active_pct,
+                "motor_status": "Recirculación Activa" if (motor_active_pct > 0 and has_sensor_data) else ("En Espera" if has_sensor_data else "Sin telemetría")
             },
             "periods": periods_data,
             "thermal_curve": {
@@ -365,6 +468,15 @@ class AnalyticsApplicationService:
                 "best_period": best_p,
                 "avg_height": mean_height,
                 "avg_diameter": mean_diameter
+            },
+            "motor_chart": {
+                "labels": motor_labels,
+                "states": motor_states_series,
+                "current_state": current_motor_state,
+                "current_state_label": "ENCENDIDO (1)" if current_motor_state == 1 else "APAGADO (0)",
+                "active_pct": motor_active_pct,
+                "cycles_count": motor_cycles,
+                "status": "Recirculación Activa" if current_motor_state == 1 else "Bomba en Espera"
             },
             "pump_chart": {
                 "avg_current": mean_curr,
@@ -399,6 +511,8 @@ class AnalyticsApplicationService:
             ph = (sensor.water_ph if sensor and sensor.water_ph is not None else 6.20)
             turb = (sensor.turbidity_ntu if sensor and sensor.turbidity_ntu is not None else 3.8)
             do = (sensor.dissolved_oxygen_mg_l if sensor and sensor.dissolved_oxygen_mg_l is not None else 7.4)
+            water_temp = (getattr(sensor, 'water_temp', 20.0) if sensor and getattr(sensor, 'water_temp', None) is not None else 20.0)
+            motor_state = int(getattr(sensor, 'motor_state', 0) if sensor and getattr(sensor, 'motor_state', None) is not None else (1 if curr > 0.1 else 0))
 
             avg_metric = s.get_average_metric()
             avg_cenital = avg_metric.image_path_cenital_proc or "" if avg_metric else ""
@@ -413,6 +527,8 @@ class AnalyticsApplicationService:
                 m_dict["photo_num"] = idx + 1
                 m_dict["temperature_c"] = round(temp, 2)
                 m_dict["humidity_rh"] = round(hum, 1)
+                m_dict["water_temp_c"] = round(water_temp, 1)
+                m_dict["motor_state"] = motor_state
                 m_dict["uv_solar_lux"] = round(uv, 1)
                 m_dict["motor_current_a"] = round(curr, 3)
                 m_dict["ec_conductivity"] = round(ec, 1)
@@ -461,6 +577,8 @@ class AnalyticsApplicationService:
                     "compacity_index": round(avg_metric.compacity_index, 3),
                     "temperature_c": round(temp, 2),
                     "humidity_rh": round(hum, 1),
+                    "water_temp_c": round(water_temp, 1),
+                    "motor_state": motor_state,
                     "uv_solar_lux": round(uv, 1),
                     "motor_current_a": round(curr, 3),
                     "ec_conductivity": round(ec, 1),
@@ -480,8 +598,10 @@ class AnalyticsApplicationService:
         sensor_keys = [
             ("temperature_c", "Temperatura Ambiente", "°C", "#2563eb"),
             ("humidity_rh", "Humedad Relativa", "%", "#0284c7"),
+            ("water_temp_c", "Temperatura del Agua", "°C", "#0ea5e9"),
+            ("motor_state", "Estado Motor (1/0)", "pts", "#059669"),
             ("uv_solar_lux", "Radiación Solar", "lux", "#d97706"),
-            ("motor_current_a", "Corriente Bomba", "A", "#059669"),
+            ("motor_current_a", "Corriente Bomba", "A", "#10b981"),
             ("ec_conductivity", "Conductividad Eléctrica", "µS/cm", "#8b5cf6"),
             ("water_ph", "pH de la Solución", "pH", "#ec4899"),
             ("turbidity_ntu", "Turbidez del Agua", "NTU", "#f97316"),
@@ -811,8 +931,10 @@ class AnalyticsApplicationService:
             "Diametro_Tallo_mm",
             "Indice_Salud_pct",
             "Indice_Compacidad",
-            "Temperatura_C",
+            "Temperatura_Ambiente_C",
             "Humedad_Relativa_pct",
+            "Temperatura_Agua_C",
+            "Estado_Motor_1_0",
             "Radiacion_Solar_UV_lux",
             "Corriente_Motor_A",
             "Conductividad_Electrica_uS_cm",
@@ -836,6 +958,8 @@ class AnalyticsApplicationService:
                 item.get("compacity_index", 0.0),
                 item.get("temperature_c", 0.0),
                 item.get("humidity_rh", 0.0),
+                item.get("water_temp_c", 20.0),
+                item.get("motor_state", 0),
                 item.get("uv_solar_lux", 0.0),
                 item.get("motor_current_a", 0.0),
                 item.get("ec_conductivity", 1650.0),
@@ -843,6 +967,61 @@ class AnalyticsApplicationService:
                 item.get("turbidity_ntu", 3.8),
                 item.get("dissolved_oxygen_mg_l", 7.4),
                 item.get("photos_count", 0)
+            ])
+
+        return output.getvalue()
+
+    def generate_daily_summary_csv(self, target_date: str, plant_id: int = 1) -> str:
+        """Genera un CSV consolidado con el resumen agronómico y ambiental de una fecha específica."""
+        daily_data = self.get_daily_summary_data(target_date=target_date, plant_id=plant_id)
+        kpis = daily_data.get("kpis", {})
+        periods = daily_data.get("periods", {})
+        thermal = daily_data.get("thermal_curve", {})
+        pump = daily_data.get("pump_chart", {})
+
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter=';')
+
+        writer.writerow(["REPORTE CONSOLIDADO DIARIO SIFMA"])
+        writer.writerow(["Fecha de Evaluacion", target_date])
+        writer.writerow(["Canastilla / Nivel", f"#{plant_id}"])
+        writer.writerow(["Generado", datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
+        writer.writerow([])
+
+        writer.writerow(["PARAMETRO BIOMETRICO", "VALOR", "UNIDAD", "DIAGNOSTICO"])
+        writer.writerow(["Area Foliar Media", kpis.get("foliar_area_cm2", 0.0), "cm²", "Expansión foliar"])
+        writer.writerow(["Variacion vs Dia Anterior", kpis.get("foliar_area_diff", 0.0), "cm²", "Crecimiento neto"])
+        writer.writerow(["Altura Promedio Planta", kpis.get("plant_height_cm", 0.0), "cm", "Morfología vertical"])
+        writer.writerow(["Diametro Promedio Tallo", kpis.get("stem_diameter_mm", 0.0), "mm", "Grosor basal"])
+        writer.writerow(["Indice de Salud Foliar", kpis.get("health_index", 100.0), "%", kpis.get("health_status", "Normal")])
+        writer.writerow(["Indice de Compacidad", kpis.get("compacity_index", 0.0), "pts", "Densidad de canopia"])
+        writer.writerow([])
+
+        writer.writerow(["PARAMETRO AMBIENTAL / NUTRIENTES", "VALOR MEDIO", "UNIDAD", "ESTADO OPERATIVO"])
+        writer.writerow(["Temperatura Exterior", kpis.get("temperature_c", 0.0), "°C", kpis.get("temperature_status", "")])
+        writer.writerow(["Humedad Relativa Exterior", kpis.get("humidity_rh", 0.0), "% HR", kpis.get("humidity_status", "")])
+        writer.writerow(["pH Solucion Nutritiva", kpis.get("water_ph", 6.20), "pH", kpis.get("ph_status", "")])
+        writer.writerow(["Conductividad Electrica (EC)", kpis.get("ec_conductivity", 1650.0), "µS/cm", kpis.get("ec_status", "")])
+        writer.writerow(["Turbidez del Agua", kpis.get("turbidity_ntu", 3.8), "NTU", kpis.get("turbidity_status", "")])
+        writer.writerow(["Oxigeno Disuelto (DO)", kpis.get("dissolved_oxygen_mg_l", 7.4), "mg/L", kpis.get("do_status", "")])
+        writer.writerow(["Temperatura del Agua", kpis.get("water_temp_c", 20.0), "°C", kpis.get("water_temp_status", "")])
+        writer.writerow(["Ciclo Recirculacion Bomba", f"{kpis.get('motor_state_pct', 0.0)}% activo", "% tiempo", kpis.get("motor_status", "")])
+        writer.writerow(["Radiacion Solar Media", kpis.get("uv_solar_lux", 0.0), "lux", kpis.get("uv_solar_status", "")])
+        writer.writerow(["Corriente Bomba Recirculacion", pump.get("avg_current", 0.0), "A", pump.get("status", "")])
+        writer.writerow(["Temperatura Maxima del Dia", thermal.get("max_temp", 0.0), "°C", "Pico térmico"])
+        writer.writerow(["Temperatura Minima del Dia", thermal.get("min_temp", 0.0), "°C", "Mínimo nocturno"])
+        writer.writerow(["Delta Termico (Amplitud)", thermal.get("amplitude", 0.0), "°C", thermal.get("regime", "")])
+        writer.writerow([])
+
+        writer.writerow(["FRANJA HORARIA / PERIODO", "AREA FOLIAR (cm²)", "ALTURA (cm)", "TALLO (mm)", "SALUD (%)"])
+        for p_key, p_name in [("manana", "Mañana (07:00)"), ("medio_dia", "Mediodía (12:00)"), ("tarde", "Tarde (17:00)")]:
+            p_data = periods.get(p_key, {})
+            writer.writerow([
+                p_name,
+                p_data.get("area", 0.0),
+                p_data.get("height", 0.0),
+                p_data.get("diameter", 0.0),
+                p_data.get("health", 0.0)
             ])
 
         return output.getvalue()
@@ -1079,7 +1258,9 @@ class AnalyticsApplicationService:
             "avg_ec": round(float(np.mean([(r.ec_conductivity if r.ec_conductivity is not None else 1650.0) for r in readings])), 1) if readings else 1650.0,
             "avg_ph": round(float(np.mean([(r.water_ph if r.water_ph is not None else 6.20) for r in readings])), 2) if readings else 6.20,
             "avg_turbidity": round(float(np.mean([(r.turbidity_ntu if r.turbidity_ntu is not None else 3.8) for r in readings])), 2) if readings else 3.8,
-            "avg_do": round(float(np.mean([(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings])), 2) if readings else 7.4
+            "avg_do": round(float(np.mean([(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.4) for r in readings])), 2) if readings else 7.4,
+            "avg_water_temp": round(float(np.mean([(r.water_temp if getattr(r, 'water_temp', None) is not None else 20.0) for r in readings])), 1) if readings else 20.0,
+            "motor_active_pct": round((sum([(r.motor_state if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0)) for r in readings]) / max(len(readings), 1)) * 100.0, 1) if readings else 0.0
         }
 
         return {

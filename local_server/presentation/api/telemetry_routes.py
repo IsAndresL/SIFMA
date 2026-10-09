@@ -183,6 +183,21 @@ def export_cross_analysis_csv():
         headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
 
+@api_bp.route('/api/daily_summary/export_csv', methods=['GET'])
+@api_bp.route('/api/export_daily_summary_csv', methods=['GET'])
+def export_daily_summary_csv():
+    from datetime import datetime
+    target_date = request.args.get("date") or datetime.now().strftime("%Y-%m-%d")
+    plant_id = request.args.get("plant_id", type=int) or session.get("active_plant_id", 1)
+    csv_content = analytics_service.generate_daily_summary_csv(target_date=target_date, plant_id=plant_id)
+    
+    filename = f"sifma_resumen_diario_{target_date}_canastilla_{plant_id}.csv"
+    return Response(
+        csv_content.encode('utf-8-sig'),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
+
 @api_bp.route('/api/calendar/month_data', methods=['GET'])
 def get_calendar_month_data_api():
     from datetime import datetime
@@ -207,9 +222,50 @@ def get_benchmark_data_api():
     data = analytics_service.get_inter_plant_benchmark_data()
     return jsonify(data)
 
-@api_bp.route('/api/timelapse/data', methods=['GET'])
-def get_timelapse_data_api():
-    plant_id = request.args.get('plant_id', type=int) or session.get('active_plant_id', 1)
-    data = analytics_service.get_timelapse_data(plant_id=plant_id)
-    return jsonify(data)
+@api_bp.route('/api/weather', methods=['GET'])
+def get_weather_api():
+    from application.services import WeatherService, SystemService
+    sys_svc = SystemService()
+    cfg = sys_svc.get_config()
+    lat = getattr(cfg, 'latitude', None) or 11.2408
+    lon = getattr(cfg, 'longitude', None) or -74.1990
+    city = getattr(cfg, 'city_name', None) or "Santa Marta, Magdalena"
+    
+    w_svc = WeatherService.get_instance()
+    w_data = w_svc.get_current_weather(lat=lat, lon=lon, city_name=city)
+    return jsonify({"status": "success", "weather": w_data, "location": {"lat": lat, "lon": lon, "city": city}})
+
+@api_bp.route('/api/config/location', methods=['POST'])
+def update_location_api():
+    from application.services import SystemService, WeatherService
+    from infrastructure.database.connection import db
+    
+    data = request.json or {}
+    lat = data.get('latitude')
+    lon = data.get('longitude')
+    city = data.get('city_name')
+    
+    if lat is None or lon is None:
+        return jsonify({"status": "error", "message": "Latitud y longitud son requeridas."}), 400
+        
+    try:
+        sys_svc = SystemService()
+        cfg = sys_svc.get_config()
+        cfg.latitude = float(lat)
+        cfg.longitude = float(lon)
+        if city:
+            cfg.city_name = str(city).strip()
+        db.session.commit()
+        
+        w_svc = WeatherService.get_instance()
+        w_svc.clear_cache()
+        new_weather = w_svc.get_current_weather(lat=cfg.latitude, lon=cfg.longitude, city_name=cfg.city_name)
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Ubicación actualizada a {cfg.city_name} ({cfg.latitude}, {cfg.longitude})",
+            "weather": new_weather
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error al guardar ubicación: {str(e)}"}), 500
 

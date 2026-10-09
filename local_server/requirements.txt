@@ -14,3 +14,4 @@ pyserial>=3.5
 requests>=2.31.0
 Pillow>=10.0.0
 Werkzeug>=3.0.0
+python-dotenv>=1.0.0

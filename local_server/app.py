@@ -40,9 +40,28 @@ def create_app():
     # Inicializar ORM
     db.init_app(app)
     
+    with app.app_context():
+        from sqlalchemy import event
+        @event.listens_for(db.engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.close()
+    
     # Registrar Blueprints de presentación (Web y APIs REST)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(api_bp)
+    
+    # Ruta directa para el favicon del navegador
+    from flask import send_from_directory
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(
+            os.path.join(app.static_folder, 'img'),
+            'sifma_sin_texto.svg',
+            mimetype='image/svg+xml'
+        )
     
     return app
 

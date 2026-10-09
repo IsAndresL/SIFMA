@@ -1,15 +1,15 @@
 {
   "plant_id": 1,
   "crop_type": "cebollin",
-  "capture_mode": "interval",
+  "capture_mode": "scheduled",
   "interval_minutes": 60,
   "scheduled_times": [
     "07:05",
     "12:05",
     "17:05"
   ],
-  "photos_per_session": 3,
-  "interval_between_photos_sec": 5,
+  "photos_per_session": 5,
+  "interval_between_photos_sec": 300,
   "boot_delay_sec": 10,
   "capture_on_boot": true,
   "cenital_camera_index": 0,

@@ -1,0 +1,2 @@
+﻿ID_Sesion;Periodo_Muestreo;Fecha_Hora_Captura;Especie_Cultivo;Canastilla_ID;Area_Foliar_cm2;Altura_Planta_cm;Diametro_Tallo_mm;Indice_Salud_pct;Indice_Compacidad;Temperatura_Ambiente_C;Humedad_Relativa_pct;Temperatura_Agua_C;Estado_Motor_1_0;Radiacion_Solar_UV_lux;Corriente_Motor_A;Conductividad_Electrica_uS_cm;pH_Solucion;Turbidez_NTU;Oxigeno_Disuelto_mg_L;Numero_Fotos_Lote
+1;2026-10-09;2026-10-08 23:10:43;cebollin;1;154.32;15.44;3.93;57.1;0.14;22.81;86.4;19.8;1;130.0;1.193;1648.4;6.1;4.27;7.8;5

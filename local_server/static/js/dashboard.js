@@ -77,91 +77,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. GRÁFICA 2: CRECIMIENTO Y MORFOMETRÍA POR PERÍODO
-    const ctxGrowth = document.getElementById('growthPeriodsChart');
-    if (ctxGrowth) {
-        const growth = dailyData.growth_chart || {};
-        const labels = growth.labels || ["Mañana", "Mediodía", "Tarde"];
-        const areas = growth.areas || [0, 0, 0];
+    // 2. GRÁFICA 2: ESTADO DE BOMBA / MOTOR DE RECIRCULACIÓN (1 = ON, 0 = OFF)
+    const ctxMotor = document.getElementById('motorStateChart');
+    if (ctxMotor) {
+        const motor = dailyData.motor_chart || {};
+        const labels = motor.labels || ["07:00", "10:00", "13:00", "16:00", "19:00"];
+        const states = motor.states || [0, 0, 0, 0, 0];
 
-        const gradientBars = ctxGrowth.getContext('2d').createLinearGradient(0, 0, 0, 200);
-        gradientBars.addColorStop(0, '#059669');
-        gradientBars.addColorStop(1, '#10b981');
+        const gradientMotor = ctxMotor.getContext('2d').createLinearGradient(0, 0, 0, 200);
+        gradientMotor.addColorStop(0, 'rgba(5, 150, 105, 0.35)');
+        gradientMotor.addColorStop(1, 'rgba(5, 150, 105, 0.03)');
 
-        new Chart(ctxGrowth, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Área Foliar (cm²)',
-                    data: areas,
-                    backgroundColor: gradientBars,
-                    borderRadius: 8,
-                    barThickness: 36
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#09211a',
-                        titleColor: '#ffffff',
-                        bodyColor: '#e2e8f0',
-                        padding: 10,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: (ctx) => ` Área Foliar: ${ctx.parsed.y} cm²`
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 12, weight: 600 } }
-                    },
-                    y: {
-                        grid: { color: '#f1f5f9' },
-                        ticks: {
-                            callback: (v) => `${v} cm²`,
-                            font: { size: 11 }
-                        },
-                        beginAtZero: true,
-                        suggestedMax: Math.max(...areas, 50)
-                    }
-                }
-            }
-        });
-    }
-
-    // 3. GRÁFICA 3: CORRIENTE DE BOMBA (AMPERAJE)
-    const ctxPump = document.getElementById('pumpCurrentChart');
-    if (ctxPump) {
-        const pump = dailyData.pump_chart || {};
-        const labels = pump.labels || ["07:00", "10:00", "13:00", "16:00", "19:00"];
-        const currents = pump.currents || [0, 0, 0, 0, 0];
-
-        const gradientPump = ctxPump.getContext('2d').createLinearGradient(0, 0, 0, 200);
-        gradientPump.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
-        gradientPump.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
-
-        new Chart(ctxPump, {
+        new Chart(ctxMotor, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Corriente Motor (A)',
-                    data: currents,
+                    label: 'Estado Motor (1=ON, 0=OFF)',
+                    data: states,
                     borderColor: '#059669',
-                    backgroundColor: gradientPump,
-                    borderWidth: 2,
+                    backgroundColor: gradientMotor,
+                    borderWidth: 2.5,
                     fill: true,
-                    tension: 0.3,
+                    stepped: 'before',
                     pointBackgroundColor: '#047857',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
-                    pointRadius: 4
+                    pointRadius: 3,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -176,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         padding: 10,
                         cornerRadius: 8,
                         callbacks: {
-                            label: (ctx) => ` Corriente: ${ctx.parsed.y} A`
+                            label: (ctx) => ` Estado: ${ctx.parsed.y === 1 ? '1 - ENCENDIDO (ON)' : '0 - APAGADO (OFF)'}`
                         }
                     }
                 },
@@ -187,12 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     y: {
                         grid: { color: '#f1f5f9' },
+                        min: -0.1,
+                        max: 1.1,
                         ticks: {
-                            callback: (v) => `${v} A`,
-                            font: { size: 11 }
-                        },
-                        beginAtZero: true,
-                        suggestedMax: Math.max(...currents, 0.6)
+                            stepSize: 1,
+                            callback: (v) => {
+                                if (v === 1) return '1 (ON)';
+                                if (v === 0) return '0 (OFF)';
+                                return '';
+                            },
+                            font: { size: 11, weight: 'bold' }
+                        }
                     }
                 }
             }

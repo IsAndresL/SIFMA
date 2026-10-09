@@ -7,37 +7,34 @@
 {% block content %}
 <div class="content-container">
 
-    <!-- HERO HEADER CARD INSTITUCIONAL ELEGANTE CON BORDES REDONDEADOS Y GRADIENTE ESMERALDA -->
-    <div class="card" style="border-radius: 18px; background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #022c22 100%); color: #ffffff; border: 1px solid rgba(16, 185, 129, 0.35); box-shadow: 0 14px 32px rgba(6, 78, 59, 0.28); margin-bottom: 24px; padding: 26px 30px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 22px;">
+    <!-- HERO HEADER CARD INSTITUCIONAL LIMPIA Y SERIA -->
+    <div class="card" style="border-radius: 12px; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); box-shadow: var(--shadow-card); margin-bottom: 24px; padding: 24px 28px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
             
             <!-- Bloque Logo y Título -->
             <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="width: 78px; height: 78px; border-radius: 20px; background: rgba(255, 255, 255, 0.1); border: 1.5px solid rgba(255, 255, 255, 0.25); display: flex; align-items: center; justify-content: center; padding: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); flex-shrink: 0;">
-                    <img src="{{ url_for('static', filename='img/sifma_logo.svg') }}" alt="SIFMA Emblem" style="width: 100%; height: 100%; display: block;">
-                </div>
+                <img src="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}" alt="SIFMA Emblem" style="width: 70px; height: 70px; display: block; flex-shrink: 0;">
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap;">
-                        <h2 style="font-size: 26px; font-weight: 800; letter-spacing: -0.6px; margin: 0; color: #ffffff;">SIFMA</h2>
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.45); font-family: monospace; font-size: 11.5px; padding: 4px 9px; border-radius: 6px; font-weight: 700;">
+                        <h2 style="font-family: var(--font-heading, 'Philosopher'); font-size: 26px; font-weight: 700; letter-spacing: 1px; margin: 0; color: var(--text-heading);">SIFMA</h2>
+                        <span class="badge" style="background: rgba(15, 23, 42, 0.06); color: var(--text-main); border: 1px solid var(--border-color); font-family: monospace; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
                             Versión {{ system_meta.version }}
                         </span>
                     </div>
-                    <p style="font-size: 13.5px; color: rgba(255, 255, 255, 0.9); font-weight: 500; margin-bottom: 8px; line-height: 1.4;">
-                        Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Hidropónicas
+                    <p style="font-size: 13.5px; color: var(--text-body); font-weight: 500; margin: 0; line-height: 1.4;">
+                        Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Aeropónicas Verticales
                     </p>
-                    <div style="display: flex; align-items: center; gap: 16px; font-size: 11.5px; color: rgba(255, 255, 255, 0.75); flex-wrap: wrap;">
-                        <span>Edición: <strong style="color: #ffffff;">{{ system_meta.release_name }}</strong></span>
-                        <span>Fecha: <strong style="color: #ffffff;">{{ system_meta.release_date }}</strong></span>
-                        <span>Licencia: <strong style="color: #ffffff;">{{ system_meta.license }}</strong></span>
-                    </div>
                 </div>
             </div>
 
-            <!-- Botón de Repositorio GitHub Oficial -->
-            <div>
-                <a href="https://github.com/IsAndresL/SIFMA" target="_blank" rel="noopener noreferrer" class="btn" style="background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; text-decoration: none; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" onmouseover="this.style.background='rgba(255,255,255,0.22)'; this.style.borderColor='#ffffff';" onmouseout="this.style.background='rgba(255,255,255,0.12)'; this.style.borderColor='rgba(255,255,255,0.3)';">
-                    <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+            <!-- Botones de Acción -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" onclick="openOnboardingModal()" class="btn btn-primary" style="font-size: 12.5px; padding: 9px 16px;">
+                    <span class="material-icons-round" style="font-size: 16px;">menu_book</span>
+                    <span>Guía de Inicio SIFMA</span>
+                </button>
+                <a href="https://github.com/IsAndresL/SIFMA" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 12.5px; padding: 9px 16px; text-decoration: none;">
+                    <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
                         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                     </svg>
                     <span>Repositorio en GitHub</span>
@@ -54,14 +51,22 @@
             <div class="card-header">
                 <div class="card-header-title">
                     <span class="material-icons-round text-primary" style="font-size: 20px;">badge</span>
-                    <span>Créditos, Autores & Dirección Científica</span>
+                    <span>Créditos, Dirección Científica & Autores</span>
                 </div>
             </div>
 
             <table class="table" style="font-size: 12px;">
                 <tbody>
                     <tr>
-                        <td style="font-weight: 700; width: 35%; color: var(--text-muted);">Autores del Software:</td>
+                        <td style="font-weight: 700; width: 35%; color: var(--text-muted);">Profesores Fundadores & Dirección Científica:</td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 3px;">
+                                <div><strong style="color: var(--text-heading);">Prof. Críspulo Enrique Deluque</strong> <span style="font-size: 11px; color: var(--text-muted);">(Profesor Asesor & Director de Investigación)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 700; color: var(--text-muted);">Autores del Software:</td>
                         <td>
                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <div>
@@ -82,21 +87,22 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="font-weight: 700; color: var(--text-muted);">Profesores Fundadores & Dirección Científica:</td>
+                        <td style="font-weight: 700; color: var(--text-muted);">Soporte Técnico & Reportes:</td>
                         <td>
-                            <div style="display: flex; flex-direction: column; gap: 3px;">
-                                <div><strong style="color: var(--text-heading);">Prof. Críspulo Enrique Deluque</strong> <span style="font-size: 11px; color: var(--text-muted);">(Profesor Asesor & Director de Investigación)</span></div>
-                                <div style="font-size: 11.5px; color: var(--text-muted);">Comité Docente e Investigadores del Laboratorio</div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <a href="https://wa.me/573128919009?text=Hola%20Andr%C3%A9s,%20te%20contacto%20desde%20el%20sistema%20SIFMA%20por%20una%20consulta%20t%C3%A9cnica." target="_blank" rel="noopener noreferrer" style="color: #ffffff; background: #059669; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; border: 1px solid #047857; font-size: 11.5px; transition: background 0.15s ease;" onmouseover="this.style.background='#047857';" onmouseout="this.style.background='#059669';">
+                                    <svg height="13" width="13" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                                    </svg>
+                                    <span>WhatsApp Directo: +57 312 891 9009</span>
+                                </a>
+                                <span style="font-size: 11px; color: var(--text-muted);">(Ing. Andrés Luna - Soporte & Calibración)</span>
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <td style="font-weight: 700; color: var(--text-muted);">Laboratorio / Entidad:</td>
-                        <td style="font-weight: 600; color: var(--text-heading);">{{ system_meta.institution }}</td>
-                    </tr>
-                    <tr>
                         <td style="font-weight: 700; color: var(--text-muted);">Líneas de Investigación:</td>
-                        <td>Fenotipado Digital no destructivo, Hidroponía Vertical, Visión por Computador aplicada a la Agricultura de Precisión y Telemetría Microclimática IoT.</td>
+                        <td>Fenotipado Digital no destructivo, Aeroponía e Hidroponía Vertical, Visión por Computador aplicada a la Agricultura de Precisión y Telemetría Microclimática IoT.</td>
                     </tr>
                     <tr>
                         <td style="font-weight: 700; color: var(--text-muted);">Enfoque Metodológico:</td>
@@ -106,27 +112,29 @@
             </table>
         </div>
 
-        <!-- TARJETA 2: LICENCIA LEGAL MIT -->
+        <!-- TARJETA 2: LICENCIA DE USO EXCLUSIVO -->
         <div class="card" style="border-radius: 14px; box-shadow: var(--shadow-sm);">
             <div class="card-header">
                 <div class="card-header-title">
-                    <span class="material-icons-round text-primary" style="font-size: 20px;">gavel</span>
-                    <span>Términos de Licencia (MIT License)</span>
+                    <span class="material-icons-round text-primary" style="font-size: 20px;">lock</span>
+                    <span>Términos de Licencia & Uso Exclusivo</span>
                 </div>
-                <span class="badge badge-success">Open Academic</span>
+                <span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25);">Licencia Propietaria Cerrada</span>
             </div>
 
-            <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; font-family: monospace; font-size: 11px; line-height: 1.55; color: var(--text-muted);">
-                <p style="margin-bottom: 8px; color: var(--text-heading);"><strong>MIT License - Copyright (c) 2026 {{ system_meta.author }} & Fundadores</strong></p>
-                <p style="margin-bottom: 8px;">
-                    Por la presente se concede permiso, libre de cargos, a cualquier persona que obtenga una copia de este software y de los archivos de documentación asociados (el "Software"), para utilizar el Software sin restricción, incluyendo sin limitación los derechos de usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del Software, sujeto a las siguientes condiciones:
+            <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; font-size: 12px; line-height: 1.6; color: var(--text-body);">
+                <p style="margin-bottom: 10px; font-weight: 700; color: var(--text-heading);">
+                    Software Propietario Dedicado - Torre Aeropónica Vertical SIFMA
                 </p>
-                <p style="margin-bottom: 8px;">
-                    El aviso de copyright anterior y este aviso de permiso se incluirán en todas las copias o partes sustanciales del Software.
+                <p style="margin-bottom: 10px; color: var(--text-muted);">
+                    El presente software, algoritmos de visión computacional, modelos de correlación fenotípica y arquitectura de telemetría están diseñados exclusivamente para su operación y despliegue sobre la infraestructura de la <strong>Torre Aeropónica SIFMA</strong>.
                 </p>
-                <p style="font-size: 10px; color: var(--text-muted); border-top: 1px dashed var(--border-color); padding-top: 6px;">
-                    EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O IMPLÍCITA, INCLUYENDO PERO NO LIMITADO A GARANTÍAS DE COMERCIALIZACIÓN, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN.
+                <p style="margin-bottom: 10px; color: var(--text-muted);">
+                    Queda estrictamente prohibida su redistribución, copia no autorizada, descompilación o uso en plataformas de terceros sin el consentimiento expreso de los autores y directores del proyecto.
                 </p>
+                <div style="font-size: 11px; color: var(--text-muted); border-top: 1px dashed var(--border-color); padding-top: 8px; margin-top: 10px;">
+                    &copy; 2026 SIFMA Project. Todos los derechos reservados. Uso exclusivo para investigación y operación de la Torre.
+                </div>
             </div>
         </div>
 
@@ -135,45 +143,45 @@
     <!-- GRID DE ARQUITECTURA Y HARDWARE -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; margin-bottom: 24px;">
 
-        <!-- TARJETA 3: ESPECIFICACIONES DE HARDWARE SOPORTADO -->
+        <!-- TARJETA 3: ESPECIFICACIONES DE HARDWARE Y TOPOLOGÍA -->
         <div class="card" style="border-radius: 14px; box-shadow: var(--shadow-sm);">
             <div class="card-header">
                 <div class="card-header-title">
                     <span class="material-icons-round text-primary" style="font-size: 20px;">memory</span>
-                    <span>Topología de Hardware y Sensores</span>
+                    <span>Topología de Hardware, Sensores & Visión</span>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 12px;">
                 <div style="display: flex; gap: 10px; align-items: flex-start;">
                     <span class="material-icons-round text-muted" style="font-size: 18px; margin-top: 2px;">dns</span>
                     <div>
-                        <strong style="color: var(--text-heading);">Estructura Hidropónica:</strong>
-                        <div style="color: var(--text-muted);">Torre vertical modular de 4 niveles con recirculación continua de solución nutritiva y riego programado.</div>
+                        <strong style="color: var(--text-heading);">Estructura Aeropónica Vertical:</strong>
+                        <div style="color: var(--text-muted);">Torre vertical modular con canastillas distribuidas para cultivo en aeroponía/hidroponía, equipada con sistema de aspersión y recirculación de solución nutritiva controlada.</div>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; align-items: flex-start;">
                     <span class="material-icons-round text-muted" style="font-size: 18px; margin-top: 2px;">photo_camera</span>
                     <div>
-                        <strong style="color: var(--text-heading);">Nodos de Visión Embebida:</strong>
-                        <div style="color: var(--text-muted);">Raspberry Pi 4 Model B con sistema de cámaras duales (Ángulo Cenital y Lateral).</div>
+                        <strong style="color: var(--text-heading);">Sistema de Visión Fenotípica Dual:</strong>
+                        <div style="color: var(--text-muted);">Cámara Cenital superior calibrada para segmentación del canopia vegetal (área foliar en cm² y verdor) y Cámara Lateral para estimación de altura y diámetro del tallo.</div>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; align-items: flex-start;">
                     <span class="material-icons-round text-muted" style="font-size: 18px; margin-top: 2px;">sensors</span>
                     <div>
-                        <strong style="color: var(--text-heading);">Sensores Ambientales Integrados:</strong>
-                        <div style="color: var(--text-muted);">Temperatura y Humedad (DHT22 / SHT31), Radiación Solar (BH1750 / Sensor UV analógico) y Sensor de Corriente (ACS712) para monitoreo de la bomba.</div>
+                        <strong style="color: var(--text-heading);">Matriz de Telemetría Fisicoquímica y Ambiental:</strong>
+                        <div style="color: var(--text-muted);">Monitoreo continuo de solución (pH, Conductividad Eléctrica &mu;S/cm, Turbidez NTU, Oxígeno Disuelto mg/L, Temperatura del Agua), Microclima ambiental (Temperatura, Humedad, Radiación Solar UV) y Corriente de Bombeo (ACS712).</div>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; align-items: flex-start;">
                     <span class="material-icons-round text-muted" style="font-size: 18px; margin-top: 2px;">settings_input_antenna</span>
                     <div>
-                        <strong style="color: var(--text-heading);">Enlace de Comunicación:</strong>
-                        <div style="color: var(--text-muted);">Transmisión inalámbrica por radiofrecuencia (RF) hacia antena receptora USB local o importación universal CSV.</div>
+                        <strong style="color: var(--text-heading);">Enlace de Adquisición y Sincronización:</strong>
+                        <div style="color: var(--text-muted);">Transmisión inalámbrica por radiofrecuencia (XBee / RF) con enlace serial USB hacia el servidor local SIFMA e importador universal CSV por jornadas horarias (07:00, 12:00, 17:00).</div>
                     </div>
                 </div>
             </div>
@@ -200,15 +208,15 @@
                     </tr>
                     <tr>
                         <td style="font-weight: 700; color: var(--text-muted);">Visión Computacional:</td>
-                        <td>OpenCV (<code>cv2</code>) 4.8+, NumPy, Segmentación HSV + CIELAB + Filtros Morfológicos</td>
+                        <td>OpenCV (<code>cv2</code>) 4.8+, NumPy, Segmentación HSV + CIELAB + Filtros Morfológicos y Umbralización Adaptativa</td>
                     </tr>
                     <tr>
                         <td style="font-weight: 700; color: var(--text-muted);">Base de Datos:</td>
-                        <td>SQLite3 con SQLAlchemy ORM</td>
+                        <td>SQLite3 con SQLAlchemy ORM y capa de repositorios transaccionales</td>
                     </tr>
                     <tr>
                         <td style="font-weight: 700; color: var(--text-muted);">Visualización & UI:</td>
-                        <td>Chart.js, Vanilla CSS Glassmorphism y CSS Paged Media para PDF</td>
+                        <td>Chart.js, Vanilla CSS Moderno, Heatmaps multivariables de Pearson y CSS Paged Media para Dossiers PDF</td>
                     </tr>
                 </tbody>
             </table>
@@ -227,34 +235,48 @@
 
         <div style="display: flex; flex-direction: column; gap: 16px;">
             
-            <!-- VERSIÓN 1.1 -->
+            <!-- VERSIÓN 1.2 -->
             <div style="border-left: 3.5px solid var(--accent-emerald); padding-left: 16px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
-                    <strong style="font-size: 13.5px; color: var(--text-heading);">Versión 1.1 (Versión Actual)</strong>
-                    <span class="badge badge-success">Producción Científica</span>
+                    <strong style="font-size: 13.5px; color: var(--text-heading);">Versión 1.2 (Versión Actual)</strong>
+                    <span class="badge badge-success">Optimización & UX Integral</span>
+                    <span style="font-size: 11.5px; color: var(--text-muted);">Octubre 2026</span>
+                </div>
+                <ul style="margin: 6px 0 0 18px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                    <li><strong>Rediseño Dashboard Split Lateral</strong>: Nueva distribución en dos columnas con 5 KPIs verticales extendidos e integración directa de 4 gráficas analíticas sin scroll redundante.</li>
+                    <li><strong>Calendario Integrado de Página Única</strong>: Vista mensual adaptativa con panel lateral de métricas agregadas y navegación sincronizada por jornadas.</li>
+                    <li><strong>Ventana Modal de Onboarding y Guía Rápida</strong>: Módulo de bienvenida con backdrop blur y presentación de pasos operativos con el emblema institucional SIFMA.</li>
+                    <li><strong>Navegación Interactiva por Logotipo</strong>: Barra lateral colapsable mediante interacción directa sobre el logotipo institucional SIFMA sin botones adicionales.</li>
+                    <li><strong>Depuración y Limpieza Visual</strong>: Transición global a bordes sutiles modernos (4px–6px), paleta blanca limpia y eliminación de módulos obsoletos de benchmark.</li>
+                </ul>
+            </div>
+
+            <!-- VERSIÓN 1.1 -->
+            <div style="border-left: 3.5px solid var(--border-color); padding-left: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
+                    <strong style="font-size: 13.5px; color: var(--text-heading);">Versión 1.1</strong>
+                    <span class="badge" style="background: #f1f5f9; color: #475569;">Producción Científica</span>
                     <span style="font-size: 11.5px; color: var(--text-muted);">Septiembre 2026</span>
                 </div>
                 <ul style="margin: 6px 0 0 18px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-                    <li><strong>Generador de Reportes Científicos en PDF (<code>/report/scientific</code>)</strong>: Emisión de dossiers técnicos con matrices estadísticas completas (&mu;, &sigma;, s&sup2;, IQR, CV%), correlaciones de Pearson e imágenes ajustadas proporcionalmente sin cortes.</li>
+                    <li><strong>Generador de Reportes Científicos en PDF (<code>/report/scientific</code>)</strong>: Emisión de dossiers técnicos con matrices estadísticas completas (&mu;, &sigma;, s&sup2;, IQR, CV%), correlaciones de Pearson e imágenes ajustadas proporcionalmente.</li>
                     <li><strong>Suite de Firma Digital Integrada</strong>: Trazador táctil/mouse en canvas y subida de imágenes con remoción automática de fondo blanco y persistencia en navegador.</li>
-                    <li><strong>Comparador Inter-Canastillas y Gradiente Vertical (<code>/benchmark</code>)</strong>: Evaluación multi-canastilla con tasas de crecimiento relativo (RGR) y absoluto (AGR) y exportación a CSV.</li>
                     <li><strong>Time-Lapse Interactivo (<code>/timelapse</code>)</strong>: Reproductor de evolución biológica con vista dual, gauges en vivo y cinta de miniaturas.</li>
-                    <li><strong>Calendario Interactivo de Muestreo (<code>/calendar</code>)</strong>: Grid mensual con doble indicador y modal inspector de turnos.</li>
-                    <li><strong>Emblema Vectorial Institucional SIFMA</strong>: Nuevo logotipo SVG limpio, optimizado y adaptable.</li>
+                    <li><strong>Matriz de Correlación Multivariable de Pearson (<code>/cross_analysis</code>)</strong>: Cruce cruzado entre variables de microclima y biometría vegetal con selector de franjas horarias.</li>
                 </ul>
             </div>
 
             <!-- VERSIÓN 1.0 -->
             <div style="border-left: 3.5px solid var(--border-color); padding-left: 16px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
-                    <strong style="font-size: 13.5px; color: var(--text-heading);">Versión 1.0 (Lanzamiento Inicial)</strong>
-                    <span class="badge" style="background: #f1f5f9; color: #475569;">Base</span>
+                    <strong style="font-size: 13.5px; color: var(--text-heading);">Versión 1.0</strong>
+                    <span class="badge" style="background: #f1f5f9; color: #475569;">Lanzamiento Base</span>
                     <span style="font-size: 11.5px; color: var(--text-muted);">Agosto 2026</span>
                 </div>
                 <ul style="margin: 6px 0 0 18px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-                    <li>Pipeline básico de segmentación cromática y cálculo de área foliar preliminar.</li>
-                    <li>Adquisición de telemetría de sensores en vivo mediante enlace serial USB.</li>
-                    <li>Base de datos relacional inicial y panel de monitoreo básico.</li>
+                    <li>Pipeline básico de segmentación cromática HSV y cálculo de área foliar preliminar.</li>
+                    <li>Adquisición de telemetría física de sensores mediante enlace serial USB.</li>
+                    <li>Base de datos relacional inicial SQLite y panel de monitoreo agronómico básico.</li>
                 </ul>
             </div>
 

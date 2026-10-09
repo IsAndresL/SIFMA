@@ -27,7 +27,7 @@ def load_node_config():
         "capture_mode": "interval",           # "interval" (cada X minutos) o "scheduled" (horas fijas)
         "interval_minutes": 60,               # Frecuencia de captura (60 = 1 hora para exhibición)
         "scheduled_times": ["07:05", "12:05", "17:05"],
-        "photos_per_session": 3,              # Número de fotos por sesión
+        "photos_per_session": 5,              # Número de fotos por sesión (5 tomas dobles)
         "interval_between_photos_sec": 5,     # Intervalo entre fotos de la misma toma
         "boot_delay_sec": 10,                 # Retardo inicial al encender (10s para exhibición rápida)
         "capture_on_boot": True,              # Tomar fotos inmediatamente al encender

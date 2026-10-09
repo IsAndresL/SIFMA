@@ -1,15 +1,33 @@
+# ========================================================
+# SIFMA - Generador de Acceso Directo en el Escritorio
+# Funciona en cualquier computador detectando la ruta actual
+# ========================================================
+$scriptDir = $PSScriptRoot
+if (-not $scriptDir) {
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+
 $desktop = [Environment]::GetFolderPath("Desktop")
 $wscript = New-Object -ComObject WScript.Shell
 $shortcutPath = Join-Path $desktop "SIFMA - Servidor Local.lnk"
-$targetBat = "c:\Luna-Dev Compartido\Dev\Luna - Personal\SIFMA\local_server\Iniciar_SIFMA.bat"
-$workDir = "c:\Luna-Dev Compartido\Dev\Luna - Personal\SIFMA\local_server"
-$iconPath = "c:\Luna-Dev Compartido\Dev\Luna - Personal\SIFMA\local_server\static\img\sifma_icon.ico"
+
+$targetBat = Join-Path $scriptDir "Iniciar_Servidor.bat"
+$workDir = $scriptDir
+$iconPath = Join-Path $scriptDir "static\img\sifma_icon.ico"
 
 $shortcut = $wscript.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $targetBat
 $shortcut.WorkingDirectory = $workDir
-$shortcut.IconLocation = "$iconPath,0"
-$shortcut.Description = "Iniciar Sistema de Fenotipado y Telemetria SIFMA"
+if (Test-Path $iconPath) {
+    $shortcut.IconLocation = "$iconPath,0"
+}
+$shortcut.Description = "Iniciar Sistema Integral de Fenotipado y Monitoreo Agronómico (SIFMA)"
 $shortcut.Save()
 
-Write-Output "ACCESO DIRECTO CREADO EXITOSAMENTE EN EL ESCRITORIO"
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host "  ¡ACCESO DIRECTO DE SIFMA CREADO EN EL ESCRITORIO!" -ForegroundColor Cyan
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host "Ruta del acceso directo: $shortcutPath"
+Write-Host "Destino: $targetBat"
+Write-Host "Icono asignado: $iconPath"
+Write-Host ""

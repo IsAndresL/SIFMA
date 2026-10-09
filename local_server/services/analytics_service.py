@@ -33,3 +33,11 @@ class AnalyticsCrossService:
     @staticmethod
     def generate_research_csv(cross_data):
         return _analytics_app_service.generate_research_csv(cross_data)
+
+    @staticmethod
+    def generate_daily_summary_csv(target_date, plant_id=1):
+        return _analytics_app_service.generate_daily_summary_csv(target_date, plant_id)
+
+    @staticmethod
+    def get_daily_summary_data(target_date, plant_id=1):
+        return _analytics_app_service.get_daily_summary_data(target_date, plant_id)

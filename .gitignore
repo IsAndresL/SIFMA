@@ -1,0 +1,32 @@
+# Entornos virtuales Python
+.venv/
+venv/
+ENV/
+env/
+
+# Variables de entorno y credenciales sensibles
+.env
+local_server/.env
+*.env.local
+
+# Bases de datos y archivos de datos locales
+local_server/sifma.db
+local_server/sifma.db-shm
+local_server/sifma.db-wal
+local_server/scratch/
+local_server/static/data/uploads/*
+!local_server/static/data/uploads/.gitkeep
+local_server/static/data/processed/*
+!local_server/static/data/processed/.gitkeep
+local_server/static/data/telemetry/*
+!local_server/static/data/telemetry/.gitkeep
+
+# Cachés de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Logs
+*.log
+local_server/*.log

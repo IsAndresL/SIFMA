@@ -50,24 +50,37 @@ def init_db_data(app):
                 except Exception:
                     pass
 
-        # 1. Sembrar Administrador Principal por defecto si no existe
-        admin_user = User.query.filter_by(username="admin").first()
+        # 1. Sembrar/Sincronizar Administrador Principal desde .env / config
+        from core.config import config as app_cfg
+        admin_username = app_cfg.ADMIN_USERNAME.strip().lower()
+        
+        # Eliminar cualquier usuario 'admin' antiguo o residual si el nuevo es diferente
+        for old_u in User.query.all():
+            if old_u.username.lower() != admin_username:
+                db.session.delete(old_u)
+        db.session.commit()
+
+        admin_user = User.query.filter_by(username=admin_username).first()
         if not admin_user:
             admin_user = User(
-                username="admin",
-                full_name="Andres Luna",
-                email="admin@sifma.local",
-                password_hash=SecurityService.hash_password("sifma2026"),
+                username=admin_username,
+                full_name=app_cfg.ADMIN_FULLNAME,
+                email=app_cfg.ADMIN_EMAIL,
+                password_hash=SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD),
                 role="admin",
                 is_active=True
             )
             db.session.add(admin_user)
             db.session.commit()
-            logger.info("Usuario Administrador Principal 'admin' creado exitosamente.")
+            logger.info(f"Usuario Administrador Principal '{app_cfg.ADMIN_USERNAME}' creado exitosamente.")
         else:
-            if admin_user.role != "admin":
-                admin_user.role = "admin"
-                db.session.commit()
+            admin_user.full_name = app_cfg.ADMIN_FULLNAME
+            admin_user.email = app_cfg.ADMIN_EMAIL
+            admin_user.password_hash = SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD)
+            admin_user.role = "admin"
+            admin_user.is_active = True
+            db.session.commit()
+            logger.info(f"Credenciales de Administrador Principal '{app_cfg.ADMIN_USERNAME}' actualizadas.")
         
         # 2. Configuración inicial del sistema
         if not Config.query.first():

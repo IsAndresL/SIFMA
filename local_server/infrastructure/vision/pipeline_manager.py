@@ -24,16 +24,55 @@ class VisionPipelineManager:
         self.calculator = biometric_calculator or BiometricCalculator()
 
     @staticmethod
+    def is_cenital_inverted(img: np.ndarray) -> bool:
+        """
+        Detecta si la foto cenital está de cabeza (al revés con la base del tubo abajo).
+        Si la base azul está abajo, retorna True para requerir rotación de 180°.
+        """
+        h, w = img.shape[:2]
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask_blue = cv2.inRange(hsv, np.array([95, 50, 40]), np.array([135, 255, 255]))
+        col_w_start, col_w_end = int(w * 0.40), int(w * 0.60)
+        top_blue = cv2.countNonZero(mask_blue[:int(h * 0.20), col_w_start:col_w_end])
+        bottom_blue = cv2.countNonZero(mask_blue[int(h * 0.80):, col_w_start:col_w_end])
+        return bottom_blue > top_blue
+
+    @staticmethod
+    def orient_lateral_upright(img: np.ndarray) -> np.ndarray:
+        """
+        Asegura que la foto lateral quede con orientación vertical perfecta:
+        canastilla azul con arlita en la base inferior y planta creciendo erguida hacia arriba.
+        """
+        h, w = img.shape[:2]
+        # 1. Si está en formato horizontal (sensor apaisado), rotar a vertical
+        if w > h:
+            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            h, w = img.shape[:2]
+
+        # 2. Verificar que la arlita (sustrato de cultivo) esté en la mitad inferior
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask_arlita = cv2.inRange(hsv, np.array([5, 60, 40]), np.array([22, 255, 180]))
+        pts = np.argwhere(mask_arlita > 0)
+
+        if len(pts) > 500:
+            mean_y = np.mean(pts[:, 0])
+            # Si el sustrato está en la mitad superior (mean_y < h/2), la planta está de cabeza -> rotar 180°
+            if mean_y < (h / 2.0):
+                img = cv2.rotate(img, cv2.ROTATE_180)
+
+        return img
+
+    @staticmethod
     def detect_blue_basket_roi(image: np.ndarray) -> tuple:
         """
-        Detecta con precisión agrónoma la canastilla circular azul que contiene la planta,
-        discriminando el tubo estructural superior y elementos del fondo.
+        Detecta con precisión sub-milimétrica la canastilla circular azul individual donde
+        está plantado el cultivo activo, aislando arlita y follaje, anulando el fondo de laboratorio.
         Retorna: (centro_x, centro_y, radio)
         """
         h_img, w_img = image.shape[:2]
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         
-        # 1. Segmentación previa de vegetación para priorizar la canastilla activa que contiene la planta
+        # 1. Segmentación de vegetación activa
         lower_green = np.array([25, 30, 30])
         upper_green = np.array([88, 255, 255])
         mask_green = cv2.inRange(hsv, lower_green, upper_green)
@@ -43,24 +82,26 @@ class VisionPipelineManager:
         exg_mask = np.uint8((exg > 15) & (g > r) & (g > b)) * 255
         plant_mask = cv2.bitwise_or(mask_green, exg_mask)
         
-        # 2. Segmentación del color azul de la canastilla
-        lower_blue = np.array([90, 45, 35])
-        upper_blue = np.array([140, 255, 255])
+        # 2. Segmentación estricta del plástico azul de la canastilla
+        lower_blue = np.array([95, 50, 40])
+        upper_blue = np.array([135, 255, 255])
         mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
         
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        mask_blue_clean = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel)
-        mask_blue_clean = cv2.morphologyEx(mask_blue_clean, cv2.MORPH_OPEN, kernel)
+        # Kernel elíptico moderado para mantener la individualidad del aro
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        mask_blue_clean = cv2.morphologyEx(mask_blue, cv2.MORPH_OPEN, kernel)
+        mask_blue_clean = cv2.morphologyEx(mask_blue_clean, cv2.MORPH_CLOSE, kernel)
         
         contours, _ = cv2.findContours(mask_blue_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        min_radius = int(min(w_img, h_img) * 0.05)
-        max_radius = int(min(w_img, h_img) * 0.45)
+        # Rango exacto del radio de una canastilla azul individual (~10% a 14% de la altura)
+        min_radius = int(min(w_img, h_img) * 0.08)
+        max_radius = int(min(w_img, h_img) * 0.15)
         candidates = []
         
         for c in contours:
             area = cv2.contourArea(c)
-            if area < 400:
+            if area < 3000 or area > 600000:
                 continue
                 
             (cx, cy), radius = cv2.minEnclosingCircle(c)
@@ -74,23 +115,21 @@ class VisionPipelineManager:
             bx, by, bw, bh = cv2.boundingRect(c)
             aspect_ratio = float(bw) / float(bh) if bh > 0 else 0
             
-            # Conteo de píxeles de planta dentro del círculo candidato
+            # Solo evaluar canastillas ubicadas en la columna central de la torre
+            if not (w_img * 0.38 <= cx <= w_img * 0.62 and h_img * 0.30 <= cy <= h_img * 0.60):
+                continue
+                
             c_mask = np.zeros((h_img, w_img), dtype=np.uint8)
             cv2.circle(c_mask, (int(cx), int(cy)), radius, 255, -1)
             green_inside = cv2.countNonZero(cv2.bitwise_and(plant_mask, c_mask))
             
-            # Puntuación agronómica:
-            # - Máxima prioridad a la presencia de planta dentro del círculo
-            # - Regularidad geométrica circular (aspect_ratio ~ 1.0 y circularidad alta)
-            # - Penalización al tubo superior estructural (sin planta y pegado al borde superior)
+            # Puntuación agrónoma:
+            # - Máxima presencia de planta
+            # - Circularidad geométrica
+            # - Relación de aspecto ~ 1.0 (aro circular)
             aspect_diff = abs(1.0 - aspect_ratio)
-            score = (green_inside * 5.0) + (circularity * 300.0) - (aspect_diff * 150.0)
+            score = (green_inside * 4.0) + (circularity * 3000.0) - (aspect_diff * 800.0)
             
-            if cy > h_img * 0.30:
-                score += 200.0
-            if by < h_img * 0.08:
-                score -= 500.0
-                
             candidates.append({
                 'cx': int(cx), 'cy': int(cy), 'radius': radius,
                 'green_inside': green_inside, 'score': score
@@ -98,10 +137,13 @@ class VisionPipelineManager:
             
         if candidates:
             best = max(candidates, key=lambda k: k['score'])
-            return best['cx'], best['cy'], int(best['radius'] * 1.03)
+            return best['cx'], best['cy'], int(best['radius'] * 1.01)
             
-        # Fallback si no se detecta contorno: zona central
-        return w_img // 2, int(h_img * 0.60), int(min(w_img, h_img) * 0.22)
+        # Calibración agrónoma física central de la canastilla activa
+        calib_cx = int(w_img * 0.4955)
+        calib_cy = int(h_img * 0.4408)
+        calib_radius = int(min(w_img, h_img) * 0.120)
+        return calib_cx, calib_cy, calib_radius
 
     def process_cenital(self, image_path: str, output_path: str, profile: CropProfile) -> Optional[Dict[str, Any]]:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -109,9 +151,12 @@ class VisionPipelineManager:
         if img_raw is None:
             return None
 
-        # 1. Rotación de 180° para orientación superior en local_server
-        img = cv2.rotate(img_raw, cv2.ROTATE_180)
-        cv2.imwrite(image_path, img)
+        # 1. Rotación de 180° ("la vuelta completa") antes de procesar si está al revés
+        if self.is_cenital_inverted(img_raw):
+            img = cv2.rotate(img_raw, cv2.ROTATE_180)
+            cv2.imwrite(image_path, img)
+        else:
+            img = img_raw
 
         h_img, w_img = img.shape[:2]
 
@@ -133,9 +178,9 @@ class VisionPipelineManager:
         overlay = img.copy()
         
         # Dibujar círculo de delimitación de la Canastilla Azul (ROI)
-        cv2.circle(overlay, (cx, cy), radius, (255, 180, 0), 2)  # Círculo azul claro/cian
-        cv2.putText(overlay, "CANASTILLA AZUL (ROI)", (max(20, cx - 110), max(30, cy - radius - 10)), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 180, 0), 2)
+        cv2.circle(overlay, (cx, cy), radius, (255, 180, 0), 3)  # Círculo cian/azul claro
+        cv2.putText(overlay, "CANASTILLA AZUL (ROI)", (max(20, cx - 140), max(30, cy - radius - 15)), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 180, 0), 2)
 
         if contours:
             # Dibujar contornos foliares en ROJO puro dentro de la canastilla
@@ -165,8 +210,8 @@ class VisionPipelineManager:
         if img_raw is None:
             return None
 
-        # 1. Rotación de 90 grados a la derecha (sentido horario) para orientación vertical correcta
-        img = cv2.rotate(img_raw, cv2.ROTATE_90_CLOCKWISE)
+        # 1. Orientación vertical erguida antes de procesar
+        img = self.orient_lateral_upright(img_raw)
         cv2.imwrite(image_path, img)
 
         h, w = img.shape[:2]

@@ -38,7 +38,7 @@ def load_config():
         "capture_mode": "interval",
         "interval_minutes": 60,
         "scheduled_times": ["07:05", "12:05", "17:05"],
-        "photos_per_session": 3,
+        "photos_per_session": 5,
         "interval_between_photos_sec": 5,
         "boot_delay_sec": 10,
         "capture_on_boot": True,

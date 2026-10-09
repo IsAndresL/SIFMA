@@ -48,11 +48,11 @@ sudo chmod 644 $CAPTURE_SERVICE
 
 # 3. Crear accesos directos en el Escritorio para el Panel Táctil y el Calibrador de Cámaras
 if [ -d "/home/$CURRENT_USER/Desktop" ]; then
-    cp $CURRENT_DIR/SIFMA_Control.desktop /home/$CURRENT_USER/Desktop/
-    cp $CURRENT_DIR/SIFMA_Calibracion.desktop /home/$CURRENT_USER/Desktop/
+    sed "s|/home/nodo1/raspi_node|$CURRENT_DIR|g" $CURRENT_DIR/SIFMA_Control.desktop > /home/$CURRENT_USER/Desktop/SIFMA_Control.desktop
+    sed "s|/home/nodo1/raspi_node|$CURRENT_DIR|g" $CURRENT_DIR/SIFMA_Calibracion.desktop > /home/$CURRENT_USER/Desktop/SIFMA_Calibracion.desktop
     chmod +x /home/$CURRENT_USER/Desktop/SIFMA_Control.desktop
     chmod +x /home/$CURRENT_USER/Desktop/SIFMA_Calibracion.desktop
-    echo "Accesos directos 'SIFMA Control' y 'SIFMA Calibracion' creados en el Escritorio."
+    echo "Accesos directos 'SIFMA Control' y 'SIFMA Calibracion' creados en el Escritorio con rutas adaptadas a $CURRENT_DIR."
 fi
 
 # 4. Habilitar e iniciar servicio de captura

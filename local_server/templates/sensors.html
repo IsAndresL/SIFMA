@@ -5,9 +5,13 @@
 {% block subheading %}Monitoreo ambiental en vivo, recepción inalámbrica XBee y registro continuo{% endblock %}
 
 {% block header_actions %}
-<a href="/api/telemetry/download_csv?date={{ sensor_data.target_date }}" class="btn btn-outline btn-sm" title="Descargar archivo CSV de esta jornada">
+<a href="/api/telemetry/download_csv?date={{ sensor_data.target_date }}" class="btn btn-outline btn-sm" title="Descargar archivo CSV de telemetría pura de esta jornada">
     <span class="material-icons-round">download</span>
-    <span>Descargar CSV ({{ sensor_data.target_date }})</span>
+    <span>Descargar Telemetría CSV ({{ sensor_data.target_date }})</span>
+</a>
+<a href="/api/daily_summary/export_csv?date={{ sensor_data.target_date }}&plant_id={{ active_plant_id }}" class="btn btn-primary btn-sm" title="Descargar Resumen Consolidado del Día (CSV / Excel)">
+    <span class="material-icons-round">table_chart</span>
+    <span>Exportar Resumen Diario</span>
 </a>
 {% endblock %}
 

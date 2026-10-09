@@ -1,0 +1,7 @@
+# SIFMA - Archivos ignorados en nodo Raspberry Pi
+__pycache__/
+*.pyc
+.preview_cache/
+SIFMA_OFFLINE_STORAGE/
+sifma_daemon_status.json
+*.tmp

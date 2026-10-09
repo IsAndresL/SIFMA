@@ -234,6 +234,8 @@
                 <option value="water_ph">pH de la Solución (pH)</option>
                 <option value="turbidity_ntu">Turbidez del Agua (NTU)</option>
                 <option value="dissolved_oxygen_mg_l">Oxígeno Disuelto (mg/L)</option>
+                <option value="water_temp_c">Temperatura del Agua (°C)</option>
+                <option value="motor_state">Estado del Motor / Bomba (1/0)</option>
             </select>
         </div>
 
@@ -311,6 +313,28 @@
                 <canvas id="dedicSolarChart"></canvas>
             </div>
         </div>
+
+        <!-- Gráfica 5: pH y Oxígeno Disuelto -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">pH y Oxígeno Disuelto (mg/L)</h4>
+                <span class="badge badge-info" style="background: rgba(6, 182, 212, 0.15); color: #0891b2;">Fisicoquímica</span>
+            </div>
+            <div class="chart-stage-container" style="height: 260px;">
+                <canvas id="dedicWaterPhChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 6: Conductividad, Turbidez y Temp. Agua -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Conductividad (µS/cm), Turbidez (NTU) y Temp. Agua (°C)</h4>
+                <span class="badge badge-primary" style="background: rgba(139, 92, 246, 0.15); color: #7c3aed;">Nutrientes / Agua</span>
+            </div>
+            <div class="chart-stage-container" style="height: 260px;">
+                <canvas id="dedicWaterQualityChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -331,15 +355,19 @@
             <thead>
                 <tr>
                     <th>Fecha y Período</th>
-                    <th>Hora Exacta</th>
+                    <th>Hora</th>
                     <th>Área Foliar</th>
                     <th>Altura</th>
                     <th>Tallo</th>
                     <th>Salud</th>
-                    <th>Temperatura</th>
+                    <th>Temp. Amb.</th>
                     <th>Humedad</th>
-                    <th>Radiación Solar</th>
-                    <th>Bomba (A)</th>
+                    <th>pH</th>
+                    <th>C.E.</th>
+                    <th>Turbidez</th>
+                    <th>O₂ Disuelto</th>
+                    <th>Temp. Agua</th>
+                    <th>Bomba</th>
                     <th>Fotos</th>
                     <th style="text-align: right;">Acciones</th>
                 </tr>
@@ -376,12 +404,34 @@
                                 </span>
                             </td>
                             <td>
-                                <span style="font-weight: 600; color: #d97706;">
-                                    {{ row.uv_solar_lux }} lux
+                                <span style="font-weight: 600; color: #ec4899;">
+                                    {{ row.water_ph }}
                                 </span>
                             </td>
                             <td>
-                                <span style="font-size: 12px; font-weight: 600; color: #059669;">{{ row.motor_current_a }} A</span>
+                                <span style="font-weight: 600; color: #8b5cf6;">
+                                    {{ row.ec_conductivity }} µS/cm
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #f97316;">
+                                    {{ row.turbidity_ntu }} NTU
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #06b6d4;">
+                                    {{ row.dissolved_oxygen_mg_l }} mg/L
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #0ea5e9;">
+                                    {{ row.water_temp_c }} °C
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if row.motor_state == 1 %}badge-success{% else %}badge-secondary{% endif %}" style="font-size: 11px;">
+                                    {{ "ON" if row.motor_state == 1 else "OFF" }} ({{ row.motor_current_a }} A)
+                                </span>
                             </td>
                             <td>
                                 <span class="badge badge-success">{{ row.photos_count }} fotos</span>
@@ -399,7 +449,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="12" style="text-align: center; padding: 35px; color: var(--text-muted);">
+                        <td colspan="16" style="text-align: center; padding: 35px; color: var(--text-muted);">
                             No hay sesiones cruzadas registradas para la Canastilla #{{ active_plant_id }}.
                         </td>
                     </tr>
@@ -448,10 +498,13 @@
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="font-size: 12px; color: #2563eb; font-weight: 600;">{{ s.temperature_c }} °C</span>
-                            <span style="font-size: 12px; color: #0284c7; font-weight: 600;">{{ s.humidity_rh }}%</span>
-                            <span style="font-size: 12px; color: #d97706; font-weight: 600;">{{ s.uv_solar_lux }} lux</span>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="font-size: 12px; color: #2563eb; font-weight: 600;" title="Temperatura Ambiente">{{ s.temperature_c }} °C</span>
+                            <span style="font-size: 12px; color: #0284c7; font-weight: 600;" title="Humedad Relativa">{{ s.humidity_rh }}%</span>
+                            <span style="font-size: 12px; color: #ec4899; font-weight: 600;" title="pH">{{ s.water_ph }} pH</span>
+                            <span style="font-size: 12px; color: #8b5cf6; font-weight: 600;" title="Conductividad">{{ s.ec_conductivity }} µS/cm</span>
+                            <span style="font-size: 12px; color: #06b6d4; font-weight: 600;" title="Oxígeno Disuelto">{{ s.dissolved_oxygen_mg_l }} mg/L</span>
+                            <span style="font-size: 12px; color: #0ea5e9; font-weight: 600;" title="Temperatura del Agua">{{ s.water_temp_c }} °C</span>
                             <span class="badge badge-success">{{ s.individual_photos | length }} Fotos</span>
                         </div>
                     </div>
@@ -469,10 +522,14 @@
                                         <th>Altura</th>
                                         <th>Diámetro</th>
                                         <th>Salud</th>
-                                        <th>Temperatura</th>
+                                        <th>Temp. Amb.</th>
                                         <th>Humedad</th>
-                                        <th>Radiación</th>
-                                        <th>Corriente</th>
+                                        <th>pH</th>
+                                        <th>C.E.</th>
+                                        <th>Turbidez</th>
+                                        <th>O₂ Disuelto</th>
+                                        <th>Temp. Agua</th>
+                                        <th>Bomba</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -505,8 +562,16 @@
                                             </td>
                                             <td><span style="font-weight: 600; color: #2563eb;">{{ p.temperature_c }} °C</span></td>
                                             <td><span style="font-weight: 600; color: #0284c7;">{{ p.humidity_rh }}%</span></td>
-                                            <td><span style="font-weight: 600; color: #d97706;">{{ p.uv_solar_lux }} lux</span></td>
-                                            <td><span style="font-size: 11.5px; font-weight: 600; color: #059669;">{{ p.motor_current_a }} A</span></td>
+                                            <td><span style="font-weight: 600; color: #ec4899;">{{ p.water_ph }}</span></td>
+                                            <td><span style="font-weight: 600; color: #8b5cf6;">{{ p.ec_conductivity }}</span></td>
+                                            <td><span style="font-weight: 600; color: #f97316;">{{ p.turbidity_ntu }}</span></td>
+                                            <td><span style="font-weight: 600; color: #06b6d4;">{{ p.dissolved_oxygen_mg_l }}</span></td>
+                                            <td><span style="font-weight: 600; color: #0ea5e9;">{{ p.water_temp_c }} °C</span></td>
+                                            <td>
+                                                <span class="badge {% if p.motor_state == 1 %}badge-success{% else %}badge-secondary{% endif %}" style="font-size: 10px;">
+                                                    {{ "ON" if p.motor_state == 1 else "OFF" }}
+                                                </span>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -751,7 +816,9 @@
         ec_conductivity: { label: 'Conductividad Eléctrica', unit: 'µS/cm', color: '#8b5cf6', type: 'sensor' },
         water_ph: { label: 'pH de la Solución', unit: 'pH', color: '#ec4899', type: 'sensor' },
         turbidity_ntu: { label: 'Turbidez del Agua', unit: 'NTU', color: '#f97316', type: 'sensor' },
-        dissolved_oxygen_mg_l: { label: 'Oxígeno Disuelto', unit: 'mg/L', color: '#06b6d4', type: 'sensor' }
+        dissolved_oxygen_mg_l: { label: 'Oxígeno Disuelto', unit: 'mg/L', color: '#06b6d4', type: 'sensor' },
+        water_temp_c: { label: 'Temperatura del Agua', unit: '°C', color: '#0ea5e9', type: 'sensor' },
+        motor_state: { label: 'Estado Bomba (1/0)', unit: 'pts', color: '#059669', type: 'sensor' }
     };
 
     function getFilteredCrossData() {
@@ -1195,6 +1262,105 @@
                 }
             });
         }
+
+        // 5. pH y Oxígeno Disuelto
+        const ctxPh = document.getElementById('dedicWaterPhChart');
+        if (ctxPh) {
+            if (dedicCharts.waterPh) dedicCharts.waterPh.destroy();
+            dedicCharts.waterPh = new Chart(ctxPh, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'pH de la Solución',
+                            data: data.map(d => d.water_ph),
+                            borderColor: '#ec4899',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderWidth: 2.2,
+                            yAxisID: 'yPh',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Oxígeno Disuelto (mg/L)',
+                            data: data.map(d => d.dissolved_oxygen_mg_l),
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                            tension: 0.3,
+                            borderWidth: 2.2,
+                            fill: true,
+                            yAxisID: 'yDo',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        yPh: { type: 'linear', position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'pH' }, min: 4, max: 9 },
+                        yDo: { type: 'linear', position: 'right', grid: { display: false }, title: { display: true, text: 'mg/L' } }
+                    }
+                }
+            });
+        }
+
+        // 6. Conductividad, Turbidez y Temperatura del Agua
+        const ctxQuality = document.getElementById('dedicWaterQualityChart');
+        if (ctxQuality) {
+            if (dedicCharts.waterQuality) dedicCharts.waterQuality.destroy();
+            dedicCharts.waterQuality = new Chart(ctxQuality, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Conductividad (µS/cm)',
+                            data: data.map(d => d.ec_conductivity),
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderWidth: 2.2,
+                            yAxisID: 'yEc',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Turbidez (NTU)',
+                            data: data.map(d => d.turbidity_ntu),
+                            borderColor: '#f97316',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            yAxisID: 'yTurb',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Temp. Agua (°C)',
+                            data: data.map(d => d.water_temp_c),
+                            borderColor: '#0ea5e9',
+                            backgroundColor: 'rgba(14, 165, 233, 0.10)',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            fill: true,
+                            yAxisID: 'yTemp',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        yEc: { type: 'linear', position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'µS/cm' } },
+                        yTurb: { type: 'linear', position: 'right', grid: { display: false }, title: { display: true, text: 'NTU' } },
+                        yTemp: { type: 'linear', position: 'right', grid: { display: false }, title: { display: true, text: '°C' } }
+                    }
+                }
+            });
+        }
     }
 
     function toggleSinglePhotoSession(sessionId) {
@@ -1283,7 +1449,7 @@
         if (!session) return;
 
         document.getElementById('modalPeriodTitle').innerText = `Desglose Fotográfico: ${session.full_period_label}`;
-        document.getElementById('modalPeriodSub').innerText = `${session.photos_count} capturas | Temp: ${session.temperature_c}°C, Hum: ${session.humidity_rh}%, Radiación: ${session.uv_solar_lux} lux`;
+        document.getElementById('modalPeriodSub').innerText = `${session.photos_count} capturas | T. Amb: ${session.temperature_c}°C, Hum: ${session.humidity_rh}%, pH: ${session.water_ph}, CE: ${session.ec_conductivity} µS/cm, OD: ${session.dissolved_oxygen_mg_l} mg/L, T. Agua: ${session.water_temp_c}°C`;
 
         const grid = document.getElementById('modalPhotosGrid');
         grid.innerHTML = '';
@@ -1316,6 +1482,12 @@
                         <div>Tallo: <strong>${p.stem_diameter_mm} mm</strong></div>
                         <div>Salud: <strong>${p.health_index}%</strong></div>
                         <div>Compacidad: <strong>${p.compacity_index}</strong></div>
+                    </div>
+                    <div style="font-size: 11px; color: #475569; background: #e2e8f0; padding: 6px 8px; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">
+                        <div>pH: <strong>${p.water_ph}</strong></div>
+                        <div>C.E.: <strong>${p.ec_conductivity}</strong></div>
+                        <div>OD: <strong>${p.dissolved_oxygen_mg_l} mg/L</strong></div>
+                        <div>T. Agua: <strong>${p.water_temp_c}°C</strong></div>
                     </div>
                 `;
                 grid.appendChild(card);

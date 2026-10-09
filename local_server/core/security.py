@@ -12,17 +12,13 @@ class SecurityService:
     
     @staticmethod
     def verify_password(plain_password: str, password_hash: str) -> bool:
-        """Verifica una contraseña en texto plano contra su hash o fallback seguro."""
-        if not plain_password:
+        """Verifica una contraseña en texto plano contra su hash."""
+        if not plain_password or not password_hash:
             return False
-        # Compatibilidad con hash scrypt/pbkdf2
         try:
-            if check_password_hash(password_hash, plain_password):
-                return True
+            return check_password_hash(password_hash, plain_password)
         except Exception:
-            pass
-        # Fallback de desarrollo
-        return plain_password == config.ADMIN_DEFAULT_PASSWORD
+            return False
 
     @staticmethod
     def hash_password(plain_password: str) -> str:

@@ -29,11 +29,17 @@
     </select>
 </div>
 
-<!-- Botón Exportar CSV -->
-<a href="{{ url_for('api.export_cross_analysis_csv', plant_id=active_plant_id) }}" class="btn-header-action" title="Exportar Registro Científico en CSV">
-    <span class="material-icons-round">download</span>
-    <span>Exportar</span>
-</a>
+<!-- Botones Exportar del Día -->
+<div style="display: flex; gap: 8px;">
+    <a href="/api/daily_summary/export_csv?date={{ target_date }}&plant_id={{ active_plant_id }}" class="btn-header-action" title="Exportar Resumen Consolidado del Día (CSV / Excel)">
+        <span class="material-icons-round">today</span>
+        <span>Exportar Día</span>
+    </a>
+    <a href="{{ url_for('api.export_cross_analysis_csv', plant_id=active_plant_id) }}" class="btn-header-action" style="background: rgba(255,255,255,0.08);" title="Exportar Dataset Científico Multivariable Completo en CSV">
+        <span class="material-icons-round">download</span>
+        <span>Histórico</span>
+    </a>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -51,257 +57,332 @@
 </div>
 {% endif %}
 
-<!-- SECCIÓN 1: 5 TARJETAS KPI EJECUTIVAS SUPERIORES -->
-<div class="kpi-row-grid">
-    <!-- KPI 1: Área Foliar -->
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Área Foliar Promedio</span>
-            <div class="kpi-icon-badge emerald">
-                <span class="material-icons-round">spa</span>
+<!-- CONTENEDOR PRINCIPAL: DISTRIBUCIÓN LATERAL (TARJETAS KPI AL LADO DE LAS GRÁFICAS) -->
+<div class="dashboard-split-layout">
+    <!-- COLUMNA LATERAL: 5 TARJETAS KPI RESUMEN -->
+    <div class="dashboard-kpi-column">
+        <!-- KPI 1: Área Foliar -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Área Foliar</span>
+                <div class="kpi-icon-badge emerald">
+                    <span class="material-icons-round">spa</span>
+                </div>
             </div>
-        </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number">{{ daily.kpis.foliar_area_cm2 }}</span>
-            <span class="kpi-unit">cm²</span>
-        </div>
-        <div class="kpi-footer-badge {% if daily.kpis.foliar_area_diff >= 0 %}positive{% else %}neutral{% endif %}">
-            <span class="material-icons-round" style="font-size: 14px;">{% if daily.kpis.foliar_area_diff >= 0 %}trending_up{% else %}trending_flat{% endif %}</span>
-            <span>{% if daily.kpis.foliar_area_diff != 0.0 %}{{ '+ ' if daily.kpis.foliar_area_diff > 0 else '' }}{{ daily.kpis.foliar_area_diff }} cm² vs día previo{% else %}Expansión de Canopia{% endif %}</span>
-        </div>
-    </div>
-
-    <!-- KPI 2: Temperatura -->
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Temperatura Media</span>
-            <div class="kpi-icon-badge blue">
-                <span class="material-icons-round">thermostat</span>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number">{{ daily.kpis.foliar_area_cm2 }}</span>
+                <span class="kpi-unit">cm²</span>
             </div>
-        </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number">{{ daily.kpis.temperature_c }}</span>
-            <span class="kpi-unit">°C</span>
-        </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in daily.kpis.temperature_status %}positive{% else %}neutral{% endif %}">
-            <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
-            <span>{{ daily.kpis.temperature_status }}</span>
-        </div>
-    </div>
-
-    <!-- KPI 3: Humedad Relativa -->
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Humedad Relativa</span>
-            <div class="kpi-icon-badge cyan">
-                <span class="material-icons-round">water_drop</span>
+            <div class="kpi-footer-badge {% if daily.kpis.foliar_area_diff >= 0 %}positive{% else %}neutral{% endif %}">
+                <span class="material-icons-round" style="font-size: 14px;">{% if daily.kpis.foliar_area_diff >= 0 %}trending_up{% else %}trending_flat{% endif %}</span>
+                <span>{% if daily.kpis.foliar_area_diff != 0.0 %}{{ '+ ' if daily.kpis.foliar_area_diff > 0 else '' }}{{ daily.kpis.foliar_area_diff }} cm² vs día ant.{% else %}Expansión canopia{% endif %}</span>
             </div>
-        </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number">{{ daily.kpis.humidity_rh }}</span>
-            <span class="kpi-unit">% HR</span>
-        </div>
-        <div class="kpi-footer-badge {% if 'Adecuado' in daily.kpis.humidity_status %}positive{% else %}neutral{% endif %}">
-            <span class="material-icons-round" style="font-size: 14px;">info</span>
-            <span>{{ daily.kpis.humidity_status }}</span>
-        </div>
-    </div>
-
-    <!-- KPI 4: Radiación Solar UV -->
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Radiación Solar</span>
-            <div class="kpi-icon-badge amber">
-                <span class="material-icons-round">wb_sunny</span>
-            </div>
-        </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number">{{ daily.kpis.uv_solar_lux }}</span>
-            <span class="kpi-unit">lux</span>
-        </div>
-        <div class="kpi-footer-badge neutral">
-            <span class="material-icons-round" style="font-size: 14px;">light_mode</span>
-            <span>{{ daily.kpis.uv_solar_status }}</span>
-        </div>
-    </div>
-
-    <!-- KPI 5: Salud Vegetal -->
-    <div class="kpi-card">
-        <div class="kpi-card-header">
-            <span class="kpi-label">Salud y Vigor Foliar</span>
-            <div class="kpi-icon-badge emerald">
-                <span class="material-icons-round">health_and_safety</span>
-            </div>
-        </div>
-        <div class="kpi-value-row">
-            <span class="kpi-big-number">{{ daily.kpis.health_index }}</span>
-            <span class="kpi-unit">%</span>
-        </div>
-        <div class="kpi-footer-badge positive">
-            <span class="material-icons-round" style="font-size: 14px;">eco</span>
-            <span>{{ daily.kpis.health_status }}</span>
-        </div>
-    </div>
-</div>
-
-<!-- SECCIÓN 2: 4 WIDGETS ANALÍTICOS Y GRÁFICAS (GRID 2x2) -->
-<div class="analytics-grid-2x2">
-    <!-- WIDGET 1: Temperatura y Curva Térmica de la Jornada -->
-    <div class="widget-card">
-        <div class="widget-header">
-            <div class="widget-header-title">
-                <h3>Temperatura y Clima de la Jornada</h3>
-                <p>Comportamiento térmico con banda de amplitud diaria</p>
-            </div>
-            <div class="widget-actions-box">
-                <span class="widget-badge-tag active">Jornada Diaria</span>
-            </div>
-        </div>
-        
-        <div class="chart-stage-container">
-            <canvas id="thermalCurveChart"></canvas>
         </div>
 
-        <div class="widget-stats-row">
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Máx. Diaria</span>
-                <span class="stat-item-value">{{ daily.thermal_curve.max_temp }} °C</span>
-                <span class="stat-item-desc">Pico térmico</span>
+        <!-- KPI 2: Temperatura -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Temperatura Media</span>
+                <div class="kpi-icon-badge blue">
+                    <span class="material-icons-round">thermostat</span>
+                </div>
             </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Mín. Diaria</span>
-                <span class="stat-item-value">{{ daily.thermal_curve.min_temp }} °C</span>
-                <span class="stat-item-desc">Mínimo nocturno</span>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number">{{ daily.kpis.temperature_c }}</span>
+                <span class="kpi-unit">°C</span>
             </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Amplitud</span>
-                <span class="stat-item-value">{{ daily.thermal_curve.amplitude }} °C</span>
-                <span class="stat-item-desc">Delta térmico</span>
+            <div class="kpi-footer-badge {% if 'Óptimo' in daily.kpis.temperature_status %}positive{% else %}neutral{% endif %}">
+                <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
+                <span>{{ daily.kpis.temperature_status }}</span>
             </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Régimen</span>
-                <span class="stat-item-value">{{ daily.thermal_curve.regime }}</span>
-                <span class="stat-item-desc">Evaluación</span>
+        </div>
+
+        <!-- KPI 3: Humedad Relativa -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Humedad Relativa</span>
+                <div class="kpi-icon-badge cyan">
+                    <span class="material-icons-round">water_drop</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number">{{ daily.kpis.humidity_rh }}</span>
+                <span class="kpi-unit">% HR</span>
+            </div>
+            <div class="kpi-footer-badge {% if 'Adecuado' in daily.kpis.humidity_status %}positive{% else %}neutral{% endif %}">
+                <span class="material-icons-round" style="font-size: 14px;">info</span>
+                <span>{{ daily.kpis.humidity_status }}</span>
+            </div>
+        </div>
+
+        <!-- KPI 4: Radiación Solar UV -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Radiación Solar</span>
+                <div class="kpi-icon-badge amber">
+                    <span class="material-icons-round">wb_sunny</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number">{{ daily.kpis.uv_solar_lux }}</span>
+                <span class="kpi-unit">lux</span>
+            </div>
+            <div class="kpi-footer-badge neutral">
+                <span class="material-icons-round" style="font-size: 14px;">light_mode</span>
+                <span>{{ daily.kpis.uv_solar_status }}</span>
+            </div>
+        </div>
+
+        <!-- KPI 5: Salud Vegetal -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Salud y Vigor Foliar</span>
+                <div class="kpi-icon-badge emerald">
+                    <span class="material-icons-round">health_and_safety</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number">{{ daily.kpis.health_index }}</span>
+                <span class="kpi-unit">%</span>
+            </div>
+            <div class="kpi-footer-badge positive">
+                <span class="material-icons-round" style="font-size: 14px;">eco</span>
+                <span>{{ daily.kpis.health_status }}</span>
+            </div>
+        </div>
+
+        <!-- KPI 6: Clima Exterior de la Zona (Open-Meteo API / Sincronización GPS) -->
+        <div class="kpi-card" style="border-left: 3px solid var(--primary); position: relative;">
+            <div class="kpi-card-header">
+                <div style="display: flex; flex-direction: column;">
+                    <span class="kpi-label">Clima Exterior</span>
+                    <span id="weather-city-label" style="font-size: 10.5px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.3px;">
+                        {% if weather %}{{ weather.location_name }}{% else %}Santa Marta, Magdalena{% endif %}
+                    </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button type="button" onclick="syncBrowserLocation()" title="Sincronizar Ubicación GPS de la Torre" style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px; display: flex; align-items: center; border-radius: 4px; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                        <span class="material-icons-round" style="font-size: 16px;">my_location</span>
+                    </button>
+                    <div class="kpi-icon-badge blue" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                        <span class="material-icons-round" id="weather-main-icon">{% if weather %}{{ weather.icon }}{% else %}cloud{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number" id="weather-temp-val">{% if weather %}{{ weather.temperature_c }}{% else %}--{% endif %}</span>
+                <span class="kpi-unit">°C</span>
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); margin: 2px 0 6px 0; display: flex; align-items: center; justify-content: space-between;">
+                <span id="weather-desc-val">{% if weather %}{{ weather.weather_description }}{% else %}Cargando clima...{% endif %}</span>
+                <span id="weather-wind-val" style="color: var(--text-muted); font-size: 10.5px;">{% if weather %}Viento: {{ weather.wind_speed_kmh }} km/h{% endif %}</span>
+            </div>
+            <div class="kpi-footer-badge {% if weather and weather.online %}positive{% else %}neutral{% endif %}" id="weather-footer-badge">
+                <span class="material-icons-round" style="font-size: 13px;">{% if weather and weather.online %}wifi{% else %}wifi_off{% endif %}</span>
+                <span id="weather-status-text">{% if weather %}{{ weather.status_text }}{% else %}Sincronizando{% endif %} &bull; HR: {{ weather.humidity_rh if weather else '--' }}%</span>
             </div>
         </div>
     </div>
 
-    <!-- WIDGET 2: Morfometría y Crecimiento Diario -->
-    <div class="widget-card">
-        <div class="widget-header">
-            <div class="widget-header-title">
-                <h3>Crecimiento y Morfometría del Día</h3>
-                <p>Evolución del área foliar por período de muestreo</p>
-            </div>
-            <div class="widget-actions-box">
-                <span class="widget-badge-tag active">3 Períodos</span>
-            </div>
-        </div>
+    <!-- COLUMNA PRINCIPAL: 4 WIDGETS ANALÍTICOS Y GRÁFICAS -->
+    <div class="dashboard-charts-main">
+        <div class="analytics-grid-2x2">
+            <!-- WIDGET 1: Temperatura y Curva Térmica de la Jornada -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Temperatura y Clima de la Jornada</h3>
+                        <p>Comportamiento térmico con banda de amplitud diaria</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="widget-badge-tag active">Jornada Diaria</span>
+                    </div>
+                </div>
+                
+                <div class="chart-stage-container">
+                    <canvas id="thermalCurveChart"></canvas>
+                </div>
 
-        <div class="chart-stage-container">
-            <canvas id="growthPeriodsChart"></canvas>
-        </div>
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Máx. Diaria</span>
+                        <span class="stat-item-value">{{ daily.thermal_curve.max_temp }} °C</span>
+                        <span class="stat-item-desc">Pico térmico</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Mín. Diaria</span>
+                        <span class="stat-item-value">{{ daily.thermal_curve.min_temp }} °C</span>
+                        <span class="stat-item-desc">Mínimo nocturno</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Amplitud</span>
+                        <span class="stat-item-value">{{ daily.thermal_curve.amplitude }} °C</span>
+                        <span class="stat-item-desc">Delta térmico</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Régimen</span>
+                        <span class="stat-item-value">{{ daily.thermal_curve.regime }}</span>
+                        <span class="stat-item-desc">Evaluación</span>
+                    </div>
+                </div>
+            </div>
 
-        <div class="widget-stats-row">
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Mayor Vigor</span>
-                <span class="stat-item-value">{{ daily.growth_chart.best_period }}</span>
-                <span class="stat-item-desc">Máxima área</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Altura Planta</span>
-                <span class="stat-item-value">{{ daily.growth_chart.avg_height }} cm</span>
-                <span class="stat-item-desc">Morfometría</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Diámetro Tallo</span>
-                <span class="stat-item-value">{{ daily.growth_chart.avg_diameter }} mm</span>
-                <span class="stat-item-desc">Espesor basal</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Compacidad</span>
-                <span class="stat-item-value">{{ daily.kpis.compacity_index }}</span>
-                <span class="stat-item-desc">Densidad foliar</span>
-            </div>
-        </div>
-    </div>
+            <!-- WIDGET 2: Última Toma de Fenotipado (Cenital y Lateral) -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Última Captura de Fenotipado</h3>
+                        <p>{% if daily.latest_capture.has_images %}Período: <strong>{{ daily.latest_capture.period }}</strong> &bull; {{ daily.latest_capture.timestamp_str }}{% else %}Tomas registradas de la canastilla{% endif %}</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        {% if daily.latest_capture.has_images %}
+                        <span class="widget-badge-tag active">{{ daily.latest_capture.period }}</span>
+                        {% else %}
+                        <span class="widget-badge-tag">Sin tomas</span>
+                        {% endif %}
+                    </div>
+                </div>
 
-    <!-- WIDGET 3: Corriente de Bomba y Riego -->
-    <div class="widget-card">
-        <div class="widget-header">
-            <div class="widget-header-title">
-                <h3>Flujo y Corriente de Bomba (Telemetría)</h3>
-                <p>Estabilidad de recirculación de la solución nutritiva</p>
-            </div>
-            <div class="widget-actions-box">
-                <span class="widget-badge-tag active">Amperaje</span>
-            </div>
-        </div>
+                {% if daily.latest_capture.has_images %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 16px; background: rgba(0,0,0,0.02); min-height: 220px; align-items: center;">
+                    <!-- Toma Cenital -->
+                    <div style="display: flex; flex-direction: column; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-icons-round" style="font-size: 14px; color: var(--primary);">camera</span>
+                            <span>Cámara Cenital (ROI Canastilla)</span>
+                        </div>
+                        <div style="width: 100%; height: 165px; border-radius: 6px; overflow: hidden; background: #0f172a; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <img src="{{ url_for('static', filename=daily.latest_capture.cenital_proc) }}" alt="Última Toma Cenital" style="width: 100%; height: 100%; object-fit: contain; display: block;" onerror="this.onerror=null; this.src='{{ url_for('static', filename=daily.latest_capture.cenital_orig) }}';">
+                            <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">{{ daily.latest_capture.foliar_area_cm2 }} cm²</span>
+                        </div>
+                    </div>
 
-        <div class="chart-stage-container">
-            <canvas id="pumpCurrentChart"></canvas>
-        </div>
+                    <!-- Toma Lateral -->
+                    <div style="display: flex; flex-direction: column; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-icons-round" style="font-size: 14px; color: var(--primary);">filter_center_focus</span>
+                            <span>Cámara Lateral (Perfil Vertical)</span>
+                        </div>
+                        <div style="width: 100%; height: 165px; border-radius: 6px; overflow: hidden; background: #0f172a; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <img src="{{ url_for('static', filename=daily.latest_capture.lateral_proc) }}" alt="Última Toma Lateral" style="width: 100%; height: 100%; object-fit: contain; display: block;" onerror="this.onerror=null; this.src='{{ url_for('static', filename=daily.latest_capture.lateral_orig) }}';">
+                            <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">{{ daily.latest_capture.plant_height_cm }} cm</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 220px; color: var(--text-muted); text-align: center; padding: 20px;">
+                    <span class="material-icons-round" style="font-size: 40px; color: #cbd5e1; margin-bottom: 8px;">hide_image</span>
+                    <p style="font-weight: 600; margin: 0 0 4px 0; color: var(--text-secondary);">Sin capturas para esta fecha</p>
+                    <p style="font-size: 12px; margin: 0;">Selecciona otra fecha o realiza un lote de fenotipado para ver las tomas.</p>
+                </div>
+                {% endif %}
 
-        <div class="widget-stats-row">
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Corriente Media</span>
-                <span class="stat-item-value">{{ daily.pump_chart.avg_current }} A</span>
-                <span class="stat-item-desc">Consumo motor</span>
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Área Foliar</span>
+                        <span class="stat-item-value">{{ daily.latest_capture.foliar_area_cm2 }} cm²</span>
+                        <span class="stat-item-desc">Última toma</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Altura Planta</span>
+                        <span class="stat-item-value">{{ daily.latest_capture.plant_height_cm }} cm</span>
+                        <span class="stat-item-desc">Morfometría vertical</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Diámetro Tallo</span>
+                        <span class="stat-item-value">{{ daily.latest_capture.stem_diameter_mm }} mm</span>
+                        <span class="stat-item-desc">Espesor basal</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Índice Salud</span>
+                        <span class="stat-item-value">{{ daily.latest_capture.health_index }}%</span>
+                        <span class="stat-item-desc">Vigor botánico</span>
+                    </div>
+                </div>
             </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Máx. Registrado</span>
-                <span class="stat-item-value">{{ daily.pump_chart.max_current }} A</span>
-                <span class="stat-item-desc">Pico de arranque</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Estado Bombeo</span>
-                <span class="stat-item-value">{{ daily.pump_chart.status }}</span>
-                <span class="stat-item-desc">Presión estable</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Canastilla</span>
-                <span class="stat-item-value">Torre #{{ active_plant_id }}</span>
-                <span class="stat-item-desc">Posición vertical</span>
-            </div>
-        </div>
-    </div>
 
-    <!-- WIDGET 4: Radiación Solar UV y Fotoperíodo -->
-    <div class="widget-card">
-        <div class="widget-header">
-            <div class="widget-header-title">
-                <h3>Radiación Solar UV (Irradiancia)</h3>
-                <p>Distribución de luz útil a lo largo de las horas</p>
-            </div>
-            <div class="widget-actions-box">
-                <span class="widget-badge-tag active">Luximetría</span>
-            </div>
-        </div>
+            <!-- WIDGET 3: Estado de Bomba / Motor de Recirculación (1=ON, 0=OFF) -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Estado de Bomba (Recirculación)</h3>
+                        <p>Ciclos de activación del motor (1 = Encendido, 0 = Apagado)</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="widget-badge-tag {% if daily.motor_chart.current_state == 1 %}active{% endif %}">
+                            {{ daily.motor_chart.current_state_label }}
+                        </span>
+                    </div>
+                </div>
 
-        <div class="chart-stage-container">
-            <canvas id="solarIrradianceChart"></canvas>
-        </div>
+                <div class="chart-stage-container">
+                    <canvas id="motorStateChart"></canvas>
+                </div>
 
-        <div class="widget-stats-row">
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Radiación Media</span>
-                <span class="stat-item-value">{{ daily.solar_chart.avg_uv }} lux</span>
-                <span class="stat-item-desc">Media diurna</span>
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Estado Actual</span>
+                        <span class="stat-item-value" style="color: {% if daily.motor_chart.current_state == 1 %}#059669{% else %}#64748b{% endif %};">
+                            {{ daily.motor_chart.current_state_label }}
+                        </span>
+                        <span class="stat-item-desc">Último registro</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Tiempo Activo</span>
+                        <span class="stat-item-value">{{ daily.motor_chart.active_pct }}%</span>
+                        <span class="stat-item-desc">Del período diario</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Ciclos Riego</span>
+                        <span class="stat-item-value">{{ daily.motor_chart.cycles_count }}</span>
+                        <span class="stat-item-desc">Encendidos registrados</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Solución Nutritiva</span>
+                        <span class="stat-item-value">{{ daily.motor_chart.status }}</span>
+                        <span class="stat-item-desc">Operación</span>
+                    </div>
+                </div>
             </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Máx. Radiación</span>
-                <span class="stat-item-value">{{ daily.solar_chart.max_uv }} lux</span>
-                <span class="stat-item-desc">Pico solar</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Especie Activa</span>
-                <span class="stat-item-value">{{ selected_profile.display_name }}</span>
-                <span class="stat-item-desc">Perfil botánico</span>
-            </div>
-            <div class="widget-stats-item">
-                <span class="stat-item-label">Fotoperíodo</span>
-                <span class="stat-item-value">Adecuado</span>
-                <span class="stat-item-desc">Luz acumulada</span>
+
+            <!-- WIDGET 4: Radiación Solar UV y Fotoperíodo -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Radiación Solar UV (Irradiancia)</h3>
+                        <p>Distribución de luz útil a lo largo de las horas</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="widget-badge-tag active">Luximetría</span>
+                    </div>
+                </div>
+
+                <div class="chart-stage-container">
+                    <canvas id="solarIrradianceChart"></canvas>
+                </div>
+
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Radiación Media</span>
+                        <span class="stat-item-value">{{ daily.solar_chart.avg_uv }} lux</span>
+                        <span class="stat-item-desc">Media diurna</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Máx. Radiación</span>
+                        <span class="stat-item-value">{{ daily.solar_chart.max_uv }} lux</span>
+                        <span class="stat-item-desc">Pico solar</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Especie Activa</span>
+                        <span class="stat-item-value">{{ selected_profile.display_name }}</span>
+                        <span class="stat-item-desc">Perfil botánico</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Fotoperíodo</span>
+                        <span class="stat-item-value">Adecuado</span>
+                        <span class="stat-item-desc">Luz acumulada</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -333,6 +414,73 @@
         d.setDate(d.getDate() + 1);
         const nextStr = d.toISOString().split('T')[0];
         navigateDate(nextStr);
+    });
+    // Sincronización inteligente de ubicación GPS para el Clima Exterior
+    function syncBrowserLocation() {
+        if (!navigator.geolocation) {
+            console.log("Geolocalización no soportada por el navegador");
+            return;
+        }
+
+        const cityLabel = document.getElementById('weather-city-label');
+        if (cityLabel) cityLabel.innerText = "Sincronizando GPS...";
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                localStorage.setItem('sifma_location_synced', 'true');
+
+                try {
+                    let cityName = "Santa Marta, Magdalena";
+                    try {
+                        // Geocodificación inversa ligera
+                        const geoResp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`);
+                        if (geoResp.ok) {
+                            const geoData = await geoResp.json();
+                            cityName = geoData.address.city || geoData.address.town || geoData.address.state || cityName;
+                        }
+                    } catch (e) {}
+
+                    const resp = await fetch('/api/config/location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude: lat, longitude: lon, city_name: cityName })
+                    });
+
+                    const resData = await resp.json();
+                    if (resData.status === 'success' && resData.weather) {
+                        const w = resData.weather;
+                        if (cityLabel) cityLabel.innerText = w.location_name;
+                        const tempVal = document.getElementById('weather-temp-val');
+                        if (tempVal) tempVal.innerText = w.temperature_c;
+                        const descVal = document.getElementById('weather-desc-val');
+                        if (descVal) descVal.innerText = w.weather_description;
+                        const windVal = document.getElementById('weather-wind-val');
+                        if (windVal) windVal.innerText = `Viento: ${w.wind_speed_kmh} km/h`;
+                        const statusText = document.getElementById('weather-status-text');
+                        if (statusText) statusText.innerHTML = `${w.status_text} &bull; HR: ${w.humidity_rh}%`;
+                        const iconEl = document.getElementById('weather-main-icon');
+                        if (iconEl) iconEl.innerText = w.icon;
+                    }
+                } catch (err) {
+                    console.warn("Error actualizando coordenadas de la torre:", err);
+                    if (cityLabel) cityLabel.innerText = "Santa Marta, Magdalena";
+                }
+            },
+            (error) => {
+                console.log("Ubicación rechazada o no disponible, usando Santa Marta por defecto:", error.message);
+                if (cityLabel) cityLabel.innerText = "Santa Marta, Magdalena";
+            },
+            { timeout: 8000, maximumAge: 86400000 }
+        );
+    }
+
+    // Solicitar permiso de ubicación automáticamente la primera vez
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!localStorage.getItem('sifma_location_synced') && navigator.geolocation) {
+            syncBrowserLocation();
+        }
     });
 </script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>

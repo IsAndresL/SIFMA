@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, Float
 from infrastructure.database.connection import db
 
 class Config(db.Model):
@@ -24,6 +24,11 @@ class Config(db.Model):
     shared_telemetry = Column(Boolean, default=True)
     telemetry_mode = Column(String(50), default="shared_tower") # 'shared_tower' o 'isolated_node'
 
+    # Ubicación Geográfica de la Torre (Santa Marta por defecto)
+    latitude = Column(Float, default=11.2408)
+    longitude = Column(Float, default=-74.1990)
+    city_name = Column(String(100), default="Santa Marta, Magdalena")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -41,5 +46,8 @@ class Config(db.Model):
             "plant_3_crop": self.plant_3_crop or "lechuga",
             "plant_4_crop": self.plant_4_crop or "fresa",
             "shared_telemetry": self.shared_telemetry if self.shared_telemetry is not None else True,
-            "telemetry_mode": self.telemetry_mode or "shared_tower"
+            "telemetry_mode": self.telemetry_mode or "shared_tower",
+            "latitude": self.latitude if self.latitude is not None else 11.2408,
+            "longitude": self.longitude if self.longitude is not None else -74.1990,
+            "city_name": self.city_name or "Santa Marta, Magdalena"
         }

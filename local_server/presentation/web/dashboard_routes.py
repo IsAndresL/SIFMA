@@ -8,7 +8,8 @@ from application.services import (
     TelemetryApplicationService, 
     AnalyticsApplicationService, 
     ConclusionApplicationService,
-    UserService
+    UserService,
+    WeatherService
 )
 from infrastructure.database.repositories import (
     SensorRepository, 
@@ -22,6 +23,7 @@ telemetry_service = TelemetryApplicationService.get_instance()
 analytics_service = AnalyticsApplicationService()
 conclusion_service = ConclusionApplicationService()
 user_service = UserService()
+weather_service = WeatherService.get_instance()
 sensor_repo = SensorRepository()
 session_repo = CaptureSessionRepository()
 
@@ -121,18 +123,6 @@ def login():
             session['user_avatar'] = user.avatar_initials
             session.permanent = True
             return redirect(url_for('dashboard.index'))
-            
-        # 2. Fallback de desarrollo para admin maestro
-        elif username == app_settings.ADMIN_USERNAME and SecurityService.verify_password(password, app_settings.ADMIN_PASSWORD_HASH):
-            session['logged_in'] = True
-            session['user_id'] = 1
-            session['username'] = "admin"
-            session['user_name'] = "Andres Luna"
-            session['user_role'] = "admin"
-            session['user_role_display'] = "Administrador Principal"
-            session['user_avatar'] = "AL"
-            session.permanent = True
-            return redirect(url_for('dashboard.index'))
         else:
             error = "Usuario o contraseña incorrectos, o cuenta inactiva."
             
@@ -154,6 +144,13 @@ def index():
     # Obtener el análisis diario consolidado para la fecha seleccionada
     daily_data = analytics_service.get_daily_summary_data(target_date=target_date, plant_id=active_plant_id)
     
+    # Obtener clima exterior actual para la ubicación de la torre (Open-Meteo API / Caché / Fallback)
+    current_weather = weather_service.get_current_weather(
+        lat=getattr(config, 'latitude', None) or 11.2408,
+        lon=getattr(config, 'longitude', None) or -74.1990,
+        city_name=getattr(config, 'city_name', None) or "Santa Marta, Magdalena"
+    )
+    
     profiles = system_service.get_all_profiles()
     selected_profile = system_service.get_profile_for_plant(active_plant_id)
 
@@ -162,6 +159,7 @@ def index():
                            profiles=profiles,
                            selected_profile=selected_profile,
                            daily=daily_data,
+                           weather=current_weather,
                            target_date=daily_data["target_date"],
                            available_dates=daily_data["available_dates"],
                            active_plant_id=active_plant_id)
@@ -456,7 +454,7 @@ def system_info():
 
     system_metadata = {
         "version": "1.1",
-        "release_name": "SIFMA PhenoCore v1.1 - Hydroponic Research Edition",
+        "release_name": "SIFMA PhenoCore",
         "release_date": "Septiembre 2026",
         "author": "Ing. Andrés Luna & Cristian",
         "lead_developer": "Ing. Andrés Luna",
@@ -464,7 +462,7 @@ def system_info():
         "scientific_advisor": "Prof. Críspulo Enrique Deluque",
         "founding_professors": "Prof. Críspulo Enrique Deluque y Comité Docente",
         "institution": "Laboratorio de Automatización, Visión Artificial & Fenotipado Digital",
-        "license": "MIT License",
+        "license": "Licencia Cerrada Exclusiva (Torre SIFMA)",
         "python_version": "3.10+",
         "opencv_version": "4.8+",
         "architecture": "Clean Architecture / Hexagonal"

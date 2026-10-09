@@ -283,7 +283,13 @@ class VisionApplicationService:
                 temperature=float(sensor_data.get("temperature", 0.0)),
                 humidity=float(sensor_data.get("humidity", 0.0)),
                 uv_solar=float(sensor_data.get("uv_solar", 0.0)),
-                motor_current=float(sensor_data.get("motor_current", 0.0))
+                motor_current=float(sensor_data.get("motor_current", 0.0)),
+                motor_state=int(sensor_data.get("motor_state", 1 if float(sensor_data.get("motor_current", 0.0)) > 0 else 0)),
+                water_ph=float(sensor_data.get("water_ph", 0.0)),
+                ec_conductivity=float(sensor_data.get("ec_conductivity", 0.0)),
+                turbidity_ntu=float(sensor_data.get("turbidity_ntu", 0.0)),
+                dissolved_oxygen_mg_l=float(sensor_data.get("dissolved_oxygen_mg_l", 0.0)),
+                water_temp=float(sensor_data.get("water_temp", 0.0))
             )
             self.sensor_repo.add(sensor_record)
             sensor_id = sensor_record.id

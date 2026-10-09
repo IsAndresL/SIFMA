@@ -6,10 +6,13 @@
     <meta name="description" content="Inicio de sesión seguro para el Panel de Control SIFMA.">
     <title>SIFMA - Iniciar Sesión</title>
     
-    <!-- Google Fonts: Outfit e Inter -->
+    <!-- Favicon Oficial SIFMA -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}">
+    
+    <!-- Google Fonts: Philosopher (marca oficial) + Literata (cuerpo y datos) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400;1,7..72,600&family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     
     <!-- Google Material Icons Round -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
@@ -19,10 +22,10 @@
 </head>
 <body class="login-page-wrapper">
     <div class="login-glass-panel">
-        <!-- Logo y Marca -->
+        <!-- Logo y Marca Oficial -->
         <div class="login-brand-header">
-            <div class="sidebar-logo-icon" style="width: 58px; height: 58px; border-radius: 14px; margin: 0 auto; background: transparent; box-shadow: none; padding: 0;">
-                <img src="{{ url_for('static', filename='img/sifma_logo.svg') }}" alt="SIFMA Logo" style="width: 100%; height: 100%; border-radius: 14px;">
+            <div style="width: 80px; height: 80px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}" alt="SIFMA Emblem" style="width: 100%; height: 100%; display: block;">
             </div>
             <h1>SIFMA</h1>
             <p>Sistema Integrado de Fenotipado y Monitoreo Agronómico</p>
