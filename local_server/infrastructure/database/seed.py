@@ -42,7 +42,14 @@ def init_db_data(app):
                 "ALTER TABLE crop_profile ADD COLUMN lat_b_max INTEGER DEFAULT 255",
                 "ALTER TABLE crop_profile ADD COLUMN lat_pixel_to_cm_ratio FLOAT DEFAULT 0.038",
                 "ALTER TABLE crop_profile ADD COLUMN lat_min_area INTEGER DEFAULT 60",
-                "ALTER TABLE crop_profile ADD COLUMN lat_filter_isolated BOOLEAN DEFAULT 1"
+                "ALTER TABLE crop_profile ADD COLUMN lat_filter_isolated BOOLEAN DEFAULT 1",
+                "ALTER TABLE config ADD COLUMN latitude FLOAT DEFAULT 11.2408",
+                "ALTER TABLE config ADD COLUMN longitude FLOAT DEFAULT -74.1990",
+                "ALTER TABLE config ADD COLUMN city_name VARCHAR(100) DEFAULT 'Santa Marta, Magdalena'",
+                "ALTER TABLE config ADD COLUMN cenital_roi_cx FLOAT DEFAULT 0.4955",
+                "ALTER TABLE config ADD COLUMN cenital_roi_cy FLOAT DEFAULT 0.4408",
+                "ALTER TABLE config ADD COLUMN cenital_roi_radius FLOAT DEFAULT 0.1450",
+                "ALTER TABLE config ADD COLUMN cenital_roi_mode VARCHAR(20) DEFAULT 'dynamic_conn'"
             ]:
                 try:
                     conn.execute(db.text(col_sql))

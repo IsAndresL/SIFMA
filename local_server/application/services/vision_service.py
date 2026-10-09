@@ -12,7 +12,8 @@ from domain.models import CaptureSession, BiometricMetric, SensorReading, CropPr
 from infrastructure.database.repositories import (
     CaptureSessionRepository, 
     CropProfileRepository, 
-    SensorRepository
+    SensorRepository,
+    ConfigRepository
 )
 from infrastructure.vision import VisionPipelineManager
 from infrastructure.database.connection import db
@@ -28,11 +29,13 @@ class VisionApplicationService:
         session_repo: Optional[CaptureSessionRepository] = None,
         crop_repo: Optional[CropProfileRepository] = None,
         sensor_repo: Optional[SensorRepository] = None,
+        config_repo: Optional[ConfigRepository] = None,
         pipeline: Optional[VisionPipelineManager] = None
     ):
         self.session_repo = session_repo or CaptureSessionRepository()
         self.crop_repo = crop_repo or CropProfileRepository()
         self.sensor_repo = sensor_repo or SensorRepository()
+        self.config_repo = config_repo or ConfigRepository()
         self.pipeline = pipeline or VisionPipelineManager()
 
     def detect_connected_usb_drives(self) -> List[Dict[str, Any]]:
@@ -163,12 +166,14 @@ class VisionApplicationService:
         cenital_paths_list = []
         lateral_paths_list = []
         
+        sys_config = self.config_repo.get()
+
         for i, src_img in enumerate(cenital_imgs):
             dst_orig = os.path.join(upload_dir, f"cenital_{i+1}.png")
             dst_proc = os.path.join(processed_dir, f"proc_cenital_{i+1}.png")
             shutil.copy(src_img, dst_orig)
             
-            res = self.pipeline.process_cenital(dst_orig, dst_proc, profile)
+            res = self.pipeline.process_cenital(dst_orig, dst_proc, profile, config=sys_config)
             if res:
                 cenital_results.append(res)
                 rel_orig = os.path.relpath(dst_orig, config.DATA_DIR).replace("\\", "/")

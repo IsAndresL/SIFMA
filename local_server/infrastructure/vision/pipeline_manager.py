@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import cv2
 import numpy as np
 from domain.models import CropProfile
@@ -137,21 +137,86 @@ class VisionPipelineManager:
             
         if candidates:
             best = max(candidates, key=lambda k: k['score'])
-            return best['cx'], best['cy'], int(best['radius'] * 1.01)
+    def detect_blue_basket_roi(self, img: np.ndarray, config: Optional[Any] = None) -> Tuple[int, int, int]:
+        """
+        Calcula el ROI cenital. Si el usuario configuró coordenadas personalizadas en Config,
+        las utiliza; de lo contrario busca el aro azul automáticamente con fallback agrónomo.
+        """
+        h_img, w_img = img.shape[:2]
+        
+        # 1. Si hay configuración explícita guardada por el usuario
+        if config is not None:
+            cx_ratio = getattr(config, 'cenital_roi_cx', None)
+            cy_ratio = getattr(config, 'cenital_roi_cy', None)
+            rad_ratio = getattr(config, 'cenital_roi_radius', None)
+            if cx_ratio is not None and cy_ratio is not None and rad_ratio is not None:
+                cx = int(w_img * float(cx_ratio))
+                cy = int(h_img * float(cy_ratio))
+                radius = int(min(w_img, h_img) * float(rad_ratio))
+                return cx, cy, radius
+
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask_blue = cv2.inRange(hsv, np.array([90, 45, 30]), np.array([140, 255, 255]))
+        plant_mask = self.segmenter.create_mask(img, CropProfile(crop_type="detect", display_name="detect"))
+        
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        mask_blue_clean = cv2.morphologyEx(mask_blue, cv2.MORPH_OPEN, kernel)
+        mask_blue_clean = cv2.morphologyEx(mask_blue_clean, cv2.MORPH_CLOSE, kernel)
+        
+        contours, _ = cv2.findContours(mask_blue_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        min_radius = int(min(w_img, h_img) * 0.08)
+        max_radius = int(min(w_img, h_img) * 0.18)
+        candidates = []
+        
+        for c in contours:
+            area = cv2.contourArea(c)
+            if area < 3000 or area > 600000:
+                continue
+                
+            (cx, cy), radius = cv2.minEnclosingCircle(c)
+            radius = int(radius)
+            if radius < min_radius or radius > max_radius:
+                continue
+                
+            peri = cv2.arcLength(c, True)
+            circularity = (4 * np.pi * area) / (peri * peri) if peri > 0 else 0
             
-        # Calibración agrónoma física central de la canastilla activa
+            bx, by, bw, bh = cv2.boundingRect(c)
+            aspect_ratio = float(bw) / float(bh) if bh > 0 else 0
+            
+            if not (w_img * 0.35 <= cx <= w_img * 0.65 and h_img * 0.28 <= cy <= h_img * 0.62):
+                continue
+                
+            c_mask = np.zeros((h_img, w_img), dtype=np.uint8)
+            cv2.circle(c_mask, (int(cx), int(cy)), radius, 255, -1)
+            green_inside = cv2.countNonZero(cv2.bitwise_and(plant_mask, c_mask))
+            
+            aspect_diff = abs(1.0 - aspect_ratio)
+            score = (green_inside * 4.0) + (circularity * 3000.0) - (aspect_diff * 800.0)
+            
+            candidates.append({
+                'cx': int(cx), 'cy': int(cy), 'radius': radius,
+                'green_inside': green_inside, 'score': score
+            })
+            
+        if candidates:
+            best = max(candidates, key=lambda k: k['score'])
+            return best['cx'], best['cy'], int(best['radius'] * 1.05)
+            
+        # Calibración agrónoma física central por defecto
         calib_cx = int(w_img * 0.4955)
         calib_cy = int(h_img * 0.4408)
-        calib_radius = int(min(w_img, h_img) * 0.120)
+        calib_radius = int(min(w_img, h_img) * 0.145)
         return calib_cx, calib_cy, calib_radius
 
-    def process_cenital(self, image_path: str, output_path: str, profile: CropProfile) -> Optional[Dict[str, Any]]:
+    def process_cenital(self, image_path: str, output_path: str, profile: CropProfile, config: Optional[Any] = None) -> Optional[Dict[str, Any]]:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         img_raw = cv2.imread(image_path)
         if img_raw is None:
             return None
 
-        # 1. Rotación de 180° ("la vuelta completa") antes de procesar si está al revés
+        # 1. Rotación de 180° antes de procesar si está al revés
         if self.is_cenital_inverted(img_raw):
             img = cv2.rotate(img_raw, cv2.ROTATE_180)
             cv2.imwrite(image_path, img)
@@ -160,15 +225,46 @@ class VisionPipelineManager:
 
         h_img, w_img = img.shape[:2]
 
-        # 2. Detección automática del ROI de la Canastilla Azul donde está la planta
-        cx, cy, radius = self.detect_blue_basket_roi(img)
+        # 2. Obtención de centro y radio del ROI (Manual o Automático)
+        cx, cy, radius = self.detect_blue_basket_roi(img, config=config)
+        roi_mode = getattr(config, 'cenital_roi_mode', 'dynamic_conn') if config else 'dynamic_conn'
         
         roi_mask = np.zeros((h_img, w_img), dtype=np.uint8)
         cv2.circle(roi_mask, (cx, cy), radius, 255, -1)
 
-        # 3. Segmentación foliar y aplicación estricta del ROI (anula personas, ropa y fondo exterior)
+        # 3. Segmentación foliar
         raw_leaf_mask = self.segmenter.create_mask(img, profile)
-        mask = cv2.bitwise_and(raw_leaf_mask, roi_mask)
+        
+        # Filtro Inteligente de Componentes Conectados (Filtro Anti-Plantas Vecinas)
+        if roi_mode == 'dynamic_conn':
+            # Aplicar ROI amplio y filtrar islas desconectadas que pertenezcan a otras canastillas
+            bounded_leaf = cv2.bitwise_and(raw_leaf_mask, roi_mask)
+            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(bounded_leaf, connectivity=8)
+            
+            # Centroide de la canastilla
+            target_mask = np.zeros_like(bounded_leaf)
+            inner_core_radius = max(15, int(radius * 0.45))
+            
+            for label_idx in range(1, num_labels):
+                area = stats[label_idx, cv2.CC_STAT_AREA]
+                if area < 25:
+                    continue
+                comp_mask = (labels == label_idx).astype(np.uint8)
+                
+                # Verificar si el componente toca el núcleo central de la canastilla
+                # o está lo suficientemente cerca del centro
+                dist_to_center = np.sqrt((centroids[label_idx][0] - cx)**2 + (centroids[label_idx][1] - cy)**2)
+                
+                # Si está dentro del rango o toca la zona central
+                comp_core_overlap = cv2.countNonZero(cv2.bitwise_and(comp_mask, cv2.circle(np.zeros_like(comp_mask), (cx, cy), inner_core_radius, 255, -1)))
+                
+                if comp_core_overlap > 0 or dist_to_center <= (radius * 0.85):
+                    target_mask = cv2.bitwise_or(target_mask, comp_mask * 255)
+                    
+            mask = target_mask if cv2.countNonZero(target_mask) > 0 else bounded_leaf
+        else:
+            mask = cv2.bitwise_and(raw_leaf_mask, roi_mask)
+            
         contours = self.segmenter.extract_contours(mask, min_area=25)
         
         # 4. Cálculo de Biometría Foliar
@@ -177,13 +273,18 @@ class VisionPipelineManager:
         # 5. Generación de Overlay de visualización
         overlay = img.copy()
         
-        # Dibujar círculo de delimitación de la Canastilla Azul (ROI)
+        # Dibujar círculo de delimitación del ROI
         cv2.circle(overlay, (cx, cy), radius, (255, 180, 0), 3)  # Círculo cian/azul claro
-        cv2.putText(overlay, "CANASTILLA AZUL (ROI)", (max(20, cx - 140), max(30, cy - radius - 15)), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 180, 0), 2)
+        # Cruz central de anclaje
+        cross_len = 16
+        cv2.line(overlay, (cx - cross_len, cy), (cx + cross_len, cy), (0, 255, 0), 2)
+        cv2.line(overlay, (cx, cy - cross_len), (cx, cy + cross_len), (0, 255, 0), 2)
+        
+        cv2.putText(overlay, "ROI CALIBRADO", (max(20, cx - 100), max(30, cy - radius - 12)), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.70, (255, 180, 0), 2)
 
         if contours:
-            # Dibujar contornos foliares en ROJO puro dentro de la canastilla
+            # Dibujar contornos foliares en ROJO puro
             cv2.drawContours(overlay, contours, -1, (0, 0, 255), 2)
             
             # Envoltura convexa de la canopia

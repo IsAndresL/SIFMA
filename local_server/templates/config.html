@@ -264,11 +264,78 @@
                 </div>
             </div>
             
-            <!-- SECCIÓN 3: MORFOMETRÍA CENITAL -->
+            <!-- SECCIÓN 3: CALIBRADOR INTERACTIVO DE ROI CENITAL (ÁREA DE CANASTILLA Y PLANTA) -->
+            <div style="margin-bottom: 24px; background: rgba(16, 185, 129, 0.04); border: 1.5px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">
+                    <h4 style="font-size: 14.5px; font-weight: 700; color: var(--accent-success); margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span class="material-icons-round" style="font-size: 20px;">adjust</span>
+                        <span>3. Calibrador Visual Dinámico de ROI (Región de Interés)</span>
+                    </h4>
+                    <span class="badge badge-success" style="font-size: 11px;">Ajuste con Mouse y Tiempo Real</span>
+                </div>
+
+                <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                    Haz <strong>clic o arrastra</strong> sobre la imagen para mover el centro del círculo hacia el tallo de la canastilla. Ajusta el <strong>radio</strong> para cubrir el follaje sin cortar hojas grandes. El filtro inteligente descartará automáticamente hojas de canastillas vecinas.
+                </p>
+
+                <div style="display: grid; grid-template-columns: minmax(320px, 1fr) 300px; gap: 20px; align-items: start;">
+                    <!-- Canvas Interactivo con la Foto Cenital -->
+                    <div style="position: relative; background: #0f172a; border-radius: 10px; overflow: hidden; border: 2px solid #334155; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <canvas id="roi-canvas" style="display: block; max-width: 100%; height: auto; margin: 0 auto; cursor: crosshair;"></canvas>
+                        <div id="roi-canvas-overlay-hint" style="position: absolute; bottom: 8px; left: 8px; right: 8px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); color: #f8fafc; font-size: 11px; padding: 4px 10px; border-radius: 6px; pointer-events: none; display: flex; justify-content: space-between;">
+                            <span>🖱️ Clic/Arrastrar: Mover Centro (X, Y)</span>
+                            <span id="roi-coords-display">X: 50.0% | Y: 44.1% | R: 14.5%</span>
+                        </div>
+                    </div>
+
+                    <!-- Controles y Formulario de Guardado de ROI -->
+                    <div style="background: #ffffff; padding: 16px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="roi_radius_slider" style="font-size: 12px; font-weight: 700; color: var(--text-heading); display: flex; justify-content: space-between;">
+                                <span>Radio del Círculo (Cobertura):</span>
+                                <span id="label-roi_radius" style="color: var(--accent-success); font-weight: 800;">{{ '%.1f'|format((config.cenital_roi_radius or 0.145) * 100) }}%</span>
+                            </label>
+                            <input type="range" id="roi_radius_slider" min="5" max="35" step="0.5" value="{{ ((config.cenital_roi_radius or 0.145) * 100)|round(1) }}" oninput="onRoiRadiusChange(this.value)" style="width: 100%; cursor: pointer; accent-color: var(--accent-success);">
+                            <small style="color: var(--text-muted); font-size: 10.5px; display: block; margin-top: 2px;">Agranda si la planta sobrepasa la canastilla.</small>
+                        </div>
+
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 12px; font-weight: 700; color: var(--text-heading); display: block; margin-bottom: 6px;">
+                                Modo de Filtrado de Vecinos:
+                            </label>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; cursor: pointer;">
+                                    <input type="radio" name="roi_mode_radio" value="dynamic_conn" {% if (config.cenital_roi_mode or 'dynamic_conn') == 'dynamic_conn' %}checked{% endif %} onchange="onRoiModeChange(this.value)" style="accent-color: var(--accent-success);">
+                                    <span><strong>Conectividad Inteligente</strong> (Ignora hojas ajenas)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; cursor: pointer;">
+                                    <input type="radio" name="roi_mode_radio" value="strict_circle" {% if config.cenital_roi_mode == 'strict_circle' %}checked{% endif %} onchange="onRoiModeChange(this.value)" style="accent-color: var(--accent-success);">
+                                    <span><strong>Círculo Estricto</strong> (Todo lo que esté dentro)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="resetRoiToDefault()" style="flex: 1; font-size: 11.5px;">
+                                <span class="material-icons-round" style="font-size: 16px;">restart_alt</span>
+                                <span>Restablecer</span>
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" onclick="saveRoiCalibration()" id="btn-save-roi" style="flex: 1.2; font-size: 11.5px; font-weight: 700;">
+                                <span class="material-icons-round" style="font-size: 16px;">save</span>
+                                <span>Guardar ROI</span>
+                            </button>
+                        </div>
+
+                        <div id="roi-save-status" style="display: none; font-size: 11.5px; padding: 8px; border-radius: 6px; text-align: center;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: MORFOMETRÍA CENITAL -->
             <div style="margin-bottom: 24px;">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--accent-warning); margin-bottom: 14px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                     <span class="material-icons-round" style="font-size: 18px;">straighten</span>
-                    <span>3. Factor de Conversión Morfométrica Cenital</span>
+                    <span>4. Factor de Conversión Morfométrica Cenital</span>
                 </h4>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center;">
@@ -480,5 +547,254 @@
             btn.innerHTML = '<span class="material-icons-round">sync</span> <span>Sincronizar Telemetría con Canastillas</span>';
         }
     }
+
+    // ==========================================
+    // CALIBRADOR INTERACTIVO DE ROI CENITAL
+    // ==========================================
+    let roiState = {
+        cx: parseFloat("{{ config.cenital_roi_cx or 0.4955 }}"),
+        cy: parseFloat("{{ config.cenital_roi_cy or 0.4408 }}"),
+        radius: parseFloat("{{ config.cenital_roi_radius or 0.1450 }}"),
+        mode: "{{ config.cenital_roi_mode or 'dynamic_conn' }}",
+        isDragging: false
+    };
+
+    const canvas = document.getElementById('roi-canvas');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    const bgImage = new Image();
+    const latestCenitalUrl = "{{ url_for('static', filename=latest_cenital_img) if latest_cenital_img else '' }}";
+
+    function initRoiCanvas() {
+        if (!canvas || !ctx) return;
+
+        if (latestCenitalUrl) {
+            bgImage.src = latestCenitalUrl;
+            bgImage.onload = () => {
+                canvas.width = bgImage.naturalWidth || 640;
+                canvas.height = bgImage.naturalHeight || 480;
+                drawRoi();
+            };
+            bgImage.onerror = () => {
+                drawFallbackCanvas();
+            };
+        } else {
+            drawFallbackCanvas();
+        }
+
+        // Eventos de Mouse sobre el Canvas
+        canvas.addEventListener('mousedown', (e) => {
+            roiState.isDragging = true;
+            updateRoiCenterFromEvent(e);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (roiState.isDragging) {
+                updateRoiCenterFromEvent(e);
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            roiState.isDragging = false;
+        });
+
+        // Touch para pantallas táctiles
+        canvas.addEventListener('touchstart', (e) => {
+            roiState.isDragging = true;
+            if (e.touches.length > 0) updateRoiCenterFromEvent(e.touches[0]);
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (roiState.isDragging && e.touches.length > 0) {
+                updateRoiCenterFromEvent(e.touches[0]);
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            roiState.isDragging = false;
+        });
+    }
+
+    function drawFallbackCanvas() {
+        canvas.width = 640;
+        canvas.height = 480;
+        drawRoi();
+    }
+
+    function updateRoiCenterFromEvent(e) {
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        roiState.cx = Math.max(0.05, Math.min(0.95, x / canvas.width));
+        roiState.cy = Math.max(0.05, Math.min(0.95, y / canvas.height));
+
+        drawRoi();
+        updateRoiLabels();
+    }
+
+    function drawRoi() {
+        if (!ctx || !canvas) return;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        if (bgImage.complete && bgImage.naturalWidth > 0) {
+            ctx.drawImage(bgImage, 0, 0, w, h);
+        } else {
+            // Fondo simulado de la torre
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('No hay fotos cenitales capturadas aún. Usa el patrón de referencia:', w / 2, h / 2 - 40);
+        }
+
+        const px = roiState.cx * w;
+        const py = roiState.cy * h;
+        const minDim = Math.min(w, h);
+        const r = roiState.radius * minDim;
+
+        // 1. Zona oscurecida fuera del ROI (Máscara translúcida)
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(0, 0, w, h);
+
+        // Recortar círculo transparente
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2, false);
+        ctx.fill();
+        ctx.restore();
+
+        // 2. Anillo del ROI (Verde / Cian Neón)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2, false);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#10b981';
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+
+        // Núcleo central mínimo (~45% del radio)
+        ctx.beginPath();
+        ctx.arc(px, py, r * 0.45, 0, Math.PI * 2, false);
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.stroke();
+
+        // Cruz Central
+        ctx.setLineDash([]);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#22c55e';
+        const cl = 16;
+        ctx.beginPath();
+        ctx.moveTo(px - cl, py); ctx.lineTo(px + cl, py);
+        ctx.moveTo(px, py - cl); ctx.lineTo(px, py + cl);
+        ctx.stroke();
+
+        // Etiqueta
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 4;
+        ctx.fillText('ROI CALIBRADO (CANASTILLA)', px, Math.max(20, py - r - 8));
+        ctx.restore();
+    }
+
+    function onRoiRadiusChange(val) {
+        roiState.radius = parseFloat(val) / 100.0;
+        const label = document.getElementById('label-roi_radius');
+        if (label) label.innerText = parseFloat(val).toFixed(1) + '%';
+        drawRoi();
+        updateRoiLabels();
+    }
+
+    function onRoiModeChange(mode) {
+        roiState.mode = mode;
+    }
+
+    function updateRoiLabels() {
+        const coords = document.getElementById('roi-coords-display');
+        if (coords) {
+            coords.innerText = `X: ${(roiState.cx * 100).toFixed(1)}% | Y: ${(roiState.cy * 100).toFixed(1)}% | R: ${(roiState.radius * 100).toFixed(1)}%`;
+        }
+    }
+
+    function resetRoiToDefault() {
+        roiState.cx = 0.4955;
+        roiState.cy = 0.4408;
+        roiState.radius = 0.1450;
+        roiState.mode = 'dynamic_conn';
+
+        const slider = document.getElementById('roi_radius_slider');
+        if (slider) slider.value = 14.5;
+        const label = document.getElementById('label-roi_radius');
+        if (label) label.innerText = '14.5%';
+
+        drawRoi();
+        updateRoiLabels();
+    }
+
+    async function saveRoiCalibration() {
+        const btn = document.getElementById('btn-save-roi');
+        const status = document.getElementById('roi-save-status');
+        if (!btn) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-round spinner">sync</span> <span>Guardando...</span>';
+
+        const formData = new FormData();
+        formData.append('action', 'update_cenital_roi');
+        formData.append('cenital_roi_cx', roiState.cx.toFixed(4));
+        formData.append('cenital_roi_cy', roiState.cy.toFixed(4));
+        formData.append('cenital_roi_radius', roiState.radius.toFixed(4));
+        formData.append('cenital_roi_mode', roiState.mode);
+
+        try {
+            const resp = await fetch("{{ url_for('dashboard.configuration_panel') }}", {
+                method: 'POST',
+                body: formData
+            });
+
+            if (resp.ok) {
+                if (status) {
+                    status.style.display = 'block';
+                    status.style.background = 'rgba(16, 185, 129, 0.12)';
+                    status.style.color = '#065f46';
+                    status.innerHTML = '<span class="material-icons-round" style="vertical-align: middle; font-size: 16px;">check_circle</span> ¡ROI Cenital guardado y calibrado con éxito!';
+                    setTimeout(() => { status.style.display = 'none'; }, 4000);
+                }
+            } else {
+                throw new Error('Error al guardar en el servidor');
+            }
+        } catch (err) {
+            if (status) {
+                status.style.display = 'block';
+                status.style.background = 'rgba(239, 68, 68, 0.12)';
+                status.style.color = '#991b1b';
+                status.innerHTML = `<span class="material-icons-round" style="vertical-align: middle; font-size: 16px;">error</span> Error: ${err.message}`;
+            }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-icons-round" style="font-size: 16px;">save</span> <span>Guardar ROI</span>';
+        }
+    }
+
+    // Iniciar el canvas cuando cargue la página
+    document.addEventListener('DOMContentLoaded', () => {
+        initRoiCanvas();
+        updateRoiLabels();
+    });
 </script>
 {% endblock %}

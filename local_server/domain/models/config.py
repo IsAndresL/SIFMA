@@ -29,6 +29,12 @@ class Config(db.Model):
     longitude = Column(Float, default=-74.1990)
     city_name = Column(String(100), default="Santa Marta, Magdalena")
 
+    # Calibración de ROI Cenital Interactivo (Porcentajes normalizados 0.0 - 1.0)
+    cenital_roi_cx = Column(Float, default=0.4955)
+    cenital_roi_cy = Column(Float, default=0.4408)
+    cenital_roi_radius = Column(Float, default=0.1450)
+    cenital_roi_mode = Column(String(20), default="dynamic_conn") # 'dynamic_conn' o 'strict_circle'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -49,5 +55,9 @@ class Config(db.Model):
             "telemetry_mode": self.telemetry_mode or "shared_tower",
             "latitude": self.latitude if self.latitude is not None else 11.2408,
             "longitude": self.longitude if self.longitude is not None else -74.1990,
-            "city_name": self.city_name or "Santa Marta, Magdalena"
+            "city_name": self.city_name or "Santa Marta, Magdalena",
+            "cenital_roi_cx": self.cenital_roi_cx if self.cenital_roi_cx is not None else 0.4955,
+            "cenital_roi_cy": self.cenital_roi_cy if self.cenital_roi_cy is not None else 0.4408,
+            "cenital_roi_radius": self.cenital_roi_radius if self.cenital_roi_radius is not None else 0.1450,
+            "cenital_roi_mode": self.cenital_roi_mode or "dynamic_conn"
         }

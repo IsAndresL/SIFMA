@@ -419,15 +419,46 @@ def configuration_panel():
                 
             return redirect(url_for('dashboard.configuration_panel', crop_type=crop_type))
 
+        # 3. Calibrar ROI Cenital Interactivo
+        elif action == 'update_cenital_roi':
+            try:
+                cx = float(request.form.get('cenital_roi_cx', 0.4955))
+                cy = float(request.form.get('cenital_roi_cy', 0.4408))
+                radius = float(request.form.get('cenital_roi_radius', 0.1450))
+                mode = request.form.get('cenital_roi_mode', 'dynamic_conn')
+                system_service.update_config(
+                    cenital_roi_cx=cx,
+                    cenital_roi_cy=cy,
+                    cenital_roi_radius=radius,
+                    cenital_roi_mode=mode
+                )
+            except Exception:
+                pass
+            return redirect(url_for('dashboard.configuration_panel'))
+
     requested_crop = request.args.get('crop_type', system_service.get_crop_for_plant(active_plant_id))
     selected_profile = system_service.get_profile(requested_crop)
     plant_profiles_map = system_service.get_all_plant_profiles_map()
+
+    # Obtener la última foto cenital procesada o capturada para el canvas interactivo
+    sessions = session_repo.get_all_by_plant(active_plant_id, order_asc=False)
+    latest_cenital_img = None
+    if sessions:
+        for s in sessions:
+            if s.metrics:
+                for m in s.metrics:
+                    if m.image_path_cenital_orig:
+                        latest_cenital_img = m.image_path_cenital_orig
+                        break
+            if latest_cenital_img:
+                break
 
     return render_template('config.html', 
                            config=config, 
                            profiles=profiles, 
                            selected_profile=selected_profile,
                            plant_profiles_map=plant_profiles_map,
+                           latest_cenital_img=latest_cenital_img,
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/users')
