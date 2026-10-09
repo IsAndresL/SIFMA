@@ -3,17 +3,17 @@ chcp 65001 > nul
 title SIFMA - Instalador de Dependencias y Servidor Local
 
 echo ========================================================
-echo        SIFMA - SISTEMA DE FENOTIPADO Y TELEMETRÃA
+echo        SIFMA - SISTEMA DE FENOTIPADO Y TELEMETRÍA
 echo           Instalador Automatizado para Campo
 echo ========================================================
 echo.
 
-:: 1. Verificar si Python estÃ¡ instalado
+:: 1. Verificar si Python está instalado
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Python no estÃ¡ instalado o no se encuentra en el PATH.
+    echo [ERROR] Python no está instalado o no se encuentra en el PATH.
     echo Por favor instala Python 3.10, 3.11, 3.12 o 3.13 desde https://www.python.org/downloads/
-    echo AsegÃºrate de marcar la casilla "Add Python to PATH" durante la instalaciÃ³n.
+    echo Asegúrate de marcar la casilla "Add Python to PATH" durante la instalación.
     echo.
     pause
     exit /b 1
@@ -43,12 +43,12 @@ echo [4/5] Creando acceso directo en el Escritorio...
 powershell -ExecutionPolicy Bypass -File "%~dp0Crear_Acceso_Directo.ps1"
 
 echo.
-echo [5/5] Limpiando archivos temporales y cachÃ©s...
+echo [5/5] Limpiando archivos temporales y cachés...
 for /d /r "%~dp0" %%d in (__pycache__) do @if exist "%%d" rd /s /q "%%d" 2>nul
 
 echo.
 echo ========================================================
-echo   Â¡DESPLIEGUE E INSTALACIÃ“N COMPLETADA CON Ã‰XITO!
+echo   ¡DESPLIEGUE E INSTALACIÓN COMPLETADA CON ÉXITO!
 echo ========================================================
 echo.
 echo Para iniciar SIFMA en cualquier momento:
