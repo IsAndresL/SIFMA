@@ -280,7 +280,7 @@ class VisionPipelineManager:
         cv2.line(overlay, (cx - cross_len, cy), (cx + cross_len, cy), (0, 255, 0), 2)
         cv2.line(overlay, (cx, cy - cross_len), (cx, cy + cross_len), (0, 255, 0), 2)
         
-        cv2.putText(overlay, "ROI CALIBRADO", (max(20, cx - 100), max(30, cy - radius - 12)), 
+        cv2.putText(overlay, "ROI", (max(20, cx - 100), max(30, cy - radius - 12)), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.70, (255, 180, 0), 2)
 
         if contours:
@@ -305,7 +305,7 @@ class VisionPipelineManager:
         cv2.imwrite(output_path, overlay)
         return metrics
 
-    def process_lateral(self, image_path: str, output_path: str, profile: CropProfile) -> Optional[Dict[str, Any]]:
+    def process_lateral(self, image_path: str, output_path: str, profile: CropProfile, config: Optional[Any] = None) -> Optional[Dict[str, Any]]:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         img_raw = cv2.imread(image_path)
         if img_raw is None:
@@ -323,39 +323,61 @@ class VisionPipelineManager:
         contours = self.segmenter.extract_contours(mask, min_area=min_area)
         
         # 3. Cálculo de altura vertical y diámetro basal de tallo
-        metrics = self.calculator.calculate_lateral(img, mask, contours, profile)
+        metrics = self.calculator.calculate_lateral(img, mask, contours, profile, config=config)
         plant_contours = metrics.get("filtered_contours", contours)
         
         overlay = img.copy()
+        
+        # Dibujar la línea base horizontal calibrada de la maceta (en rojo/cian neón)
+        baseline_ratio = getattr(config, 'lateral_baseline_y', 0.72) if config else 0.72
+        baseline_px = int(h * float(baseline_ratio))
+        cv2.line(overlay, (0, baseline_px), (w, baseline_px), (0, 0, 255), 2)
+        cv2.putText(overlay, "LINEA BASE MACETA", (15, max(25, baseline_px - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+        
         if plant_contours:
-            # Dibujar contornos en ROJO sobre tallos y hojas
-            cv2.drawContours(overlay, plant_contours, -1, (0, 0, 255), 2)
+            draw_contours = getattr(profile, 'lat_draw_contours', False)
+            if draw_contours:
+                # Dibujar contornos en ROJO sobre tallos y hojas solo si está habilitado
+                cv2.drawContours(overlay, plant_contours, -1, (0, 0, 255), 2)
             
-            y_min = metrics.get("y_min")  # Ápice foliar superior
-            y_max = metrics.get("y_max")  # Base del tallo en el sustrato
+            y_min = metrics.get("y_min")  # Ápice foliar superior (detectado por OpenCV)
+            y_max = metrics.get("y_max", baseline_px)  # Base calibrada de la planta
             x_points = metrics.get("x_points")
             
             if y_min is not None and y_max is not None and y_min < y_max and x_points is not None and len(x_points) > 0:
                 x_center = int(np.mean(x_points))
                 
-                # Línea de medición vertical completa desde la base hasta la punta
-                cv2.line(overlay, (x_center - 20, y_min), (x_center + 20, y_min), (0, 255, 255), 2)
-                cv2.line(overlay, (x_center - 20, y_max), (x_center + 20, y_max), (0, 255, 255), 2)
+                # Línea de medición vertical completa desde la base hasta la punta más alta
+                cv2.line(overlay, (x_center - 25, y_min), (x_center + 25, y_min), (0, 255, 255), 2)
+                cv2.line(overlay, (x_center - 25, y_max), (x_center + 25, y_max), (0, 255, 255), 2)
                 cv2.line(overlay, (x_center, y_min), (x_center, y_max), (0, 255, 255), 2)
                 
                 # Etiqueta de altura
                 cv2.putText(overlay, f"H: {metrics['height_cm']:.1f} cm", (x_center + 15, int((y_min + y_max)/2)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 2)
                 
-            if metrics.get("stem_draw_y") is not None and metrics.get("stem_row_pixels") is not None:
-                draw_y = metrics["stem_draw_y"]
-                row_pixels = metrics["stem_row_pixels"]
-                if len(row_pixels) > 0:
-                    cv2.line(overlay, (np.min(row_pixels), draw_y), (np.max(row_pixels), draw_y), (0, 0, 255), 3)
-                    cv2.circle(overlay, (np.min(row_pixels), draw_y), 4, (0, 0, 255), -1)
-                    cv2.circle(overlay, (np.max(row_pixels), draw_y), 4, (0, 0, 255), -1)
-                    cv2.putText(overlay, f"D: {metrics['stem_diameter_mm']:.1f} mm", (np.max(row_pixels) + 15, draw_y + 4),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+            # 4. Dibujar Cuadro ROI de Tallo y Medición de Diámetro
+            stem_box = metrics.get("stem_box")
+            stem_x_left = metrics.get("stem_x_left")
+            stem_x_right = metrics.get("stem_x_right")
+            stem_y_mid = metrics.get("stem_y_mid")
+            stem_d = metrics.get("stem_diameter_mm", 0.0)
+
+            if stem_box:
+                bx1, by1, bx2, by2 = stem_box
+                # Dibujar recuadro de la zona de escaneo en naranja/ámbar
+                cv2.rectangle(overlay, (bx1, by1), (bx2, by2), (255, 165, 0), 1)
+                cv2.putText(overlay, "SCAN TALLO", (bx1, max(18, by1 - 5)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 165, 0), 1)
+                
+            if stem_x_left is not None and stem_x_right is not None and stem_d > 0 and stem_y_mid is not None:
+                # Línea de medición de calibre del tallo con topes verticales
+                cv2.line(overlay, (stem_x_left, stem_y_mid), (stem_x_right, stem_y_mid), (0, 255, 255), 2)
+                cv2.line(overlay, (stem_x_left, stem_y_mid - 4), (stem_x_left, stem_y_mid + 4), (0, 255, 255), 2)
+                cv2.line(overlay, (stem_x_right, stem_y_mid - 4), (stem_x_right, stem_y_mid + 4), (0, 255, 255), 2)
+                cv2.putText(overlay, f"D: {stem_d:.1f} mm", (bx2 + 8 if stem_box else stem_x_right + 12, stem_y_mid + 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
                                 
         cv2.imwrite(output_path, overlay)
         return {

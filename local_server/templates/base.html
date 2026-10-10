@@ -339,6 +339,105 @@
             }
         }
 
+        // Toast Notification System Global
+        window.showToast = function({ type = 'success', title = '', message = '', duration = 4000 }) {
+            let container = document.getElementById('sifma-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'sifma-toast-container';
+                container.style.cssText = 'position: fixed; top: 20px; right: 24px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'sifma-toast';
+            
+            let iconName = 'check_circle';
+            if (type === 'error') iconName = 'error';
+            else if (type === 'warning') iconName = 'warning';
+            else if (type === 'info') iconName = 'info';
+
+            toast.innerHTML = `
+                <div class="sifma-toast-body">
+                    <div class="sifma-toast-icon ${type}">
+                        <span class="material-icons-round" style="font-size: 20px;">${iconName}</span>
+                    </div>
+                    <div style="flex: 1; padding-right: 6px;">
+                        <div class="sifma-toast-title">${title}</div>
+                        <div class="sifma-toast-msg">${message}</div>
+                    </div>
+                    <button type="button" class="sifma-toast-close" title="Cerrar">
+                        <span class="material-icons-round" style="font-size: 16px;">close</span>
+                    </button>
+                </div>
+                <div class="sifma-toast-progress-bar">
+                    <div class="sifma-toast-progress-fill ${type}" style="transition: width ${duration}ms linear; width: 100%;"></div>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            const fill = toast.querySelector('.sifma-toast-progress-fill');
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    if (fill) fill.style.width = '0%';
+                }, 50);
+            });
+
+            const closeToast = () => {
+                if (toast.classList.contains('closing')) return;
+                toast.classList.add('closing');
+                setTimeout(() => {
+                    if (toast.parentElement) toast.parentElement.removeChild(toast);
+                }, 300);
+            };
+
+            toast.querySelector('.sifma-toast-close').addEventListener('click', closeToast);
+            setTimeout(closeToast, duration);
+        };
+
+        // Monitor Global en segundo plano para procesamientos activos
+        let globalPollInterval = null;
+        window.startGlobalProcessingMonitor = function() {
+            if (globalPollInterval) return;
+            globalPollInterval = setInterval(async () => {
+                const isLocallyActive = localStorage.getItem('sifma_processing_active') === 'true';
+                if (!isLocallyActive) {
+                    clearInterval(globalPollInterval);
+                    globalPollInterval = null;
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/processing/progress');
+                    if (res.ok) {
+                        const prog = await res.json();
+                        if (prog && prog.percent === 100 && !prog.is_processing) {
+                            localStorage.removeItem('sifma_processing_active');
+                            clearInterval(globalPollInterval);
+                            globalPollInterval = null;
+                            window.showToast({
+                                type: 'success',
+                                title: '¡Lote Fenotípico Finalizado!',
+                                message: prog.message || 'El procesamiento de fotos ha concluido exitosamente.',
+                                duration: 5000
+                            });
+                        } else if (prog && !prog.is_processing && prog.percent === 0 && prog.message && prog.message.startsWith('Error')) {
+                            localStorage.removeItem('sifma_processing_active');
+                            clearInterval(globalPollInterval);
+                            globalPollInterval = null;
+                            window.showToast({
+                                type: 'error',
+                                title: 'Error en Procesamiento',
+                                message: prog.message,
+                                duration: 6000
+                            });
+                        }
+                    }
+                } catch (e) {}
+            }, 2000);
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth > 992) {
                 const saved = localStorage.getItem('sifma_sidebar_collapsed');
@@ -355,8 +454,102 @@
                     openOnboardingModal();
                 }, 400);
             }
+
+            // Iniciar monitoreo si hay un proceso en segundo plano lanzado desde otra pestaña
+            if (localStorage.getItem('sifma_processing_active') === 'true') {
+                window.startGlobalProcessingMonitor();
+            }
         });
     </script>
+
+    <style>
+    @keyframes toastSlideIn {
+        from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes toastSlideOut {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    }
+    .sifma-toast {
+        display: flex;
+        flex-direction: column;
+        background: #0f172a;
+        color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        min-width: 320px;
+        max-width: 420px;
+        pointer-events: auto;
+        position: relative;
+        overflow: hidden;
+        animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transition: all 0.3s ease;
+    }
+    .sifma-toast.closing {
+        animation: toastSlideOut 0.3s ease forwards;
+    }
+    .sifma-toast-body {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+    .sifma-toast-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .sifma-toast-icon.success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .sifma-toast-icon.info { background: rgba(37, 99, 235, 0.2); color: #3b82f6; }
+    .sifma-toast-icon.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .sifma-toast-icon.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+    .sifma-toast-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 2px;
+    }
+    .sifma-toast-msg {
+        font-size: 12px;
+        color: #94a3b8;
+        line-height: 1.4;
+    }
+    .sifma-toast-close {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        margin-left: auto;
+        transition: color 0.2s;
+    }
+    .sifma-toast-close:hover { color: #ffffff; }
+    .sifma-toast-progress-bar {
+        width: 100%;
+        height: 3.5px;
+        background: rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+    .sifma-toast-progress-fill {
+        height: 100%;
+        width: 100%;
+        transform-origin: left;
+    }
+    .sifma-toast-progress-fill.success { background: #10b981; }
+    .sifma-toast-progress-fill.info { background: #3b82f6; }
+    .sifma-toast-progress-fill.warning { background: #f59e0b; }
+    .sifma-toast-progress-fill.error { background: #ef4444; }
+    </style>
 
     {% block scripts %}{% endblock %}
 </body>

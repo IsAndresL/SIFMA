@@ -30,66 +30,103 @@ def scan_usb_drives():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Error al escanear unidades USB: {e}"}), 500
 
+@api_bp.route('/api/processing/progress', methods=['GET'])
+def get_processing_progress():
+    """Retorna el estado de progreso en tiempo real del procesamiento de imágenes."""
+    return jsonify(vision_service.get_progress())
+
 @api_bp.route('/api/process_usb_path', methods=['POST'])
 def process_usb_path():
     data = request.json or {}
-    folder_path = data.get("folder_path") or data.get("path") or data.get("mountpoint")
+    folder_paths = data.get("folder_paths") or []
+    single_path = data.get("folder_path") or data.get("path") or data.get("mountpoint")
+    if single_path and single_path not in folder_paths:
+        folder_paths.append(single_path)
+
     crop_type = data.get("crop_type")
     period = data.get("period", "Día 1")
     plant_id = data.get("plant_id") or session.get("active_plant_id", 1)
     
-    if not folder_path or not os.path.exists(folder_path):
-        return jsonify({"status": "error", "message": f"Ruta no válida o no encontrada: {folder_path}"}), 400
+    if not folder_paths:
+        vision_service.set_progress(0, "Ruta no encontrada", is_processing=False)
+        return jsonify({"status": "error", "message": "No se especificaron carpetas para procesar."}), 400
         
     try:
-        # Detectar si la carpeta seleccionada contiene subcarpetas de turnos (mañana, mediodía, tarde)
-        subdirs_with_images = []
-        for r_dir, _, f_list in os.walk(folder_path):
-            imgs = [img for img in f_list if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
-            if imgs and r_dir != folder_path:
-                subdirs_with_images.append((r_dir, imgs))
+        # Recopilar todos los subdirectorios con imágenes de todas las carpetas seleccionadas
+        all_subdirs_to_process = []
+        for f_path in folder_paths:
+            if not f_path or not os.path.exists(f_path):
+                continue
+            subdirs = []
+            for r_dir, _, f_list in os.walk(f_path):
+                imgs = [img for img in f_list if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                if imgs and r_dir != f_path:
+                    subdirs.append((f_path, r_dir, imgs))
+            if subdirs:
+                all_subdirs_to_process.extend(subdirs)
+            else:
+                # Fotos directas en la raíz de f_path
+                direct_imgs = [img for img in os.listdir(f_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                if direct_imgs:
+                    all_subdirs_to_process.append((f_path, f_path, direct_imgs))
 
+        if not all_subdirs_to_process:
+            vision_service.set_progress(0, "No se encontraron fotos en las carpetas seleccionadas.", is_processing=False)
+            return jsonify({"status": "error", "message": "No se encontraron fotos válidas (.jpg, .png) en las carpetas seleccionadas."}), 400
+
+        total_all_photos = sum(len(imgs) for _, _, imgs in all_subdirs_to_process)
+        accumulated_photos = 0
         processed_results = []
-        if subdirs_with_images:
-            # Procesar cada turno de ese día de forma individual y ordenada
-            for sub_dir, _ in subdirs_with_images:
-                sub_name = os.path.basename(sub_dir).lower()
-                if 'manana' in sub_name or 'mañana' in sub_name:
-                    turn_label = "Mañana"
-                elif 'medio_dia' in sub_name or 'mediodia' in sub_name or 'medio-dia' in sub_name:
-                    turn_label = "Mediodía"
-                elif 'tarde' in sub_name:
-                    turn_label = "Tarde"
-                else:
-                    turn_label = sub_name.replace('_', ' ').title()
 
-                day_label = os.path.basename(folder_path)
-                full_turn_period = f"{day_label} - {turn_label}" if re.match(r'^\d{4}[-_]\d{2}[-_]\d{2}$', day_label) else turn_label
-                
-                r = vision_service.process_folder_batch(
-                    sub_dir,
-                    crop_type=crop_type,
-                    period=full_turn_period,
-                    plant_id=int(plant_id)
-                )
-                processed_results.append(r)
-        else:
-            # Procesar directamente las imágenes de la carpeta
-            res = vision_service.process_folder_batch(
-                folder_path, 
-                crop_type=crop_type, 
-                period=period,
-                plant_id=int(plant_id)
+        vision_service.set_progress(
+            percent=5,
+            message=f"Iniciando procesamiento de {len(all_subdirs_to_process)} turno(s) ({total_all_photos} fotos en total)...",
+            is_processing=True,
+            current_item=0,
+            total_items=total_all_photos
+        )
+
+        for root_folder, sub_dir, imgs in all_subdirs_to_process:
+            sub_name = os.path.basename(sub_dir).lower()
+            if 'manana' in sub_name or 'mañana' in sub_name:
+                turn_label = "Mañana"
+            elif 'medio_dia' in sub_name or 'mediodia' in sub_name or 'medio-dia' in sub_name:
+                turn_label = "Mediodía"
+            elif 'tarde' in sub_name:
+                turn_label = "Tarde"
+            else:
+                turn_label = sub_name.replace('_', ' ').title()
+
+            day_label = os.path.basename(root_folder)
+            full_turn_period = f"{day_label} - {turn_label}" if re.match(r'^\d{4}[-_]\d{2}[-_]\d{2}$', day_label) else (f"{period} - {turn_label}" if period != "Día 1" else turn_label)
+            
+            r = vision_service.process_folder_batch(
+                sub_dir,
+                crop_type=crop_type,
+                period=full_turn_period,
+                plant_id=int(plant_id),
+                global_offset=accumulated_photos,
+                total_global_photos=total_all_photos,
+                turn_label=turn_label
             )
-            processed_results.append(res)
+            accumulated_photos += len(imgs)
+            processed_results.append(r)
+
+        vision_service.set_progress(
+            percent=100,
+            message=f"¡Procesamiento fenotípico finalizado con éxito! ({total_all_photos} fotos procesadas)",
+            is_processing=False
+        )
 
         return jsonify({
             "status": "success",
-            "message": f"Día procesado con éxito para Canastilla #{plant_id} ({len(processed_results)} turnos procesados)",
+            "message": f"Se procesaron {len(processed_results)} turnos ({total_all_photos} fotos) exitosamente para Canastilla #{plant_id}.",
             "data": processed_results[0] if len(processed_results) == 1 else processed_results,
-            "processed_batches": processed_results
+            "processed_batches": processed_results,
+            "total_photos": total_all_photos
         })
     except Exception as e:
+        vision_service.set_progress(0, f"Error: {e}", is_processing=False)
         return jsonify({"status": "error", "message": f"Error al procesar lote USB: {e}"}), 500
 
 @api_bp.route('/api/process_usb_mount', methods=['POST'])
@@ -101,30 +138,43 @@ def process_usb_mount():
     plant_id = data.get("plant_id") or session.get("active_plant_id", 1)
     
     if not mountpoint or not os.path.exists(mountpoint):
+        vision_service.set_progress(0, "Ruta USB no encontrada", is_processing=False)
         return jsonify({"status": "error", "message": f"Ruta de memoria USB no encontrada: {mountpoint}"}), 400
 
     batches = vision_service.detect_connected_usb_drives()
     target_batches = [b for b in batches if mountpoint in b["path"] or b["path"] in mountpoint or mountpoint == b.get("drive_root")]
     
     if not target_batches:
-        # Si la ruta directa contiene fotos
         target_batches = [{"path": mountpoint, "period_str": "Muestreo General", "date_str": target_date or "Día 1"}]
 
+    total_photos_all = sum(b.get("images_count", 10) for b in target_batches)
+    accumulated = 0
     processed_results = []
+    
     for b in target_batches:
         b_path = b["path"]
         p_name = b.get("period_str", "Muestreo")
         if target_date:
             p_name = f"{target_date} - {p_name}"
         try:
-            r = vision_service.process_folder_batch(b_path, period=p_name, plant_id=int(plant_id))
+            r = vision_service.process_folder_batch(
+                b_path, 
+                period=p_name, 
+                plant_id=int(plant_id),
+                global_offset=accumulated,
+                total_global_photos=total_photos_all,
+                turn_label=b.get("date_str", "USB")
+            )
+            accumulated += b.get("images_count", 10)
             processed_results.append(r)
         except Exception as err:
             pass
 
     if not processed_results:
+        vision_service.set_progress(0, "No se encontraron fotos", is_processing=False)
         return jsonify({"status": "error", "message": "No se encontraron fotos válidas para procesar en la unidad."}), 400
 
+    vision_service.set_progress(100, "¡Historial USB procesado exitosamente!", is_processing=False)
     return jsonify({
         "status": "success",
         "message": f"Se procesaron {len(processed_results)} turnos/lotes exitosamente para la Canastilla #{plant_id}.",

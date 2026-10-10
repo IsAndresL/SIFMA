@@ -64,7 +64,10 @@
         <!-- KPI 1: Área Foliar -->
         <div class="kpi-card">
             <div class="kpi-card-header">
-                <span class="kpi-label">Área Foliar</span>
+                <div>
+                    <span class="kpi-label">Área Foliar</span>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio del Día (3 Períodos)</div>
+                </div>
                 <div class="kpi-icon-badge emerald">
                     <span class="material-icons-round">spa</span>
                 </div>
@@ -75,14 +78,17 @@
             </div>
             <div class="kpi-footer-badge {% if daily.kpis.foliar_area_diff >= 0 %}positive{% else %}neutral{% endif %}">
                 <span class="material-icons-round" style="font-size: 14px;">{% if daily.kpis.foliar_area_diff >= 0 %}trending_up{% else %}trending_flat{% endif %}</span>
-                <span>{% if daily.kpis.foliar_area_diff != 0.0 %}{{ '+ ' if daily.kpis.foliar_area_diff > 0 else '' }}{{ daily.kpis.foliar_area_diff }} cm² vs día ant.{% else %}Expansión canopia{% endif %}</span>
+                <span>{% if daily.kpis.foliar_area_diff != 0.0 %}{{ '+ ' if daily.kpis.foliar_area_diff > 0 else '' }}{{ daily.kpis.foliar_area_diff }} cm² vs día ant.{% else %}Promedio consolidado{% endif %}</span>
             </div>
         </div>
 
         <!-- KPI 2: Temperatura -->
         <div class="kpi-card">
             <div class="kpi-card-header">
-                <span class="kpi-label">Temperatura Media</span>
+                <div>
+                    <span class="kpi-label">Temperatura Media</span>
+                    <div style="font-size: 10px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio Diario (24h)</div>
+                </div>
                 <div class="kpi-icon-badge blue">
                     <span class="material-icons-round">thermostat</span>
                 </div>
@@ -100,7 +106,10 @@
         <!-- KPI 3: Humedad Relativa -->
         <div class="kpi-card">
             <div class="kpi-card-header">
-                <span class="kpi-label">Humedad Relativa</span>
+                <div>
+                    <span class="kpi-label">Humedad Relativa</span>
+                    <div style="font-size: 10px; font-weight: 700; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio Diario (24h)</div>
+                </div>
                 <div class="kpi-icon-badge cyan">
                     <span class="material-icons-round">water_drop</span>
                 </div>
@@ -118,7 +127,10 @@
         <!-- KPI 4: Radiación Solar UV -->
         <div class="kpi-card">
             <div class="kpi-card-header">
-                <span class="kpi-label">Radiación Solar</span>
+                <div>
+                    <span class="kpi-label">Radiación Solar</span>
+                    <div style="font-size: 10px; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio Diario</div>
+                </div>
                 <div class="kpi-icon-badge amber">
                     <span class="material-icons-round">wb_sunny</span>
                 </div>
@@ -136,7 +148,10 @@
         <!-- KPI 5: Salud Vegetal -->
         <div class="kpi-card">
             <div class="kpi-card-header">
-                <span class="kpi-label">Salud y Vigor Foliar</span>
+                <div>
+                    <span class="kpi-label">Salud y Vigor Foliar</span>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio del Día</div>
+                </div>
                 <div class="kpi-icon-badge emerald">
                     <span class="material-icons-round">health_and_safety</span>
                 </div>

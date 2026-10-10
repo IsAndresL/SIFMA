@@ -23,7 +23,28 @@ class VisionApplicationService:
     Caso de uso: Procesamiento de lotes fotográficos, detección USB y persistencia de métricas individuales.
     (SOLID: SRP, DIP)
     """
-    
+    _progress = {
+        "is_processing": False,
+        "percent": 0,
+        "message": "Inactivo",
+        "current_item": 0,
+        "total_items": 0,
+        "current_turn": "",
+        "detail": ""
+    }
+
+    @classmethod
+    def get_progress(cls) -> Dict[str, Any]:
+        return cls._progress
+
+    @classmethod
+    def set_progress(cls, percent: int, message: str, is_processing: bool = True, **kwargs):
+        cls._progress["is_processing"] = is_processing
+        cls._progress["percent"] = max(0, min(100, percent))
+        cls._progress["message"] = message
+        for k, v in kwargs.items():
+            cls._progress[k] = v
+
     def __init__(
         self,
         session_repo: Optional[CaptureSessionRepository] = None,
@@ -145,7 +166,10 @@ class VisionApplicationService:
         crop_type: Optional[str] = None, 
         period: str = "Día 1", 
         sensor_data: Optional[Dict[str, Any]] = None, 
-        plant_id: int = 1
+        plant_id: int = 1,
+        global_offset: int = 0,
+        total_global_photos: int = 0,
+        turn_label: str = ""
     ) -> Dict[str, Any]:
         """Procesa una carpeta de imágenes, calcula métricas biométricas individuales y promedio."""
         if not os.path.exists(folder_path):
@@ -155,11 +179,16 @@ class VisionApplicationService:
         photos_meta_map = {}
         session_timestamp = datetime.now()
         
+        # Obtener el cultivo asignado en el sistema para esta canastilla
+        sys_config = self.config_repo.get()
+        assigned_crop = getattr(sys_config, f"plant_{plant_id}_crop", None) or sys_config.selected_crop_type
+        
+        meta_crop = None
         if os.path.exists(metadata_file):
             try:
                 with open(metadata_file, "r") as f:
                     meta = json.load(f)
-                    crop_type = meta.get("crop_type", crop_type)
+                    meta_crop = meta.get("crop_type")
                     if "timestamp" in meta:
                         try:
                             session_timestamp = datetime.fromisoformat(meta["timestamp"])
@@ -175,7 +204,9 @@ class VisionApplicationService:
             except Exception:
                 pass
                 
-        profile = self.crop_repo.get_by_type(crop_type) or self.crop_repo.get_by_type("cebollin") or self.crop_repo.get_all()[0]
+        # Jerarquía: crop_type explícito > cultivo asignado a la Canastilla > metadata.json > fallback cebollín
+        effective_crop = crop_type or assigned_crop or meta_crop or "cebollin"
+        profile = self.crop_repo.get_by_type(effective_crop) or self.crop_repo.get_by_type(meta_crop) or self.crop_repo.get_by_type("cebollin") or self.crop_repo.get_all()[0]
         
         all_images = glob.glob(os.path.join(folder_path, "*.png")) + glob.glob(os.path.join(folder_path, "*.jpg"))
         if not all_images:
@@ -202,7 +233,23 @@ class VisionApplicationService:
         
         sys_config = self.config_repo.get()
 
+        total_folder_photos = len(cenital_imgs) + len(lateral_imgs)
+        actual_total = total_global_photos if total_global_photos > 0 else max(1, total_folder_photos)
+        current_processed = global_offset
+        turn_prefix = f"[{turn_label}] " if turn_label else ""
+
         for i, src_img in enumerate(cenital_imgs):
+            current_processed += 1
+            pct = int((current_processed / (actual_total + 1)) * 95)
+            self.set_progress(
+                percent=pct,
+                message=f"{turn_prefix}Segmentando vista cenital {i+1}/{len(cenital_imgs)} (ExG + Otsu)...",
+                is_processing=True,
+                current_item=current_processed,
+                total_items=actual_total,
+                current_turn=turn_label
+            )
+
             dst_orig = os.path.join(upload_dir, f"cenital_{i+1}.png")
             dst_proc = os.path.join(processed_dir, f"proc_cenital_{i+1}.png")
             shutil.copy(src_img, dst_orig)
@@ -220,11 +267,22 @@ class VisionApplicationService:
                 })
                 
         for i, src_img in enumerate(lateral_imgs):
+            current_processed += 1
+            pct = int((current_processed / (actual_total + 1)) * 95)
+            self.set_progress(
+                percent=pct,
+                message=f"{turn_prefix}Segmentando vista lateral {i+1}/{len(lateral_imgs)} (Tallo y Altura)...",
+                is_processing=True,
+                current_item=current_processed,
+                total_items=actual_total,
+                current_turn=turn_label
+            )
+
             dst_orig = os.path.join(upload_dir, f"lateral_{i+1}.png")
             dst_proc = os.path.join(processed_dir, f"proc_lateral_{i+1}.png")
             shutil.copy(src_img, dst_orig)
             
-            res = self.pipeline.process_lateral(dst_orig, dst_proc, profile)
+            res = self.pipeline.process_lateral(dst_orig, dst_proc, profile, config=sys_config)
             if res:
                 lateral_results.append(res)
                 rel_orig = os.path.relpath(dst_orig, config.DATA_DIR).replace("\\", "/")

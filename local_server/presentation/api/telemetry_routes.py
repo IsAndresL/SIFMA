@@ -19,6 +19,8 @@ def start_telemetry():
     data = request.json or {}
     port = data.get("port", "USB_ANTENNA_AUTO")
     res = telemetry_service.start_acquisition(port=port, app=current_app._get_current_object())
+    if res.get("status") == "error":
+        return jsonify(res), 400
     return jsonify({"status": "success", "data": res})
 
 @api_bp.route('/api/telemetry/stop', methods=['POST'])
@@ -142,14 +144,14 @@ def download_telemetry_csv():
         fecha_str = r.timestamp.strftime("%d/%m/%Y") if r.timestamp else ""
         hora_str = r.timestamp.strftime("%I:%M:%S %p") if r.timestamp else ""
         
-        ph_val = f"{(r.water_ph if r.water_ph is not None else 6.12):.2f}".replace('.', ',')
-        turb_val = f"{(r.turbidity_ntu if r.turbidity_ntu is not None else 4.06):.2f}".replace('.', ',')
-        ec_val = f"{(r.ec_conductivity if r.ec_conductivity is not None else 1649.6):.1f}".replace('.', ',')
-        do_val = f"{(r.dissolved_oxygen_mg_l if r.dissolved_oxygen_mg_l is not None else 7.60):.2f}".replace('.', ',')
-        water_t_val = f"{(getattr(r, 'water_temp', 20.0) if getattr(r, 'water_temp', None) is not None else 20.0):.1f}".replace('.', ',')
-        motor_st_val = int(getattr(r, 'motor_state', 1) if getattr(r, 'motor_state', None) is not None else (1 if r.motor_current > 0.1 else 0))
-        temp_val = f"{(r.temperature if r.temperature is not None else 25.49):.2f}".replace('.', ',')
-        hum_val = f"{(r.humidity if r.humidity is not None else 83.2):.1f}".replace('.', ',')
+        ph_val = f"{r.water_ph:.2f}".replace('.', ',') if r.water_ph is not None else ""
+        turb_val = f"{r.turbidity_ntu:.2f}".replace('.', ',') if r.turbidity_ntu is not None else ""
+        ec_val = f"{r.ec_conductivity:.1f}".replace('.', ',') if r.ec_conductivity is not None else ""
+        do_val = f"{r.dissolved_oxygen_mg_l:.2f}".replace('.', ',') if r.dissolved_oxygen_mg_l is not None else ""
+        water_t_val = f"{r.water_temp:.1f}".replace('.', ',') if getattr(r, 'water_temp', None) is not None else ""
+        motor_st_val = int(r.motor_state) if getattr(r, 'motor_state', None) is not None else (1 if (r.motor_current and r.motor_current > 0.1) else 0)
+        temp_val = f"{r.temperature:.2f}".replace('.', ',') if r.temperature is not None else ""
+        hum_val = f"{r.humidity:.1f}".replace('.', ',') if r.humidity is not None else ""
 
         writer.writerow([
             fecha_str,

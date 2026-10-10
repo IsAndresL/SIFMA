@@ -249,10 +249,13 @@
                 
                 <!-- SECTOR A: RESUMEN DE TELEMETRÍA AMBIENTAL -->
                 <div style="margin-bottom: 22px;">
-                    <h4 style="font-size: 13.5px; font-weight: 700; color: #0284c7; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                        <span class="material-icons-round" style="font-size: 18px;">sensors</span>
-                        <span>Microclima Ambiental de la Jornada</span>
-                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: #0284c7; margin: 0; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-icons-round" style="font-size: 18px;">sensors</span>
+                            <span>Microclima Ambiental de la Jornada</span>
+                        </h4>
+                        <span class="badge badge-primary" style="font-size: 10.5px;">Promedios Diarios (24h)</span>
+                    </div>
 
                     <div id="modal-env-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
                         <!-- Inyectado dinámicamente con JS -->
@@ -261,10 +264,13 @@
 
                 <!-- SECTOR B: LOTES FOTOGRÁFICOS Y FENOTIPADO -->
                 <div style="margin-bottom: 22px;">
-                    <h4 style="font-size: 13.5px; font-weight: 700; color: var(--accent-success); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                        <span class="material-icons-round" style="font-size: 18px;">spa</span>
-                        <span>Muestreos de Fenotipado Digital</span>
-                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--accent-success); margin: 0; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-icons-round" style="font-size: 18px;">spa</span>
+                            <span>Muestreos de Fenotipado Digital</span>
+                        </h4>
+                        <span class="badge badge-success" style="font-size: 10.5px;">Promedios de 5 Fotos / Período</span>
+                    </div>
 
                     <div id="modal-sessions-container">
                         <!-- Inyectado dinámicamente con JS -->

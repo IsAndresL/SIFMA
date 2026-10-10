@@ -35,6 +35,17 @@ class Config(db.Model):
     cenital_roi_radius = Column(Float, default=0.1450)
     cenital_roi_mode = Column(String(20), default="dynamic_conn") # 'dynamic_conn' o 'strict_circle'
 
+    # Calibración de Línea Base Lateral Interactiva (Altura desde la maceta)
+    lateral_baseline_y = Column(Float, default=0.7200) # Porcentaje de altura Y donde empieza el sustrato/borde de canastilla
+    lateral_baseline_mode = Column(String(20), default="manual_baseline") # 'manual_baseline' o 'auto_bottom'
+
+    # Calibración de Cuadro / Franja de Medición de Tallo (Scanline & Gradiente de Bordes)
+    lateral_stem_roi_y = Column(Float, default=0.6600) # Centro Y del cuadro de tallo (normalizado 0.0 - 1.0)
+    lateral_stem_roi_height = Column(Float, default=0.0500) # Altura del cuadro de tallo (normalizado 0.0 - 1.0)
+    lateral_stem_roi_x = Column(Float, default=0.5000) # Centro X del cuadro de tallo (normalizado 0.0 - 1.0)
+    lateral_stem_roi_width = Column(Float, default=0.2000) # Ancho del cuadro de tallo (normalizado 0.0 - 1.0)
+    lateral_stem_mode = Column(String(20), default="auto_edge") # 'auto_edge' o 'disabled'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -59,5 +70,12 @@ class Config(db.Model):
             "cenital_roi_cx": self.cenital_roi_cx if self.cenital_roi_cx is not None else 0.4955,
             "cenital_roi_cy": self.cenital_roi_cy if self.cenital_roi_cy is not None else 0.4408,
             "cenital_roi_radius": self.cenital_roi_radius if self.cenital_roi_radius is not None else 0.1450,
-            "cenital_roi_mode": self.cenital_roi_mode or "dynamic_conn"
+            "cenital_roi_mode": self.cenital_roi_mode or "dynamic_conn",
+            "lateral_baseline_y": self.lateral_baseline_y if self.lateral_baseline_y is not None else 0.7200,
+            "lateral_baseline_mode": self.lateral_baseline_mode or "manual_baseline",
+            "lateral_stem_roi_y": self.lateral_stem_roi_y if self.lateral_stem_roi_y is not None else 0.6600,
+            "lateral_stem_roi_height": self.lateral_stem_roi_height if self.lateral_stem_roi_height is not None else 0.0500,
+            "lateral_stem_roi_x": self.lateral_stem_roi_x if self.lateral_stem_roi_x is not None else 0.5000,
+            "lateral_stem_roi_width": self.lateral_stem_roi_width if self.lateral_stem_roi_width is not None else 0.2000,
+            "lateral_stem_mode": self.lateral_stem_mode or "auto_edge"
         }

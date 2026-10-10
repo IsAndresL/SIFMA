@@ -273,8 +273,11 @@
         <!-- Gráfica 1: Área Foliar -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
             <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Evolución de Área Foliar (cm²)</h4>
-                <span class="badge badge-success">Biometría</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Evolución de Área Foliar (cm²)</h4>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Promedio de 5 fotos por período</span>
+                </div>
+                <span class="badge badge-success">Promedio 5 Fotos / Período</span>
             </div>
             <div class="chart-stage-container" style="height: 260px;">
                 <canvas id="dedicFoliarChart"></canvas>
@@ -284,8 +287,11 @@
         <!-- Gráfica 2: Altura y Tallo -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
             <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Altura de Planta (cm) y Tallo (mm)</h4>
-                <span class="badge badge-primary">Morfología</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Altura de Planta (cm) y Tallo (mm)</h4>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Promedio de 5 fotos por período</span>
+                </div>
+                <span class="badge badge-primary">Promedio 5 Fotos / Período</span>
             </div>
             <div class="chart-stage-container" style="height: 260px;">
                 <canvas id="dedicMorphChart"></canvas>
@@ -295,8 +301,11 @@
         <!-- Gráfica 3: Clima Temperatura y Humedad -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
             <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Temperatura (°C) y Humedad (% HR)</h4>
-                <span class="badge badge-primary">Microclima</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Temperatura (°C) y Humedad (% HR)</h4>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Telemetría captada en la franja horaria</span>
+                </div>
+                <span class="badge badge-primary">Telemetría Sincronizada</span>
             </div>
             <div class="chart-stage-container" style="height: 260px;">
                 <canvas id="dedicClimateChart"></canvas>
@@ -306,8 +315,11 @@
         <!-- Gráfica 4: Radiación y Bombeo -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
             <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Radiación Solar (lux) y Bombeo (A)</h4>
-                <span class="badge badge-warning">Fotoperíodo / Hidráulica</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Radiación Solar (lux) y Bombeo (A)</h4>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Telemetría captada en la franja horaria</span>
+                </div>
+                <span class="badge badge-warning">Telemetría Sincronizada</span>
             </div>
             <div class="chart-stage-container" style="height: 260px;">
                 <canvas id="dedicSolarChart"></canvas>
@@ -317,8 +329,11 @@
         <!-- Gráfica 5: pH y Oxígeno Disuelto -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
             <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">pH y Oxígeno Disuelto (mg/L)</h4>
-                <span class="badge badge-info" style="background: rgba(6, 182, 212, 0.15); color: #0891b2;">Fisicoquímica</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 700; margin: 0;">pH y Oxígeno Disuelto (mg/L)</h4>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Telemetría captada en la franja horaria</span>
+                </div>
+                <span class="badge badge-info" style="background: rgba(6, 182, 212, 0.15); color: #0891b2;">Telemetría Sincronizada</span>
             </div>
             <div class="chart-stage-container" style="height: 260px;">
                 <canvas id="dedicWaterPhChart"></canvas>
@@ -328,8 +343,11 @@
         <!-- Gráfica 6: Conductividad, Turbidez y Temp. Agua -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
             <div class="widget-header-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Conductividad (µS/cm), Turbidez (NTU) y Temp. Agua (°C)</h4>
-                <span class="badge badge-primary" style="background: rgba(139, 92, 246, 0.15); color: #7c3aed;">Nutrientes / Agua</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Conductividad (µS/cm), Turbidez (NTU) y Temp. Agua (°C)</h4>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Telemetría captada en la franja horaria</span>
+                </div>
+                <span class="badge badge-primary" style="background: rgba(139, 92, 246, 0.15); color: #7c3aed;">Telemetría Sincronizada</span>
             </div>
             <div class="chart-stage-container" style="height: 260px;">
                 <canvas id="dedicWaterQualityChart"></canvas>
@@ -343,7 +361,7 @@
     <div class="widget-header">
         <div class="widget-header-title">
             <h3>Matriz de Cruce Sincronizado por Período de Muestreo</h3>
-            <p>Emparejamiento promedio exacto entre las 5 fotos procesadas y las lecturas climáticas</p>
+            <p>Valores promediados de las 5 fotos por sesión vs lecturas de telemetría ambiental</p>
         </div>
         <div class="badge badge-primary">
             {{ cross_data | length }} Períodos Registrados
@@ -356,10 +374,10 @@
                 <tr>
                     <th>Fecha y Período</th>
                     <th>Hora</th>
-                    <th>Área Foliar</th>
-                    <th>Altura</th>
-                    <th>Tallo</th>
-                    <th>Salud</th>
+                    <th>Área Foliar (Prom. 5 Fotos)</th>
+                    <th>Altura (Prom. 5 Fotos)</th>
+                    <th>Tallo (Prom. 5 Fotos)</th>
+                    <th>Salud (Prom.)</th>
                     <th>Temp. Amb.</th>
                     <th>Humedad</th>
                     <th>pH</th>
@@ -368,7 +386,7 @@
                     <th>O₂ Disuelto</th>
                     <th>Temp. Agua</th>
                     <th>Bomba</th>
-                    <th>Fotos</th>
+                    <th>Fotos Ráfaga</th>
                     <th style="text-align: right;">Acciones</th>
                 </tr>
             </thead>
@@ -395,43 +413,47 @@
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #2563eb;">
-                                    {{ row.temperature_c }} °C
+                                    {% if row.temperature_c is not none %}{{ row.temperature_c }} °C{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #0284c7;">
-                                    {{ row.humidity_rh }}%
+                                    {% if row.humidity_rh is not none %}{{ row.humidity_rh }}%{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #ec4899;">
-                                    {{ row.water_ph }}
+                                    {% if row.water_ph is not none %}{{ row.water_ph }}{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #8b5cf6;">
-                                    {{ row.ec_conductivity }} µS/cm
+                                    {% if row.ec_conductivity is not none %}{{ row.ec_conductivity }} µS/cm{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #f97316;">
-                                    {{ row.turbidity_ntu }} NTU
+                                    {% if row.turbidity_ntu is not none %}{{ row.turbidity_ntu }} NTU{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #06b6d4;">
-                                    {{ row.dissolved_oxygen_mg_l }} mg/L
+                                    {% if row.dissolved_oxygen_mg_l is not none %}{{ row.dissolved_oxygen_mg_l }} mg/L{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
                                 <span style="font-weight: 600; color: #0ea5e9;">
-                                    {{ row.water_temp_c }} °C
+                                    {% if row.water_temp_c is not none %}{{ row.water_temp_c }} °C{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}
                                 </span>
                             </td>
                             <td>
-                                <span class="badge {% if row.motor_state == 1 %}badge-success{% else %}badge-secondary{% endif %}" style="font-size: 11px;">
-                                    {{ "ON" if row.motor_state == 1 else "OFF" }} ({{ row.motor_current_a }} A)
-                                </span>
+                                {% if row.motor_state is not none %}
+                                    <span class="badge {% if row.motor_state == 1 %}badge-success{% else %}badge-secondary{% endif %}" style="font-size: 11px;">
+                                        {{ "ON" if row.motor_state == 1 else "OFF" }} ({{ row.motor_current_a or 0.0 }} A)
+                                    </span>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 12px;">--</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <span class="badge badge-success">{{ row.photos_count }} fotos</span>

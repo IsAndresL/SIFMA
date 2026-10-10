@@ -33,5 +33,23 @@ class CropProfileRepository:
             existing.b_max = profile.b_max
             existing.pixel_to_cm_ratio = profile.pixel_to_cm_ratio
             existing.has_stem = profile.has_stem
+            
+            # Parámetros dedicados de Cámara Lateral (Morfometría y Escala)
+            existing.lat_h_min = getattr(profile, 'lat_h_min', profile.h_min)
+            existing.lat_h_max = getattr(profile, 'lat_h_max', profile.h_max)
+            existing.lat_s_min = getattr(profile, 'lat_s_min', profile.s_min)
+            existing.lat_s_max = getattr(profile, 'lat_s_max', profile.s_max)
+            existing.lat_v_min = getattr(profile, 'lat_v_min', profile.v_min)
+            existing.lat_v_max = getattr(profile, 'lat_v_max', profile.v_max)
+            existing.lat_l_min = getattr(profile, 'lat_l_min', profile.l_min)
+            existing.lat_l_max = getattr(profile, 'lat_l_max', profile.l_max)
+            existing.lat_a_min = getattr(profile, 'lat_a_min', profile.a_min)
+            existing.lat_a_max = getattr(profile, 'lat_a_max', profile.a_max)
+            existing.lat_b_min = getattr(profile, 'lat_b_min', profile.b_min)
+            existing.lat_b_max = getattr(profile, 'lat_b_max', profile.b_max)
+            existing.lat_pixel_to_cm_ratio = getattr(profile, 'lat_pixel_to_cm_ratio', profile.pixel_to_cm_ratio)
+            existing.lat_min_area = getattr(profile, 'lat_min_area', 60)
+            existing.lat_filter_isolated = getattr(profile, 'lat_filter_isolated', True)
+            existing.lat_draw_contours = getattr(profile, 'lat_draw_contours', False)
         db.session.commit()
         return profile

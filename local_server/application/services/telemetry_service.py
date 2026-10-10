@@ -25,13 +25,7 @@ class TelemetryApplicationService:
         self.thread = None
         self.selected_port = "USB_ANTENNA_AUTO"
         self.current_csv_file = None
-        self.latest_reading = {
-            "temperature": 23.5,
-            "humidity": 65.0,
-            "uv_solar": 380.0,
-            "motor_current": 0.42,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        self.latest_reading: Optional[Dict[str, Any]] = None
         self.readings_count = 0
         self.start_time = None
 
@@ -49,8 +43,24 @@ class TelemetryApplicationService:
         if self.is_recording:
             return {"status": "already_running", "file": self.current_csv_file}
 
+        # 1. Validar si hay puertos COM reales disponibles
+        available = self.get_available_ports()
+        if not available:
+            return {
+                "status": "error",
+                "message": "No se detectó ninguna antena conectada a los puertos USB. Conecte la antena receptora e intente nuevamente."
+            }
+
         self.selected_port = port
         self.adapter.port = port
+
+        # 2. Intentar establecer conexión serie real
+        if not self.adapter._connect():
+            return {
+                "status": "error",
+                "message": f"No se pudo establecer comunicación con la antena en el puerto '{port}'. Verifique que esté conectada y no esté ocupada."
+            }
+
         self.is_recording = True
         self.start_time = datetime.now()
         self.readings_count = 0
@@ -85,6 +95,7 @@ class TelemetryApplicationService:
         self.is_recording = False
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=2.0)
+        self.adapter._disconnect()
 
         return {
             "status": "stopped",
@@ -107,6 +118,10 @@ class TelemetryApplicationService:
         while self.is_recording:
             try:
                 sample = self.adapter.read_sample()
+                if not sample:
+                    time.sleep(1.0)
+                    continue
+
                 self.latest_reading = sample
 
                 now_dt = datetime.now()
@@ -116,16 +131,32 @@ class TelemetryApplicationService:
                 except Exception:
                     dt_obj = now_dt
 
-                ph_val = sample.get("water_ph", 6.12)
-                turb_val = sample.get("turbidity_ntu", 4.06)
-                ec_val = sample.get("ec_conductivity", 1649.6)
-                do_val = sample.get("dissolved_oxygen_mg_l", 7.6)
-                water_t_val = sample.get("water_temp", 20.0)
-                mot_st_val = sample.get("motor_state", 1)
-                temp_val = sample.get("temperature", 25.49)
-                hum_val = sample.get("humidity", 83.2)
+                ph_val = sample.get("water_ph", 0.0)
+                turb_val = sample.get("turbidity_ntu", 0.0)
+                ec_val = sample.get("ec_conductivity", 0.0)
+                do_val = sample.get("dissolved_oxygen_mg_l", 0.0)
+                water_t_val = sample.get("water_temp", 0.0)
+                mot_st_val = sample.get("motor_state", 0)
+                temp_val = sample.get("temperature", 0.0)
+                hum_val = sample.get("humidity", 0.0)
 
-                # 1. Guardar en archivo CSV continuo con el orden exacto oficial SIFMA
+                # 1. Guardar en archivo CSV continuo (con rotación automática si pasa la medianoche)
+                telemetry_dir = config.TELEMETRY_DIR
+                os.makedirs(telemetry_dir, exist_ok=True)
+                current_date_str = dt_obj.strftime("%Y-%m-%d")
+                expected_csv_file = os.path.join(telemetry_dir, f"telemetria_sensores_{current_date_str}.csv")
+                if self.current_csv_file != expected_csv_file or not os.path.exists(expected_csv_file):
+                    self.current_csv_file = expected_csv_file
+                    if not os.path.exists(self.current_csv_file):
+                        with open(self.current_csv_file, mode='w', newline='', encoding='utf-8') as f:
+                            writer = csv.writer(f)
+                            writer.writerow([
+                                "Fecha", "Hora", "pH Solución", "Turbidez (NTU)", 
+                                "Conductividad Eléctrica (µS/cm)", "Oxigeno Disuelto (mg/L)", 
+                                "temperatura de agua", "estado motor: 1-0", 
+                                "Temperatura exterior (°C)", "Humedad relativa exterior (% HR)"
+                            ])
+
                 if self.current_csv_file:
                     with open(self.current_csv_file, mode='a', newline='', encoding='utf-8') as f:
                         writer = csv.writer(f)
@@ -162,7 +193,7 @@ class TelemetryApplicationService:
                         db.session.commit()
 
                 self.readings_count += 1
-                time.sleep(2.0)
+                time.sleep(1.0)
 
             except Exception as e:
-                time.sleep(2.0)
+                time.sleep(1.0)

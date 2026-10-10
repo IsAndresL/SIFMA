@@ -4,19 +4,6 @@
 {% block heading %}Pipeline de Visión Artificial y Segmentación{% endblock %}
 {% block subheading %}Procesamiento de capturas USB / archivos ZIP por fecha y canastilla hidropónica{% endblock %}
 
-{% block header_actions %}
-<div style="display: flex; gap: 8px; align-items: center;">
-    <button class="btn btn-outline btn-sm" id="btn-mode-usb" onclick="switchImportMode('usb')">
-        <span class="material-icons-round">usb</span>
-        <span>Importación USB</span>
-    </button>
-    <button class="btn btn-outline btn-sm" id="btn-mode-drag" onclick="switchImportMode('drag')">
-        <span class="material-icons-round">cloud_upload</span>
-        <span>Subir ZIP o Fotos</span>
-    </button>
-</div>
-{% endblock %}
-
 {% block content %}
 
 <!-- CARD PRINCIPAL: IMPORTACIÓN DE LOTE FOTOGRÁFICO Y CALENDARIO (RETRAÍBLE POR DEFECTO) -->
@@ -87,8 +74,20 @@
             </div>
         </div>
 
+        <!-- SELECTOR DE MODO DENTRO DE LA TARJETA -->
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button type="button" class="btn btn-primary btn-sm" id="tab-mode-usb" onclick="switchImportMode('usb')">
+                <span class="material-icons-round" style="font-size: 16px;">usb</span>
+                <span>Importación Automática USB</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="tab-mode-drag" onclick="switchImportMode('drag')">
+                <span class="material-icons-round" style="font-size: 16px;">cloud_upload</span>
+                <span>Subir Archivo .ZIP o Imágenes</span>
+            </button>
+        </div>
+
         <!-- MODO 1: DETECCIÓN AUTOMÁTICA DE MEMORIAS USB CONECTADAS -->
-        <div id="import-mode-usb-container" style="margin-top: 14px; background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 1px dashed var(--border-color);">
+        <div id="import-mode-usb-container" style="margin-top: 10px; background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 1px dashed var(--border-color);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 13px; font-weight: 700; color: var(--text-heading);">Carpetas y Lotes USB Detectados:</span>
                 <button class="btn btn-primary btn-sm" onclick="scanUSBDrives()">
@@ -344,17 +343,22 @@
             toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text');
         }
 
+        const usbContainer = document.getElementById('import-mode-usb-container');
+        const dragContainer = document.getElementById('import-mode-drag-container');
+        const tabUsb = document.getElementById('tab-mode-usb');
+        const tabDrag = document.getElementById('tab-mode-drag');
+
         if (mode === 'usb') {
-            document.getElementById('import-mode-usb-container').style.display = 'block';
-            document.getElementById('import-mode-drag-container').style.display = 'none';
-            document.getElementById('btn-mode-usb').className = 'btn btn-primary btn-sm';
-            document.getElementById('btn-mode-drag').className = 'btn btn-outline btn-sm';
+            if (usbContainer) usbContainer.style.display = 'block';
+            if (dragContainer) dragContainer.style.display = 'none';
+            if (tabUsb) tabUsb.className = 'btn btn-primary btn-sm';
+            if (tabDrag) tabDrag.className = 'btn btn-outline btn-sm';
             scanUSBDrives();
         } else {
-            document.getElementById('import-mode-usb-container').style.display = 'none';
-            document.getElementById('import-mode-drag-container').style.display = 'block';
-            document.getElementById('btn-mode-usb').className = 'btn btn-outline btn-sm';
-            document.getElementById('btn-mode-drag').className = 'btn btn-primary btn-sm';
+            if (usbContainer) usbContainer.style.display = 'none';
+            if (dragContainer) dragContainer.style.display = 'block';
+            if (tabUsb) tabUsb.className = 'btn btn-outline btn-sm';
+            if (tabDrag) tabDrag.className = 'btn btn-primary btn-sm';
         }
     }
 
@@ -499,6 +503,8 @@
         }
     }
 
+    let currentUsbBatches = [];
+
     async function scanUSBDrives() {
         const resBox = document.getElementById('usb-scan-results');
         resBox.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 13px;">Buscando memorias USB conectadas...</p>';
@@ -506,55 +512,163 @@
             const res = await fetch('/api/scan_usb');
             const data = await res.json();
             const batches = data.batches || data.drives || [];
+            currentUsbBatches = batches;
 
             if (data.status === 'success' && batches.length > 0) {
                 let html = '';
                 
-                // Banner general
+                // Barra superior de acciones masivas
                 html += `
-                    <div style="background: #09211a; color: #ffffff; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <div style="background: #09211a; color: #ffffff; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                         <div>
                             <div style="font-weight: 700; font-size: 14px; color: #10b981; display: flex; align-items: center; gap: 6px;">
                                 <span class="material-icons-round" style="font-size: 18px;">usb</span>
-                                <span>Memoria USB Detectada (${batches.length} día(s) de muestreo encontrados)</span>
+                                <span>Memoria USB Detectada (${batches.length} lote(s) encontrados)</span>
                             </div>
                             <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Carpeta: SIFMA_CAPTURES &bull; Ubicación: ${batches[0].drive_root || 'USB'}</div>
                         </div>
-                        <button class="btn btn-primary btn-sm" style="background: #10b981; color: #09211a; font-weight: 700;" onclick="processAllUSBBatches()">
-                            <span class="material-icons-round">playlist_play</span>
-                            <span>Procesar Todo el Historial USB</span>
-                        </button>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: #cbd5e1; cursor: pointer; margin: 0 4px 0 0;">
+                                <input type="checkbox" id="check-all-usb" onchange="toggleSelectAllUSB(this.checked)" checked style="cursor: pointer; width: 16px; height: 16px; accent-color: #10b981;">
+                                <span>Seleccionar Todo</span>
+                            </label>
+                            <button class="btn btn-primary btn-sm" id="btn-process-selected-usb" style="background: #10b981; color: #09211a; font-weight: 700;" onclick="processSelectedUSBBatches()">
+                                <span class="material-icons-round">play_arrow</span>
+                                <span id="btn-process-selected-text">Procesar Seleccionados (${batches.length})</span>
+                            </button>
+                            <button class="btn btn-outline btn-sm" style="color: #ffffff; border-color: rgba(255,255,255,0.25);" onclick="processAllUSBBatches()" title="Procesar todas las carpetas y subcarpetas recursivamente">
+                                <span class="material-icons-round">playlist_play</span>
+                                <span>Todo el Historial USB</span>
+                            </button>
+                        </div>
                     </div>
                 `;
 
-                batches.forEach((b) => {
+                batches.forEach((b, idx) => {
                     const cleanPath = b.path.replace(/\\/g, '\\\\');
                     html += `
-                        <div style="background: #ffffff; border: 1.5px solid var(--border-color); border-left: 4px solid var(--accent-success); border-radius: 9px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <div>
-                                <div style="font-weight: 800; font-size: 14.5px; color: var(--text-heading); display: flex; align-items: center; gap: 8px;">
-                                    <span class="material-icons-round" style="font-size: 20px; color: var(--accent-success);">calendar_today</span>
-                                    <span>Jornada: ${b.date_str || 'Día de Muestreo'}</span>
-                                    <span class="badge badge-success" style="font-size: 11px;">${b.turns_count || 1} Turnos (${b.period_str || 'Muestreo'})</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-                                    <strong>${b.images_count} imágenes</strong> captadas por la torre | Carpeta: <code style="font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">SIFMA_CAPTURES/${b.date_str}</code>
+                        <div style="background: #ffffff; border: 1.5px solid var(--border-color); border-left: 4px solid var(--accent-success); border-radius: 9px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <input type="checkbox" class="usb-batch-check" value="${cleanPath}" data-date="${b.date_str || ''}" data-index="${idx}" onchange="updateSelectedUSBCount()" checked style="cursor: pointer; width: 17px; height: 17px; accent-color: var(--accent-success);">
+                                <div>
+                                    <div style="font-weight: 800; font-size: 14px; color: var(--text-heading); display: flex; align-items: center; gap: 8px;">
+                                        <span class="material-icons-round" style="font-size: 19px; color: var(--accent-success);">calendar_today</span>
+                                        <span>Jornada: ${b.date_str || 'Día de Muestreo'}</span>
+                                        <span class="badge badge-success" style="font-size: 11px;">${b.turns_count || 1} Turnos (${b.period_str || 'Muestreo'})</span>
+                                    </div>
+                                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px;">
+                                        <strong>${b.images_count} imágenes</strong> captadas &bull; Carpeta: <code style="font-size: 11px; background: #f1f5f9; padding: 1px 5px; border-radius: 4px;">SIFMA_CAPTURES/${b.date_str}</code>
+                                    </div>
                                 </div>
                             </div>
-                            <button class="btn btn-primary btn-sm" style="font-weight: 700;" onclick="processSingleBatch('${cleanPath}', '${b.date_str}')">
+                            <button class="btn btn-outline btn-sm" style="font-weight: 700;" onclick="processSingleBatch('${cleanPath}', '${b.date_str}')">
                                 <span class="material-icons-round">play_arrow</span>
-                                <span>Procesar Este Día Completo</span>
+                                <span>Procesar Este Lote</span>
                             </button>
                         </div>
                     `;
                 });
                 resBox.innerHTML = html;
+                updateSelectedUSBCount();
             } else {
                 resBox.innerHTML = '<p style="text-align: center; color: var(--accent-warning); font-size: 13px; font-weight: 600; padding: 12px 0;">No se encontró la carpeta <code>SIFMA_CAPTURES</code> en la memoria USB conectada. Asegúrate de que la Raspberry Pi haya guardado fotos en la memoria o usa el modo "Subir ZIP o Fotos".</p>';
             }
         } catch (e) {
             resBox.innerHTML = '<p style="text-align: center; color: var(--accent-danger); font-size: 13px;">Error al consultar memorias USB.</p>';
         }
+    }
+
+    function toggleSelectAllUSB(isChecked) {
+        document.querySelectorAll('.usb-batch-check').forEach(chk => {
+            chk.checked = isChecked;
+        });
+        updateSelectedUSBCount();
+    }
+
+    function updateSelectedUSBCount() {
+        const checked = document.querySelectorAll('.usb-batch-check:checked');
+        const btnText = document.getElementById('btn-process-selected-text');
+        const btnProcess = document.getElementById('btn-process-selected-usb');
+        const count = checked.length;
+        if (btnText) btnText.innerText = `Procesar Seleccionados (${count})`;
+        if (btnProcess) {
+            btnProcess.disabled = count === 0;
+            btnProcess.style.opacity = count === 0 ? '0.5' : '1';
+        }
+    }
+
+    function createProgressTracker(initialText) {
+        const pBar = document.getElementById('processing-status-bar');
+        const pFill = document.getElementById('progress-bar-fill');
+        const pText = document.getElementById('status-message');
+        const pPct = document.getElementById('status-percent');
+
+        pBar.style.display = 'block';
+        pFill.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+        pFill.style.width = '5%';
+        pPct.innerText = '5%';
+        pText.innerText = initialText || 'Iniciando procesamiento...';
+
+        localStorage.setItem('sifma_processing_active', 'true');
+        if (window.startGlobalProcessingMonitor) {
+            window.startGlobalProcessingMonitor();
+        }
+
+        let isPolling = true;
+
+        const pollInterval = setInterval(async () => {
+            if (!isPolling) return;
+            try {
+                const res = await fetch('/api/processing/progress');
+                if (res.ok) {
+                    const prog = await res.json();
+                    if (prog && typeof prog.percent === 'number') {
+                        const targetPct = Math.max(5, Math.min(99, prog.percent));
+                        pFill.style.width = `${targetPct}%`;
+                        pPct.innerText = `${targetPct}%`;
+                        if (prog.message) {
+                            pText.innerText = prog.message;
+                        }
+                    }
+                }
+            } catch (e) {}
+        }, 350);
+
+        return {
+            finish: (successMsg) => {
+                isPolling = false;
+                clearInterval(pollInterval);
+                localStorage.removeItem('sifma_processing_active');
+                pFill.style.width = '100%';
+                pPct.innerText = '100%';
+                pText.innerText = successMsg || '¡Procesamiento fenotípico completado con éxito!';
+
+                if (window.showToast) {
+                    window.showToast({
+                        type: 'success',
+                        title: '¡Procesamiento Fenotípico Finalizado!',
+                        message: successMsg || 'Lote procesado exitosamente para Canastilla #' + activePlantId,
+                        duration: 4500
+                    });
+                }
+            },
+            fail: (errorMsg) => {
+                isPolling = false;
+                clearInterval(pollInterval);
+                localStorage.removeItem('sifma_processing_active');
+                pFill.style.background = '#ef4444';
+                pText.innerText = 'Error: ' + errorMsg;
+
+                if (window.showToast) {
+                    window.showToast({
+                        type: 'error',
+                        title: 'Error de Procesamiento',
+                        message: errorMsg,
+                        duration: 5000
+                    });
+                }
+            }
+        };
     }
 
     async function processSingleBatch(folderPath, periodStr) {
@@ -564,15 +678,7 @@
         }
 
         const calDate = document.getElementById('calendar-date-picker').value;
-        const pBar = document.getElementById('processing-status-bar');
-        const pFill = document.getElementById('progress-bar-fill');
-        const pText = document.getElementById('status-message');
-        const pPct = document.getElementById('status-percent');
-
-        pBar.style.display = 'block';
-        pFill.style.width = '35%';
-        pPct.innerText = '35%';
-        pText.innerText = `Segmentando imágenes de ${periodStr}...`;
+        const tracker = createProgressTracker(`Iniciando procesamiento de ${periodStr}...`);
 
         try {
             const finalPeriod = calDate ? `${calDate} - ${periodStr}` : periodStr;
@@ -582,17 +688,54 @@
                 body: JSON.stringify({ folder_path: folderPath, period: finalPeriod, plant_id: activePlantId })
             });
             const data = await res.json();
-            pFill.style.width = '100%';
-            pPct.innerText = '100%';
 
-            if (data.status === 'success') {
-                pText.innerText = 'Procesamiento finalizado con éxito.';
-                setTimeout(() => window.location.reload(), 800);
+            if (res.ok && data.status === 'success') {
+                tracker.finish(data.message || '¡Procesamiento fenotípico finalizado con éxito!');
+                setTimeout(() => window.location.reload(), 1400);
             } else {
-                pText.innerText = 'Error: ' + (data.message || 'Fallo en procesamiento');
+                tracker.fail(data.message || 'Fallo en procesamiento');
             }
         } catch (e) {
-            pText.innerText = 'Error de comunicación con el servidor.';
+            tracker.fail('Error de comunicación con el servidor.');
+        }
+    }
+
+    async function processSelectedUSBBatches() {
+        const checked = Array.from(document.querySelectorAll('.usb-batch-check:checked'));
+        if (checked.length === 0) {
+            alert('Por favor selecciona al menos una carpeta para procesar.');
+            return;
+        }
+
+        const selectedPaths = checked.map(chk => chk.value);
+        const lotsBody = document.getElementById('section-lots-body');
+        if (lotsBody && (lotsBody.style.display === 'none' || lotsBody.style.display === '')) {
+            toggleCollapsibleSection('section-lots-body', 'icon-lots-toggle', 'btn-lots-text');
+        }
+
+        const calDate = document.getElementById('calendar-date-picker').value;
+        const tracker = createProgressTracker(`Iniciando procesamiento de ${selectedPaths.length} lote(s) seleccionados...`);
+
+        try {
+            const res = await fetch('/api/process_usb_path', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    folder_paths: selectedPaths,
+                    period: calDate || 'Día 1',
+                    plant_id: activePlantId
+                })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                tracker.finish(data.message || 'Lotes seleccionados procesados exitosamente.');
+                setTimeout(() => window.location.reload(), 1400);
+            } else {
+                tracker.fail(data.message || 'Fallo en procesamiento de lotes.');
+            }
+        } catch (e) {
+            tracker.fail('Error de comunicación con el servidor.');
         }
     }
 
@@ -603,15 +746,7 @@
         }
 
         const calDate = document.getElementById('calendar-date-picker').value;
-        const pBar = document.getElementById('processing-status-bar');
-        const pFill = document.getElementById('progress-bar-fill');
-        const pText = document.getElementById('status-message');
-        const pPct = document.getElementById('status-percent');
-
-        pBar.style.display = 'block';
-        pFill.style.width = '30%';
-        pPct.innerText = '30%';
-        pText.innerText = 'Procesando todos los turnos de la memoria USB...';
+        const tracker = createProgressTracker('Iniciando procesamiento completo de memoria USB...');
 
         try {
             const res = await fetch('/api/process_usb_mount', {
@@ -620,17 +755,15 @@
                 body: JSON.stringify({ mountpoint: 'D:\\', target_date: calDate, plant_id: activePlantId })
             });
             const data = await res.json();
-            pFill.style.width = '100%';
-            pPct.innerText = '100%';
 
-            if (data.status === 'success') {
-                pText.innerText = data.message || 'Lotes USB procesados exitosamente.';
-                setTimeout(() => window.location.reload(), 1000);
+            if (res.ok && data.status === 'success') {
+                tracker.finish(data.message || 'Lotes USB procesados exitosamente.');
+                setTimeout(() => window.location.reload(), 1400);
             } else {
-                pText.innerText = 'Error: ' + (data.message || 'Fallo en procesamiento');
+                tracker.fail(data.message || 'Fallo en procesamiento');
             }
         } catch (e) {
-            pText.innerText = 'Error de comunicación.';
+            tracker.fail('Error de comunicación.');
         }
     }
 
@@ -647,15 +780,7 @@
             return;
         }
 
-        const pBar = document.getElementById('processing-status-bar');
-        const pFill = document.getElementById('progress-bar-fill');
-        const pText = document.getElementById('status-message');
-        const pPct = document.getElementById('status-percent');
-
-        pBar.style.display = 'block';
-        pFill.style.width = '40%';
-        pPct.innerText = '40%';
-        pText.innerText = 'Subiendo y descomprimiendo archivo ZIP...';
+        const tracker = createProgressTracker('Subiendo y procesando archivos...');
 
         const formData = new FormData();
         for (let i = 0; i < fileInput.files.length; i++) {
@@ -665,26 +790,20 @@
         formData.append('plant_id', activePlantId);
 
         try {
-            pFill.style.width = '70%';
-            pPct.innerText = '70%';
-            pText.innerText = 'Ejecutando segmentación OpenCV y extracción morfológica...';
-
             const res = await fetch('/api/upload_manual_batch', {
                 method: 'POST',
                 body: formData
             });
             const data = await res.json();
-            pFill.style.width = '100%';
-            pPct.innerText = '100%';
 
-            if (data.status === 'success') {
-                pText.innerText = data.message || 'Archivos procesados con éxito.';
-                setTimeout(() => window.location.reload(), 1000);
+            if (res.ok && data.status === 'success') {
+                tracker.finish(data.message || 'Archivos procesados con éxito.');
+                setTimeout(() => window.location.reload(), 1400);
             } else {
-                pText.innerText = 'Error: ' + (data.message || 'Error al procesar lote.');
+                tracker.fail(data.message || 'Error al procesar lote.');
             }
         } catch (e) {
-            pText.innerText = 'Error de conexión durante la subida.';
+            tracker.fail('Error de conexión durante la subida.');
         }
     }
 </script>

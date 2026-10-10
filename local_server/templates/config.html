@@ -341,7 +341,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center;">
                     <div class="form-group">
                         <label for="pixel_to_cm_ratio">Factor de Escala Cenital (cm por píxel):</label>
-                        <input type="number" step="0.001" name="pixel_to_cm_ratio" id="pixel_to_cm_ratio" class="form-control" value="{{ selected_profile.pixel_to_cm_ratio }}" required>
+                        <input type="number" step="any" name="pixel_to_cm_ratio" id="pixel_to_cm_ratio" class="form-control" value="{{ selected_profile.pixel_to_cm_ratio }}" required>
                         <small style="color: var(--text-muted); font-size: 11px;">Escala horizontal típica para cálculo de área foliar: ~0.038 cm/px</small>
                     </div>
                 </div>
@@ -425,11 +425,106 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN 3: FILTROS DE RUIDO Y BORDES DE MACETA -->
+            <!-- SECCIÓN 3: CALIBRADOR INTERACTIVO DE LÍNEA BASE LATERAL Y ZONA DE TALLO -->
+            <div style="margin-bottom: 24px; background: rgba(37, 99, 235, 0.04); border: 1.5px solid rgba(37, 99, 235, 0.25); border-radius: 12px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">
+                    <h4 style="font-size: 14.5px; font-weight: 700; color: var(--accent-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span class="material-icons-round" style="font-size: 20px;">straighten</span>
+                        <span>3. Calibrador Visual de Línea Base y Zona de Medición de Tallo (Bordes & Escaneo)</span>
+                    </h4>
+                    <span class="badge badge-primary" style="font-size: 11px;">Línea Base + Cuadro de Tallo Móvil</span>
+                </div>
+
+                <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+                    Calibra visualmente dos elementos clave:
+                    <br>1. <strong style="color: #ef4444;">Línea Roja (Base de Maceta):</strong> Nivel exacto de inserción del tallo en el sustrato para medir la altura ($H$).
+                    <br>2. <strong style="color: #f59e0b;">Recuadro Ámbar/Cian (Zona de Tallo):</strong> Franja ajustable donde OpenCV analiza los bordes cilíndricos y transiciones de gradiente horizontal (sin importar si el tallo es verde, café o leñoso) para calcular el diámetro ($D$) en milímetros.
+                </p>
+
+                <div style="display: grid; grid-template-columns: minmax(320px, 1fr) 340px; gap: 20px; align-items: start;">
+                    <!-- Canvas Interactivo con la Foto Lateral -->
+                    <div style="position: relative; background: #0f172a; border-radius: 10px; overflow: hidden; border: 2px solid #334155; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <canvas id="lateral-canvas" style="display: block; max-width: 100%; height: auto; margin: 0 auto; cursor: crosshair;"></canvas>
+                        <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #f8fafc; font-size: 10.5px; padding: 5px 10px; border-radius: 6px; pointer-events: none; display: flex; justify-content: space-between; gap: 6px;">
+                            <span>↕️ Arrastrar Línea o Cuadro de Tallo</span>
+                            <span id="lateral-coords-display">Base: {{ '%.1f'|format((config.lateral_baseline_y or 0.72) * 100) }}% | Tallo: {{ '%.1f'|format((config.lateral_stem_roi_y or 0.66) * 100) }}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Controles y Formulario de Guardado de Línea Base y Tallo Lateral -->
+                    <div style="background: #ffffff; padding: 16px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
+                        
+                        <!-- Control de Línea Base -->
+                        <div class="form-group" style="margin: 0; background: rgba(239, 68, 68, 0.05); padding: 10px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <label for="lateral_baseline_slider" style="font-size: 11.5px; font-weight: 700; color: #b91c1c; display: flex; justify-content: space-between;">
+                                <span>1. Posición Línea Base (Maceta Y):</span>
+                                <span id="label-lateral_baseline" style="font-weight: 800;">{{ '%.1f'|format((config.lateral_baseline_y or 0.72) * 100) }}%</span>
+                            </label>
+                            <input type="range" id="lateral_baseline_slider" min="20" max="95" step="0.5" value="{{ ((config.lateral_baseline_y or 0.72) * 100)|round(1) }}" oninput="onLateralBaselineSliderChange(this.value)" style="width: 100%; cursor: pointer; accent-color: #ef4444;">
+                        </div>
+
+                        <!-- Controles de Cuadro / Franja de Tallo -->
+                        <div style="background: rgba(245, 158, 11, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.25); display: flex; flex-direction: column; gap: 10px;">
+                            <strong style="font-size: 12px; color: #b45309; display: flex; align-items: center; gap: 6px;">
+                                <span class="material-icons-round" style="font-size: 16px;">crop</span>
+                                <span>2. Zona de Escaneo de Tallo (Bordes)</span>
+                            </strong>
+
+                            <div class="form-group" style="margin: 0;">
+                                <label for="lateral_stem_y_slider" style="font-size: 11px; font-weight: 700; color: var(--text-heading); display: flex; justify-content: space-between;">
+                                    <span>Altura del Escaneo (Y):</span>
+                                    <span id="label-stem_roi_y" style="color: #d97706; font-weight: 800;">{{ '%.1f'|format((config.lateral_stem_roi_y or 0.66) * 100) }}%</span>
+                                </label>
+                                <input type="range" id="lateral_stem_y_slider" min="15" max="90" step="0.5" value="{{ ((config.lateral_stem_roi_y or 0.66) * 100)|round(1) }}" oninput="onStemSliderChange('y', this.value)" style="width: 100%; cursor: pointer; accent-color: #f59e0b;">
+                            </div>
+
+                            <div class="form-group" style="margin: 0;">
+                                <label for="lateral_stem_x_slider" style="font-size: 11px; font-weight: 700; color: var(--text-heading); display: flex; justify-content: space-between;">
+                                    <span>Centro Horizontal del Tallo (X):</span>
+                                    <span id="label-stem_roi_x" style="color: #d97706; font-weight: 800;">{{ '%.1f'|format((config.lateral_stem_roi_x or 0.50) * 100) }}%</span>
+                                </label>
+                                <input type="range" id="lateral_stem_x_slider" min="10" max="90" step="0.5" value="{{ ((config.lateral_stem_roi_x or 0.50) * 100)|round(1) }}" oninput="onStemSliderChange('x', this.value)" style="width: 100%; cursor: pointer; accent-color: #f59e0b;">
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="lateral_stem_w_slider" style="font-size: 10.5px; font-weight: 700; color: var(--text-heading); display: flex; justify-content: space-between;">
+                                        <span>Ancho (W):</span>
+                                        <span id="label-stem_roi_w" style="color: #d97706;">{{ '%.0f'|format((config.lateral_stem_roi_width or 0.20) * 100) }}%</span>
+                                    </label>
+                                    <input type="range" id="lateral_stem_w_slider" min="6" max="45" step="1" value="{{ ((config.lateral_stem_roi_width or 0.20) * 100)|round(0) }}" oninput="onStemSliderChange('w', this.value)" style="width: 100%; cursor: pointer; accent-color: #f59e0b;">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="lateral_stem_h_slider" style="font-size: 10.5px; font-weight: 700; color: var(--text-heading); display: flex; justify-content: space-between;">
+                                        <span>Alto Franja (H):</span>
+                                        <span id="label-stem_roi_h" style="color: #d97706;">{{ '%.0f'|format((config.lateral_stem_roi_height or 0.05) * 100) }}%</span>
+                                    </label>
+                                    <input type="range" id="lateral_stem_h_slider" min="2" max="15" step="0.5" value="{{ ((config.lateral_stem_roi_height or 0.05) * 100)|round(1) }}" oninput="onStemSliderChange('h', this.value)" style="width: 100%; cursor: pointer; accent-color: #f59e0b;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="resetLateralCalibrationToDefault()" style="flex: 1; font-size: 11.5px;">
+                                <span class="material-icons-round" style="font-size: 16px;">restart_alt</span>
+                                <span>Restablecer</span>
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveLateralBaselineCalibration()" id="btn-save-lateral-baseline" style="flex: 1.3; font-size: 11.5px; font-weight: 700;">
+                                <span class="material-icons-round" style="font-size: 16px;">save</span>
+                                <span>Guardar Calibración Lateral</span>
+                            </button>
+                        </div>
+
+                        <div id="lateral-save-status" style="display: none; font-size: 11.5px; padding: 8px; border-radius: 6px; text-align: center;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: FILTROS DE RUIDO Y BORDES DE MACETA -->
             <div style="margin-bottom: 24px;">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--accent-warning); margin-bottom: 14px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                     <span class="material-icons-round" style="font-size: 18px;">filter_alt</span>
-                    <span>3. Filtros Morfológicos y Descarte de Bordes de Maceta</span>
+                    <span>4. Filtros Morfológicos y Morfometría Lateral</span>
                 </h4>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 16px;">
@@ -448,15 +543,29 @@
                     </div>
                 </div>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 16px;">
+                    <div class="form-group" style="background: rgba(239, 68, 68, 0.04); padding: 14px; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: center; gap: 12px;">
+                        <input type="checkbox" name="lat_draw_contours" id="lat_draw_contours" value="true" {% if selected_profile.lat_draw_contours %}checked{% endif %} style="width: 20px; height: 20px; cursor: pointer; accent-color: #ef4444;">
+                        <div>
+                            <label for="lat_draw_contours" style="font-weight: 700; font-size: 13px; cursor: pointer; margin: 0; color: #b91c1c; display: block;">Dibujar Contornos Rojos sobre las Hojas</label>
+                            <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Desmarcado (Recomendado): La foto procesada se muestra limpia con solo la Altura ($H$), Línea Base y Tallo ($D$), sin tapar el tejido con líneas rojas.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="background: var(--bg-card-subtle); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                        <input type="checkbox" name="has_stem" id="has_stem" value="true" {% if selected_profile.has_stem %}checked{% endif %} style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-success);">
+                        <div>
+                            <label for="has_stem" style="font-weight: 700; font-size: 13px; cursor: pointer; margin: 0; color: var(--text-heading); display: block;">Medir Grosor / Diámetro del Tallo ($D$)</label>
+                            <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Activa el escaneo por gradiente en el cuello basal para calcular el diámetro en milímetros ($mm$).</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center;">
                     <div class="form-group">
                         <label for="lat_pixel_to_cm_ratio">Factor de Escala Lateral (cm por píxel vertical):</label>
-                        <input type="number" step="0.001" name="lat_pixel_to_cm_ratio" id="lat_pixel_to_cm_ratio" class="form-control" value="{{ selected_profile.lat_pixel_to_cm_ratio or selected_profile.pixel_to_cm_ratio }}" required>
+                        <input type="number" step="any" name="lat_pixel_to_cm_ratio" id="lat_pixel_to_cm_ratio" class="form-control" value="{{ selected_profile.lat_pixel_to_cm_ratio or selected_profile.pixel_to_cm_ratio }}" required>
                         <small style="color: var(--text-muted); font-size: 11px;">Escala vertical para altura y grosor de tallo: ~0.038 cm/px</small>
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
-                        <input type="checkbox" name="has_stem" id="has_stem" value="true" {% if selected_profile.has_stem %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-success);">
-                        <label for="has_stem" style="font-weight: 600; cursor: pointer; margin: 0;">Medir grosor de tallo principal ($D$)</label>
                     </div>
                 </div>
             </div>
@@ -495,6 +604,7 @@
             btnCenital.style.borderBottomColor = 'transparent';
             contentCenital.style.display = 'none';
             contentLateral.style.display = 'block';
+            setTimeout(() => { drawLateral(); }, 50);
         }
     }
 
@@ -708,7 +818,7 @@
         ctx.textAlign = 'center';
         ctx.shadowColor = '#000000';
         ctx.shadowBlur = 4;
-        ctx.fillText('ROI CALIBRADO (CANASTILLA)', px, Math.max(20, py - r - 8));
+        ctx.fillText('ROI (CANASTILLA)', px, Math.max(20, py - r - 8));
         ctx.restore();
     }
 
@@ -791,10 +901,399 @@
         }
     }
 
-    // Iniciar el canvas cuando cargue la página
+    // ==========================================
+    // CALIBRADOR INTERACTIVO DE LÍNEA BASE Y TALLO LATERAL
+    // ==========================================
+    let lateralState = {
+        baselineY: parseFloat("{{ config.lateral_baseline_y or 0.7200 }}"),
+        mode: "{{ config.lateral_baseline_mode or 'manual_baseline' }}",
+        stemRoiX: parseFloat("{{ config.lateral_stem_roi_x or 0.5000 }}"),
+        stemRoiY: parseFloat("{{ config.lateral_stem_roi_y or 0.6600 }}"),
+        stemRoiW: parseFloat("{{ config.lateral_stem_roi_width or 0.2000 }}"),
+        stemRoiH: parseFloat("{{ config.lateral_stem_roi_height or 0.0500 }}"),
+        stemMode: "{{ config.lateral_stem_mode or 'auto_edge' }}",
+        dragTarget: null, // 'baseline', 'stem_box', 'stem_resize'
+        isDragging: false,
+        dragOffsetX: 0,
+        dragOffsetY: 0
+    };
+
+    const lateralCanvas = document.getElementById('lateral-canvas');
+    const lateralCtx = lateralCanvas ? lateralCanvas.getContext('2d') : null;
+    const bgLateralImage = new Image();
+    const latestLateralUrl = "{{ url_for('static', filename=latest_lateral_img) if latest_lateral_img else '' }}";
+
+    function initLateralCanvas() {
+        if (!lateralCanvas || !lateralCtx) return;
+
+        if (latestLateralUrl) {
+            bgLateralImage.src = latestLateralUrl;
+            bgLateralImage.onload = () => {
+                lateralCanvas.width = bgLateralImage.naturalWidth || 480;
+                lateralCanvas.height = bgLateralImage.naturalHeight || 640;
+                drawLateral();
+            };
+            bgLateralImage.onerror = () => {
+                drawFallbackLateralCanvas();
+            };
+        } else {
+            drawFallbackLateralCanvas();
+        }
+
+        // Eventos Mouse
+        lateralCanvas.addEventListener('mousedown', (e) => {
+            handleLateralMouseDown(e);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (lateralState.isDragging) {
+                handleLateralMouseMove(e);
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            lateralState.isDragging = false;
+            lateralState.dragTarget = null;
+        });
+
+        // Eventos Touch
+        lateralCanvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) handleLateralMouseDown(e.touches[0]);
+            e.preventDefault();
+        }, { passive: false });
+
+        lateralCanvas.addEventListener('touchmove', (e) => {
+            if (lateralState.isDragging && e.touches.length > 0) {
+                handleLateralMouseMove(e.touches[0]);
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        lateralCanvas.addEventListener('touchend', () => {
+            lateralState.isDragging = false;
+            lateralState.dragTarget = null;
+        });
+    }
+
+    function drawFallbackLateralCanvas() {
+        if (!lateralCanvas) return;
+        lateralCanvas.width = 480;
+        lateralCanvas.height = 640;
+        drawLateral();
+    }
+
+    function getLateralCanvasCoords(e) {
+        const rect = lateralCanvas.getBoundingClientRect();
+        const scaleX = lateralCanvas.width / rect.width;
+        const scaleY = lateralCanvas.height / rect.height;
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
+        };
+    }
+
+    function handleLateralMouseDown(e) {
+        if (!lateralCanvas) return;
+        const pos = getLateralCanvasCoords(e);
+        const w = lateralCanvas.width;
+        const h = lateralCanvas.height;
+
+        const basePy = lateralState.baselineY * h;
+        const stemBx = (lateralState.stemRoiX - lateralState.stemRoiW / 2) * w;
+        const stemBy = (lateralState.stemRoiY - lateralState.stemRoiH / 2) * h;
+        const stemBw = lateralState.stemRoiW * w;
+        const stemBh = lateralState.stemRoiH * h;
+
+        // Comprobar si se hizo clic dentro del cuadro de tallo
+        if (pos.x >= stemBx && pos.x <= stemBx + stemBw && pos.y >= stemBy && pos.y <= stemBy + stemBh) {
+            lateralState.isDragging = true;
+            lateralState.dragTarget = 'stem_box';
+            lateralState.dragOffsetX = pos.x / w - lateralState.stemRoiX;
+            lateralState.dragOffsetY = pos.y / h - lateralState.stemRoiY;
+        } else if (Math.abs(pos.y - basePy) < 25) {
+            // Clic cerca de la línea base
+            lateralState.isDragging = true;
+            lateralState.dragTarget = 'baseline';
+        } else {
+            // Clic en cualquier otra parte mueve la línea base o el tallo según proximidad
+            if (pos.y > basePy - 40) {
+                lateralState.isDragging = true;
+                lateralState.dragTarget = 'baseline';
+                lateralState.baselineY = Math.max(0.15, Math.min(0.98, pos.y / h));
+                updateLateralSliders();
+                drawLateral();
+            } else {
+                lateralState.isDragging = true;
+                lateralState.dragTarget = 'stem_box';
+                lateralState.stemRoiX = Math.max(0.10, Math.min(0.90, pos.x / w));
+                lateralState.stemRoiY = Math.max(0.10, Math.min(0.90, pos.y / h));
+                lateralState.dragOffsetX = 0;
+                lateralState.dragOffsetY = 0;
+                updateLateralSliders();
+                drawLateral();
+            }
+        }
+    }
+
+    function handleLateralMouseMove(e) {
+        if (!lateralCanvas || !lateralState.isDragging) return;
+        const pos = getLateralCanvasCoords(e);
+        const w = lateralCanvas.width;
+        const h = lateralCanvas.height;
+
+        if (lateralState.dragTarget === 'baseline') {
+            lateralState.baselineY = Math.max(0.15, Math.min(0.98, pos.y / h));
+            updateLateralSliders();
+            drawLateral();
+        } else if (lateralState.dragTarget === 'stem_box') {
+            const newX = pos.x / w - lateralState.dragOffsetX;
+            const newY = pos.y / h - lateralState.dragOffsetY;
+            lateralState.stemRoiX = Math.max(0.10, Math.min(0.90, newX));
+            lateralState.stemRoiY = Math.max(0.10, Math.min(0.95, newY));
+            updateLateralSliders();
+            drawLateral();
+        }
+    }
+
+    function onLateralBaselineSliderChange(val) {
+        lateralState.baselineY = parseFloat(val) / 100.0;
+        const label = document.getElementById('label-lateral_baseline');
+        if (label) label.innerText = parseFloat(val).toFixed(1) + '%';
+        drawLateral();
+        updateLateralLabels();
+    }
+
+    function onStemSliderChange(axis, val) {
+        if (axis === 'y') {
+            lateralState.stemRoiY = parseFloat(val) / 100.0;
+            const lbl = document.getElementById('label-stem_roi_y');
+            if (lbl) lbl.innerText = parseFloat(val).toFixed(1) + '%';
+        } else if (axis === 'x') {
+            lateralState.stemRoiX = parseFloat(val) / 100.0;
+            const lbl = document.getElementById('label-stem_roi_x');
+            if (lbl) lbl.innerText = parseFloat(val).toFixed(1) + '%';
+        } else if (axis === 'w') {
+            lateralState.stemRoiW = parseFloat(val) / 100.0;
+            const lbl = document.getElementById('label-stem_roi_w');
+            if (lbl) lbl.innerText = parseFloat(val).toFixed(0) + '%';
+        } else if (axis === 'h') {
+            lateralState.stemRoiH = parseFloat(val) / 100.0;
+            const lbl = document.getElementById('label-stem_roi_h');
+            if (lbl) lbl.innerText = parseFloat(val).toFixed(1) + '%';
+        }
+        drawLateral();
+        updateLateralLabels();
+    }
+
+    function updateLateralSliders() {
+        const baseSlider = document.getElementById('lateral_baseline_slider');
+        if (baseSlider) baseSlider.value = (lateralState.baselineY * 100).toFixed(1);
+        const baseLabel = document.getElementById('label-lateral_baseline');
+        if (baseLabel) baseLabel.innerText = (lateralState.baselineY * 100).toFixed(1) + '%';
+
+        const stemYSlider = document.getElementById('lateral_stem_y_slider');
+        if (stemYSlider) stemYSlider.value = (lateralState.stemRoiY * 100).toFixed(1);
+        const stemYLabel = document.getElementById('label-stem_roi_y');
+        if (stemYLabel) stemYLabel.innerText = (lateralState.stemRoiY * 100).toFixed(1) + '%';
+
+        const stemXSlider = document.getElementById('lateral_stem_x_slider');
+        if (stemXSlider) stemXSlider.value = (lateralState.stemRoiX * 100).toFixed(1);
+        const stemXLabel = document.getElementById('label-stem_roi_x');
+        if (stemXLabel) stemXLabel.innerText = (lateralState.stemRoiX * 100).toFixed(1) + '%';
+
+        updateLateralLabels();
+    }
+
+    function updateLateralLabels() {
+        const coords = document.getElementById('lateral-coords-display');
+        if (coords) {
+            coords.innerText = `Base: ${(lateralState.baselineY * 100).toFixed(1)}% | Tallo: ${(lateralState.stemRoiY * 100).toFixed(1)}%`;
+        }
+    }
+
+    function resetLateralCalibrationToDefault() {
+        lateralState.baselineY = 0.7200;
+        lateralState.stemRoiX = 0.5000;
+        lateralState.stemRoiY = 0.6600;
+        lateralState.stemRoiW = 0.2000;
+        lateralState.stemRoiH = 0.0500;
+        lateralState.mode = 'manual_baseline';
+        lateralState.stemMode = 'auto_edge';
+
+        const baseSlider = document.getElementById('lateral_baseline_slider');
+        if (baseSlider) baseSlider.value = 72.0;
+        const stemYSlider = document.getElementById('lateral_stem_y_slider');
+        if (stemYSlider) stemYSlider.value = 66.0;
+        const stemXSlider = document.getElementById('lateral_stem_x_slider');
+        if (stemXSlider) stemXSlider.value = 50.0;
+        const stemWSlider = document.getElementById('lateral_stem_w_slider');
+        if (stemWSlider) stemWSlider.value = 20.0;
+        const stemHSlider = document.getElementById('lateral_stem_h_slider');
+        if (stemHSlider) stemHSlider.value = 5.0;
+
+        updateLateralSliders();
+        drawLateral();
+    }
+
+    function drawLateral() {
+        if (!lateralCtx || !lateralCanvas) return;
+        const w = lateralCanvas.width;
+        const h = lateralCanvas.height;
+
+        lateralCtx.clearRect(0, 0, w, h);
+
+        if (bgLateralImage.complete && bgLateralImage.naturalWidth > 0) {
+            lateralCtx.drawImage(bgLateralImage, 0, 0, w, h);
+        } else {
+            lateralCtx.fillStyle = '#1e293b';
+            lateralCtx.fillRect(0, 0, w, h);
+            lateralCtx.fillStyle = '#f8fafc';
+            lateralCtx.font = '14px Inter, sans-serif';
+            lateralCtx.textAlign = 'center';
+            lateralCtx.fillText('No hay fotos laterales capturadas aún.', w / 2, h / 2);
+        }
+
+        const py = lateralState.baselineY * h;
+
+        // 1. Sombra bajo la línea de la maceta (Sustrato / Tubo de soporte)
+        lateralCtx.save();
+        lateralCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        lateralCtx.fillRect(0, py, w, h - py);
+        lateralCtx.restore();
+
+        // 2. Línea Base Horizontal Roja (Estilo guía agrónoma)
+        lateralCtx.save();
+        lateralCtx.beginPath();
+        lateralCtx.moveTo(0, py);
+        lateralCtx.lineTo(w, py);
+        lateralCtx.lineWidth = 3.5;
+        lateralCtx.strokeStyle = '#ef4444';
+        lateralCtx.shadowColor = '#ef4444';
+        lateralCtx.shadowBlur = 12;
+        lateralCtx.stroke();
+
+        // Pequeñas flechas indicadoras en los extremos
+        lateralCtx.fillStyle = '#ef4444';
+        lateralCtx.beginPath();
+        lateralCtx.moveTo(10, py - 6); lateralCtx.lineTo(22, py); lateralCtx.lineTo(10, py + 6); lateralCtx.fill();
+        lateralCtx.beginPath();
+        lateralCtx.moveTo(w - 10, py - 6); lateralCtx.lineTo(w - 22, py); lateralCtx.lineTo(w - 10, py + 6); lateralCtx.fill();
+
+        // Cartela indicadora
+        lateralCtx.fillStyle = '#ef4444';
+        lateralCtx.font = 'bold 12px Inter, sans-serif';
+        lateralCtx.textAlign = 'left';
+        lateralCtx.shadowColor = '#000000';
+        lateralCtx.shadowBlur = 6;
+        lateralCtx.fillText('LÍNEA BASE (MACETA / INICIO ALTURA)', 30, Math.max(20, py - 8));
+        lateralCtx.restore();
+
+        // 3. Cuadro / Franja de Medición de Tallo (Scanline de Bordes)
+        const bx = (lateralState.stemRoiX - lateralState.stemRoiW / 2) * w;
+        const by = (lateralState.stemRoiY - lateralState.stemRoiH / 2) * h;
+        const bw = lateralState.stemRoiW * w;
+        const bh = lateralState.stemRoiH * h;
+
+        lateralCtx.save();
+        // Relleno suave translúcido
+        lateralCtx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+        lateralCtx.fillRect(bx, by, bw, bh);
+
+        // Borde exterior
+        lateralCtx.setLineDash([6, 4]);
+        lateralCtx.lineWidth = 2;
+        lateralCtx.strokeStyle = '#f59e0b';
+        lateralCtx.strokeRect(bx, by, bw, bh);
+        lateralCtx.setLineDash([]);
+
+        // Línea central de escaneo horizontal
+        const midY = by + bh / 2;
+        lateralCtx.beginPath();
+        lateralCtx.moveTo(bx, midY);
+        lateralCtx.lineTo(bx + bw, midY);
+        lateralCtx.lineWidth = 2;
+        lateralCtx.strokeStyle = '#38bdf8';
+        lateralCtx.stroke();
+
+        // Marcas de límite de escaneo
+        lateralCtx.fillStyle = '#38bdf8';
+        lateralCtx.fillRect(bx, midY - 6, 3, 12);
+        lateralCtx.fillRect(bx + bw - 3, midY - 6, 3, 12);
+
+        // Esquinas de anclaje
+        lateralCtx.fillStyle = '#f59e0b';
+        const handleSize = 6;
+        lateralCtx.fillRect(bx - handleSize/2, by - handleSize/2, handleSize, handleSize);
+        lateralCtx.fillRect(bx + bw - handleSize/2, by - handleSize/2, handleSize, handleSize);
+        lateralCtx.fillRect(bx - handleSize/2, by + bh - handleSize/2, handleSize, handleSize);
+        lateralCtx.fillRect(bx + bw - handleSize/2, by + bh - handleSize/2, handleSize, handleSize);
+
+        // Etiqueta de la zona de tallo
+        lateralCtx.fillStyle = '#f59e0b';
+        lateralCtx.font = 'bold 11px Inter, sans-serif';
+        lateralCtx.textAlign = 'left';
+        lateralCtx.shadowColor = '#000000';
+        lateralCtx.shadowBlur = 5;
+        lateralCtx.fillText('ZONA DE MEDICIÓN DE TALLO (SCANLINE)', bx, Math.max(16, by - 6));
+
+        lateralCtx.restore();
+    }
+
+    async function saveLateralBaselineCalibration() {
+        const btn = document.getElementById('btn-save-lateral-baseline');
+        const status = document.getElementById('lateral-save-status');
+        if (!btn) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-round spinner">sync</span> <span>Guardando...</span>';
+
+        const formData = new FormData();
+        formData.append('action', 'update_lateral_baseline');
+        formData.append('lateral_baseline_y', lateralState.baselineY.toFixed(4));
+        formData.append('lateral_baseline_mode', lateralState.mode);
+        formData.append('lateral_stem_roi_x', lateralState.stemRoiX.toFixed(4));
+        formData.append('lateral_stem_roi_y', lateralState.stemRoiY.toFixed(4));
+        formData.append('lateral_stem_roi_width', lateralState.stemRoiW.toFixed(4));
+        formData.append('lateral_stem_roi_height', lateralState.stemRoiH.toFixed(4));
+        formData.append('lateral_stem_mode', lateralState.stemMode);
+
+        try {
+            const resp = await fetch("{{ url_for('dashboard.configuration_panel') }}", {
+                method: 'POST',
+                body: formData
+            });
+
+            if (resp.ok) {
+                if (status) {
+                    status.style.display = 'block';
+                    status.style.background = 'rgba(37, 99, 235, 0.12)';
+                    status.style.color = '#1e40af';
+                    status.innerHTML = '<span class="material-icons-round" style="vertical-align: middle; font-size: 16px;">check_circle</span> ¡Línea base y zona de tallo guardadas y calibradas con éxito!';
+                    setTimeout(() => { status.style.display = 'none'; }, 4000);
+                }
+            } else {
+                throw new Error('Error al guardar en el servidor');
+            }
+        } catch (err) {
+            if (status) {
+                status.style.display = 'block';
+                status.style.background = 'rgba(239, 68, 68, 0.12)';
+                status.style.color = '#991b1b';
+                status.innerHTML = `<span class="material-icons-round" style="vertical-align: middle; font-size: 16px;">error</span> Error: ${err.message}`;
+            }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-icons-round" style="font-size: 16px;">save</span> <span>Guardar Calibración Lateral</span>';
+        }
+    }
+
+    // Iniciar ambos canvas cuando cargue la página
     document.addEventListener('DOMContentLoaded', () => {
         initRoiCanvas();
         updateRoiLabels();
+
+        initLateralCanvas();
+        updateLateralLabels();
     });
 </script>
 {% endblock %}

@@ -147,7 +147,7 @@
                     </div>
 
                     <!-- TARJETAS DE COMPARACIÓN DE IMÁGENES -->
-                    <div class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px;">
+                    <div class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px;">
                         
                         <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR) -->
                         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm);">
@@ -159,15 +159,23 @@
                                 <span class="badge badge-success">Área Foliar</span>
                             </div>
                             
-                            <div style="position: relative; width: 100%; height: 320px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
+                            <div style="position: relative; width: 100%; height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;">
-                                    <div style="position: relative; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; background: #090d16;">
-                                        <img id="img-cenital-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div class="photo-inspect-trigger" style="position: relative; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-cenital-orig-{{ s.id }}').src, 'Cámara Cenital - Foto Original')">
+                                        <img id="img-cenital-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_orig) }}" style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
                                         <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">ORIGINAL</div>
+                                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 6px; color: #38bdf8; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
+                                            <span class="material-icons-round" style="font-size: 16px;">search</span>
+                                            <span>Lupa / Zoom</span>
+                                        </div>
                                     </div>
-                                    <div style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16;">
-                                        <img id="img-cenital-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div class="photo-inspect-trigger" style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-cenital-proc-{{ s.id }}').src, 'Cámara Cenital - Segmentación ExG y ROI')">
+                                        <img id="img-cenital-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
                                         <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">MÁSCARA ExG</div>
+                                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 6px; color: #38bdf8; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
+                                            <span class="material-icons-round" style="font-size: 16px;">search</span>
+                                            <span>Lupa / Zoom</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -183,15 +191,23 @@
                                 <span class="badge badge-primary">Altura & Tallo</span>
                             </div>
                             
-                            <div style="position: relative; width: 100%; height: 320px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
+                            <div style="position: relative; width: 100%; height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;">
-                                    <div style="position: relative; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; background: #090d16;">
-                                        <img id="img-lateral-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div class="photo-inspect-trigger" style="position: relative; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-lateral-orig-{{ s.id }}').src, 'Cámara Lateral - Foto Original')">
+                                        <img id="img-lateral-orig-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_orig) }}" style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
                                         <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">ORIGINAL</div>
+                                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 6px; color: #38bdf8; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
+                                            <span class="material-icons-round" style="font-size: 16px;">search</span>
+                                            <span>Lupa / Zoom</span>
+                                        </div>
                                     </div>
-                                    <div style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16;">
-                                        <img id="img-lateral-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div class="photo-inspect-trigger" style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-lateral-proc-{{ s.id }}').src, 'Cámara Lateral - Medición de Altura y Tallo')">
+                                        <img id="img-lateral-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_lateral_proc) }}" style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
                                         <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(37,99,235,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">CALIBRACIÓN</div>
+                                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 6px; color: #38bdf8; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
+                                            <span class="material-icons-round" style="font-size: 16px;">search</span>
+                                            <span>Lupa / Zoom</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -201,6 +217,91 @@
             </div>
         {% endfor %}
     {% endif %}
+</div>
+
+<!-- MODAL LIGHTBOX PARA VER FOTOS EN TAMAÑO COMPLETO CON LUPA BOTÁNICA Y ZOOM ULTRA-ALTO -->
+<div id="image-lightbox-modal" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(10px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; user-select: none;" onclick="closeImageLightbox(event)">
+    
+    <!-- Barra superior de controles del lightbox -->
+    <div style="position: absolute; top: 12px; left: 20px; right: 20px; display: flex; align-items: center; justify-content: space-between; z-index: 20; flex-wrap: wrap; gap: 12px;" onclick="event.stopPropagation()">
+        <div style="color: #f8fafc; font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+            <div style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round" style="color: #38bdf8; font-size: 18px;">nature</span>
+                <span id="lightbox-title">Inspección de Tejido Vegetal</span>
+            </div>
+        </div>
+        
+        <!-- Barra de herramientas de Zoom y Lupa -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            
+            <!-- Controles de Zoom General -->
+            <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 4px 6px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                <button type="button" class="btn btn-outline btn-sm" onclick="adjustLightboxZoom(-0.5)" style="padding: 4px 8px; font-size: 11px; color: #fff; border-color: rgba(255,255,255,0.2);" title="Alejar (-)">
+                    <span class="material-icons-round" style="font-size: 15px;">remove</span>
+                </button>
+                <span id="lightbox-zoom-level" style="color: #38bdf8; font-size: 12px; font-weight: 700; min-width: 50px; text-align: center;">100%</span>
+                <button type="button" class="btn btn-outline btn-sm" onclick="adjustLightboxZoom(0.5)" style="padding: 4px 8px; font-size: 11px; color: #fff; border-color: rgba(255,255,255,0.2);" title="Acercar (+)">
+                    <span class="material-icons-round" style="font-size: 15px;">add</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="resetLightboxZoom()" style="padding: 4px 8px; font-size: 11px; color: #cbd5e1; border-color: rgba(255,255,255,0.2);" title="Restablecer (1:1 / 0)">
+                    <span class="material-icons-round" style="font-size: 15px;">restart_alt</span>
+                </button>
+            </div>
+
+            <!-- Controles del Modo Lupa -->
+            <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 4px 6px; display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                <button type="button" id="btn-toggle-loupe" class="btn btn-outline btn-sm" onclick="toggleLoupeMode()" style="padding: 4px 10px; font-size: 11.5px; color: #fff; border-color: rgba(255,255,255,0.25); display: flex; align-items: center; gap: 5px;" title="Activar Lupa Circular de Detalle (Tecla L)">
+                    <span class="material-icons-round" style="font-size: 16px;">search</span>
+                    <span>Modo Lupa</span>
+                </button>
+                
+                <!-- Selector de potencia de aumento de lupa -->
+                <div id="loupe-power-selector" style="display: flex; align-items: center; gap: 3px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 6px;">
+                    <button type="button" class="btn-loupe-power" onclick="setLoupePower(2.5, this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">2.5x</button>
+                    <button type="button" class="btn-loupe-power active" onclick="setLoupePower(4.0, this)" style="background: #38bdf8; border: 1px solid #38bdf8; color: #090d16; border-radius: 4px; padding: 3px 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">4x</button>
+                    <button type="button" class="btn-loupe-power" onclick="setLoupePower(8.0, this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">8x</button>
+                </div>
+            </div>
+
+            <!-- Botón de Descargar -->
+            <a id="lightbox-download-link" href="#" download="captura_sifma_hd.png" class="btn btn-outline btn-sm" style="padding: 6px 10px; font-size: 11.5px; color: #cbd5e1; border-color: rgba(255,255,255,0.2); display: flex; align-items: center; gap: 4px; background: rgba(15, 23, 42, 0.9);" title="Descargar Imagen Original">
+                <span class="material-icons-round" style="font-size: 16px;">download</span>
+            </a>
+
+            <!-- Cerrar Modal -->
+            <button type="button" onclick="closeImageLightbox()" style="background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.6); color: #ffffff; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" title="Cerrar (Esc)">
+                <span class="material-icons-round" style="font-size: 20px;">close</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Contenedor interactivo con Pan y Zoom -->
+    <div id="lightbox-viewport" style="position: relative; width: 94vw; height: 84vh; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: grab;" onclick="event.stopPropagation()">
+        <img id="lightbox-img" src="" draggable="false" style="max-width: 100%; max-height: 84vh; border-radius: 8px; box-shadow: 0 16px 48px rgba(0,0,0,0.85); object-fit: contain; border: 1px solid #1e293b; transform-origin: 0 0; transition: transform 0.05s linear; pointer-events: auto; user-select: none;">
+        
+        <!-- Lupa Circular Dinámica con Retícula y Aumento Óptico -->
+        <div id="lightbox-loupe" style="display: none; position: absolute; width: 240px; height: 240px; border-radius: 50%; border: 3px solid #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.65), inset 0 0 15px rgba(0,0,0,0.7); pointer-events: none; overflow: hidden; background-repeat: no-repeat; z-index: 60; background-color: #030712;">
+            <!-- Retícula de precisión botánica -->
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                <div style="width: 14px; height: 1.5px; background: rgba(56, 189, 248, 0.9); box-shadow: 0 0 4px #38bdf8;"></div>
+                <div style="width: 1.5px; height: 14px; background: rgba(56, 189, 248, 0.9); position: absolute; box-shadow: 0 0 4px #38bdf8;"></div>
+                <div style="width: 60px; height: 60px; border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 50%; position: absolute;"></div>
+            </div>
+            <!-- Etiqueta de potencia de aumento en la lupa -->
+            <div id="loupe-power-badge" style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 1px 8px; border-radius: 10px; letter-spacing: 0.5px;">
+                4.0x LOUPE
+            </div>
+        </div>
+    </div>
+    
+    <!-- Barra inferior informativa -->
+    <div style="position: absolute; bottom: 12px; color: #94a3b8; font-size: 11.5px; display: flex; align-items: center; gap: 18px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); padding: 5px 20px; border-radius: 20px; z-index: 20;">
+        <span>🖱️ <strong>Rueda</strong>: Zoom continuo (o dentro de la lupa)</span>
+        <span>✋ <strong>Arrastrar</strong>: Pan panorámico</span>
+        <span>⚡ <strong>Doble Clic</strong>: Zoom rápido 3x</span>
+        <span>🔍 <strong>L</strong>: Activar/Desactivar Modo Lupa</span>
+        <span>⌨️ <strong>Esc</strong>: Cerrar</span>
+    </div>
 </div>
 
 {% endblock %}
@@ -289,6 +390,266 @@
             alert('Error al eliminar período.');
         }
     }
+
+    // ==========================================
+    // VISOR LIGHTBOX CON ZOOM ULTRA-DETALLE Y LUPA BOTÁNICA
+    // ==========================================
+    let lightboxState = {
+        zoom: 1.0,
+        panX: 0,
+        panY: 0,
+        isPanning: false,
+        startX: 0,
+        startY: 0,
+        isLoupeActive: false,
+        loupePower: 4.0
+    };
+
+    function openImageLightbox(src, title) {
+        if (!src) return;
+        const modal = document.getElementById('image-lightbox-modal');
+        const img = document.getElementById('lightbox-img');
+        const titleEl = document.getElementById('lightbox-title');
+        const downloadLink = document.getElementById('lightbox-download-link');
+        
+        if (modal && img) {
+            img.src = src;
+            if (downloadLink) {
+                downloadLink.href = src;
+                downloadLink.download = (title ? title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'captura_sifma') + '.jpg';
+            }
+            if (titleEl && title) titleEl.innerText = title;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            resetLightboxZoom();
+        }
+    }
+
+    function closeImageLightbox(e) {
+        const modal = document.getElementById('image-lightbox-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            if (lightboxState.isLoupeActive) toggleLoupeMode();
+        }
+    }
+
+    function adjustLightboxZoom(delta, originClientX, originClientY) {
+        const oldZoom = lightboxState.zoom;
+        const newZoom = Math.max(0.5, Math.min(12.0, oldZoom + delta));
+        if (newZoom === oldZoom) return;
+
+        const img = document.getElementById('lightbox-img');
+        const viewport = document.getElementById('lightbox-viewport');
+
+        if (originClientX !== undefined && originClientY !== undefined && img && viewport) {
+            const vpRect = viewport.getBoundingClientRect();
+            const mouseX = originClientX - vpRect.left;
+            const mouseY = originClientY - vpRect.top;
+
+            // Zoom centrado hacia el cursor
+            const zoomRatio = newZoom / oldZoom;
+            lightboxState.panX = mouseX - (mouseX - lightboxState.panX) * zoomRatio;
+            lightboxState.panY = mouseY - (mouseY - lightboxState.panY) * zoomRatio;
+        } else if (viewport) {
+            // Zoom centrado en el medio del viewport
+            const vpW = viewport.clientWidth / 2;
+            const vpH = viewport.clientHeight / 2;
+            const zoomRatio = newZoom / oldZoom;
+            lightboxState.panX = vpW - (vpW - lightboxState.panX) * zoomRatio;
+            lightboxState.panY = vpH - (vpH - lightboxState.panY) * zoomRatio;
+        }
+
+        lightboxState.zoom = newZoom;
+        applyLightboxTransform();
+    }
+
+    function resetLightboxZoom() {
+        lightboxState.zoom = 1.0;
+        const img = document.getElementById('lightbox-img');
+        const viewport = document.getElementById('lightbox-viewport');
+        if (img && viewport) {
+            lightboxState.panX = (viewport.clientWidth - img.offsetWidth) / 2;
+            lightboxState.panY = (viewport.clientHeight - img.offsetHeight) / 2;
+        } else {
+            lightboxState.panX = 0;
+            lightboxState.panY = 0;
+        }
+        applyLightboxTransform();
+    }
+
+    function applyLightboxTransform() {
+        const img = document.getElementById('lightbox-img');
+        const level = document.getElementById('lightbox-zoom-level');
+        if (img) {
+            img.style.transform = `translate(${lightboxState.panX}px, ${lightboxState.panY}px) scale(${lightboxState.zoom})`;
+        }
+        if (level) {
+            level.innerText = `${Math.round(lightboxState.zoom * 100)}%`;
+        }
+    }
+
+    function setLoupePower(power, btnElement) {
+        lightboxState.loupePower = power;
+        document.querySelectorAll('.btn-loupe-power').forEach(b => {
+            b.style.background = 'transparent';
+            b.style.borderColor = 'rgba(255,255,255,0.2)';
+            b.style.color = '#cbd5e1';
+        });
+        if (btnElement) {
+            btnElement.style.background = '#38bdf8';
+            btnElement.style.borderColor = '#38bdf8';
+            btnElement.style.color = '#090d16';
+        }
+        const badge = document.getElementById('loupe-power-badge');
+        if (badge) badge.innerText = `${power.toFixed(1)}x LOUPE`;
+
+        // Si la lupa no está activa, activarla automáticamente
+        if (!lightboxState.isLoupeActive) {
+            toggleLoupeMode();
+        }
+    }
+
+    function toggleLoupeMode() {
+        lightboxState.isLoupeActive = !lightboxState.isLoupeActive;
+        const loupe = document.getElementById('lightbox-loupe');
+        const btn = document.getElementById('btn-toggle-loupe');
+        const viewport = document.getElementById('lightbox-viewport');
+        const img = document.getElementById('lightbox-img');
+
+        if (lightboxState.isLoupeActive) {
+            if (loupe && img) {
+                loupe.style.display = 'block';
+                loupe.style.backgroundImage = `url('${img.src}')`;
+            }
+            if (btn) {
+                btn.className = 'btn btn-primary btn-sm';
+                btn.style.background = '#38bdf8';
+                btn.style.color = '#090d16';
+            }
+            if (viewport) viewport.style.cursor = 'crosshair';
+        } else {
+            if (loupe) loupe.style.display = 'none';
+            if (btn) {
+                btn.className = 'btn btn-outline btn-sm';
+                btn.style.background = 'transparent';
+                btn.style.color = '#fff';
+            }
+            if (viewport) viewport.style.cursor = 'grab';
+        }
+    }
+
+    // Inicialización de eventos interactivos del Lightbox
+    const lbViewport = document.getElementById('lightbox-viewport');
+    if (lbViewport) {
+        // Zoom con rueda del ratón
+        lbViewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (lightboxState.isLoupeActive) {
+                // Si la lupa está activa, ajustar aumento de la lupa con la rueda
+                const deltaPower = e.deltaY < 0 ? 0.5 : -0.5;
+                lightboxState.loupePower = Math.max(1.5, Math.min(12.0, lightboxState.loupePower + deltaPower));
+                const badge = document.getElementById('loupe-power-badge');
+                if (badge) badge.innerText = `${lightboxState.loupePower.toFixed(1)}x LOUPE`;
+            } else {
+                // Si no, hacer zoom al viewport hacia la posición del mouse
+                const delta = e.deltaY < 0 ? 0.35 : -0.35;
+                adjustLightboxZoom(delta, e.clientX, e.clientY);
+            }
+        }, { passive: false });
+
+        // Doble Clic para Zoom Rápido hacia el punto
+        lbViewport.addEventListener('dblclick', (e) => {
+            if (lightboxState.isLoupeActive) return;
+            if (lightboxState.zoom > 1.2) {
+                resetLightboxZoom();
+            } else {
+                lightboxState.zoom = 3.0;
+                const vpRect = lbViewport.getBoundingClientRect();
+                const mouseX = e.clientX - vpRect.left;
+                const mouseY = e.clientY - vpRect.top;
+                lightboxState.panX = mouseX - mouseX * 3.0;
+                lightboxState.panY = mouseY - mouseY * 3.0;
+                applyLightboxTransform();
+            }
+        });
+
+        // Arrastrar y Mover Imagen (Pan)
+        lbViewport.addEventListener('mousedown', (e) => {
+            if (lightboxState.isLoupeActive) return;
+            lightboxState.isPanning = true;
+            lightboxState.startX = e.clientX - lightboxState.panX;
+            lightboxState.startY = e.clientY - lightboxState.panY;
+            lbViewport.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            const loupe = document.getElementById('lightbox-loupe');
+            const img = document.getElementById('lightbox-img');
+
+            // 1. Manejo del Modo Lupa Circular
+            if (lightboxState.isLoupeActive && loupe && img && img.complete) {
+                const rect = lbViewport.getBoundingClientRect();
+                const imgRect = img.getBoundingClientRect();
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+
+                if (mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom) {
+                    loupe.style.display = 'block';
+                    const loupeSize = 240;
+                    loupe.style.left = `${mouseX - rect.left - loupeSize / 2}px`;
+                    loupe.style.top = `${mouseY - rect.top - loupeSize / 2}px`;
+
+                    // Calcular coordenadas relativas dentro de la imagen renderizada
+                    const relX = (mouseX - imgRect.left) / imgRect.width;
+                    const relY = (mouseY - imgRect.top) / imgRect.height;
+
+                    const zoomFactor = lightboxState.loupePower;
+                    const bgW = imgRect.width * zoomFactor;
+                    const bgH = imgRect.height * zoomFactor;
+
+                    loupe.style.backgroundSize = `${bgW}px ${bgH}px`;
+                    loupe.style.backgroundPosition = `-${relX * bgW - loupeSize / 2}px -${relY * bgH - loupeSize / 2}px`;
+                } else {
+                    loupe.style.display = 'none';
+                }
+            }
+
+            // 2. Manejo de Pan / Arrastre
+            if (lightboxState.isPanning) {
+                lightboxState.panX = e.clientX - lightboxState.startX;
+                lightboxState.panY = e.clientY - lightboxState.startY;
+                applyLightboxTransform();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (lightboxState.isPanning) {
+                lightboxState.isPanning = false;
+                if (!lightboxState.isLoupeActive) lbViewport.style.cursor = 'grab';
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeImageLightbox();
+        } else if (e.key === '+' || e.key === '=') {
+            adjustLightboxZoom(0.5);
+        } else if (e.key === '-' || e.key === '_') {
+            adjustLightboxZoom(-0.5);
+        } else if (e.key === '0') {
+            resetLightboxZoom();
+        } else if (e.key.toLowerCase() === 'l') {
+            toggleLoupeMode();
+        } else if (e.key === '1') {
+            setLoupePower(2.5, document.querySelectorAll('.btn-loupe-power')[0]);
+        } else if (e.key === '2') {
+            setLoupePower(4.0, document.querySelectorAll('.btn-loupe-power')[1]);
+        } else if (e.key === '3') {
+            setLoupePower(8.0, document.querySelectorAll('.btn-loupe-power')[2]);
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         const firstThumb = document.querySelector('.capture-thumb-card');

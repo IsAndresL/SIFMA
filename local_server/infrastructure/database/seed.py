@@ -43,13 +43,21 @@ def init_db_data(app):
                 "ALTER TABLE crop_profile ADD COLUMN lat_pixel_to_cm_ratio FLOAT DEFAULT 0.038",
                 "ALTER TABLE crop_profile ADD COLUMN lat_min_area INTEGER DEFAULT 60",
                 "ALTER TABLE crop_profile ADD COLUMN lat_filter_isolated BOOLEAN DEFAULT 1",
+                "ALTER TABLE crop_profile ADD COLUMN lat_draw_contours BOOLEAN DEFAULT 0",
                 "ALTER TABLE config ADD COLUMN latitude FLOAT DEFAULT 11.2408",
                 "ALTER TABLE config ADD COLUMN longitude FLOAT DEFAULT -74.1990",
                 "ALTER TABLE config ADD COLUMN city_name VARCHAR(100) DEFAULT 'Santa Marta, Magdalena'",
                 "ALTER TABLE config ADD COLUMN cenital_roi_cx FLOAT DEFAULT 0.4955",
                 "ALTER TABLE config ADD COLUMN cenital_roi_cy FLOAT DEFAULT 0.4408",
                 "ALTER TABLE config ADD COLUMN cenital_roi_radius FLOAT DEFAULT 0.1450",
-                "ALTER TABLE config ADD COLUMN cenital_roi_mode VARCHAR(20) DEFAULT 'dynamic_conn'"
+                "ALTER TABLE config ADD COLUMN cenital_roi_mode VARCHAR(20) DEFAULT 'dynamic_conn'",
+                "ALTER TABLE config ADD COLUMN lateral_baseline_y FLOAT DEFAULT 0.7200",
+                "ALTER TABLE config ADD COLUMN lateral_baseline_mode VARCHAR(20) DEFAULT 'manual_baseline'",
+                "ALTER TABLE config ADD COLUMN lateral_stem_roi_y FLOAT DEFAULT 0.6600",
+                "ALTER TABLE config ADD COLUMN lateral_stem_roi_height FLOAT DEFAULT 0.0500",
+                "ALTER TABLE config ADD COLUMN lateral_stem_roi_x FLOAT DEFAULT 0.5000",
+                "ALTER TABLE config ADD COLUMN lateral_stem_roi_width FLOAT DEFAULT 0.2000",
+                "ALTER TABLE config ADD COLUMN lateral_stem_mode VARCHAR(20) DEFAULT 'auto_edge'"
             ]:
                 try:
                     conn.execute(db.text(col_sql))
@@ -159,7 +167,7 @@ def init_db_data(app):
                 display_name="Cilantro",
                 h_min=26, h_max=90, s_min=35, s_max=255, v_min=30, v_max=255,
                 l_min=20, l_max=245, a_min=0, a_max=124, b_min=120, b_max=250,
-                pixel_to_cm_ratio=0.038, has_stem=True,
+                pixel_to_cm_ratio=0.005, has_stem=True,
                 lat_h_min=30, lat_h_max=88, lat_s_min=40, lat_s_max=255, lat_v_min=35, lat_v_max=255,
                 lat_l_min=20, lat_l_max=255, lat_a_min=0, lat_a_max=118, lat_b_min=125, lat_b_max=255,
                 lat_pixel_to_cm_ratio=0.025, lat_min_area=50, lat_filter_isolated=True
@@ -171,29 +179,15 @@ def init_db_data(app):
             if not existing:
                 db.session.add(p)
             else:
-                existing.h_min = p.h_min
-                existing.h_max = p.h_max
-                existing.s_min = p.s_min
-                existing.s_max = p.s_max
-                existing.v_min = p.v_min
-                existing.v_max = p.v_max
-                existing.a_max = p.a_max
-                existing.b_min = p.b_min
-                existing.lat_h_min = p.lat_h_min
-                existing.lat_h_max = p.lat_h_max
-                existing.lat_s_min = p.lat_s_min
-                existing.lat_s_max = p.lat_s_max
-                existing.lat_v_min = p.lat_v_min
-                existing.lat_v_max = p.lat_v_max
-                existing.lat_l_min = p.lat_l_min
-                existing.lat_l_max = p.lat_l_max
-                existing.lat_a_min = p.lat_a_min
-                existing.lat_a_max = p.lat_a_max
-                existing.lat_b_min = p.lat_b_min
-                existing.lat_b_max = p.lat_b_max
-                existing.lat_pixel_to_cm_ratio = p.lat_pixel_to_cm_ratio
-                existing.lat_min_area = p.lat_min_area
-                existing.lat_filter_isolated = p.lat_filter_isolated
+                # Solo rellenar campos nulos para compatibilidad hacia atrás, sin sobreescribir la calibración del usuario
+                if getattr(existing, 'lat_pixel_to_cm_ratio', None) is None:
+                    existing.lat_pixel_to_cm_ratio = p.lat_pixel_to_cm_ratio
+                if getattr(existing, 'lat_min_area', None) is None:
+                    existing.lat_min_area = p.lat_min_area
+                if getattr(existing, 'lat_filter_isolated', None) is None:
+                    existing.lat_filter_isolated = p.lat_filter_isolated
+                if getattr(existing, 'lat_draw_contours', None) is None:
+                    existing.lat_draw_contours = False
 
         db.session.commit()
-        logger.info("Base de datos SIFMA inicializada y perfiles verificados.")
+        logger.info("Base de datos SIFMA inicializada y perfiles verificados (conservando calibraciones personalizadas).")

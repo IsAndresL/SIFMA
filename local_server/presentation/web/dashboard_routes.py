@@ -414,6 +414,7 @@ def configuration_panel():
                 profile.lat_pixel_to_cm_ratio = float(request.form.get('lat_pixel_to_cm_ratio', getattr(profile, 'lat_pixel_to_cm_ratio', profile.pixel_to_cm_ratio)))
                 profile.lat_min_area = int(request.form.get('lat_min_area', getattr(profile, 'lat_min_area', 60)))
                 profile.lat_filter_isolated = 'lat_filter_isolated' in request.form
+                profile.lat_draw_contours = 'lat_draw_contours' in request.form
 
                 system_service.update_profile(profile)
                 
@@ -436,29 +437,60 @@ def configuration_panel():
                 pass
             return redirect(url_for('dashboard.configuration_panel'))
 
+        # 4. Calibrar Línea Base Lateral y Zona de Tallo Interactiva
+        elif action in ['update_lateral_baseline', 'update_lateral_stem']:
+            try:
+                update_dict = {}
+                if 'lateral_baseline_y' in request.form:
+                    update_dict['lateral_baseline_y'] = float(request.form.get('lateral_baseline_y', 0.7200))
+                if 'lateral_baseline_mode' in request.form:
+                    update_dict['lateral_baseline_mode'] = request.form.get('lateral_baseline_mode', 'manual_baseline')
+                
+                if 'lateral_stem_roi_y' in request.form:
+                    update_dict['lateral_stem_roi_y'] = float(request.form.get('lateral_stem_roi_y', 0.6600))
+                if 'lateral_stem_roi_height' in request.form:
+                    update_dict['lateral_stem_roi_height'] = float(request.form.get('lateral_stem_roi_height', 0.0500))
+                if 'lateral_stem_roi_x' in request.form:
+                    update_dict['lateral_stem_roi_x'] = float(request.form.get('lateral_stem_roi_x', 0.5000))
+                if 'lateral_stem_roi_width' in request.form:
+                    update_dict['lateral_stem_roi_width'] = float(request.form.get('lateral_stem_roi_width', 0.2000))
+                if 'lateral_stem_mode' in request.form:
+                    update_dict['lateral_stem_mode'] = request.form.get('lateral_stem_mode', 'auto_edge')
+
+                if update_dict:
+                    system_service.update_config(**update_dict)
+            except Exception:
+                pass
+            return redirect(url_for('dashboard.configuration_panel'))
+
     requested_crop = request.args.get('crop_type', system_service.get_crop_for_plant(active_plant_id))
     selected_profile = system_service.get_profile(requested_crop)
     plant_profiles_map = system_service.get_all_plant_profiles_map()
 
-    # Obtener la última foto cenital procesada o capturada para el canvas interactivo
+    # Obtener la última foto cenital y lateral procesada o capturada para los canvas interactivos
     sessions = session_repo.get_all_by_plant(active_plant_id, order_asc=False)
     latest_cenital_img = None
+    latest_lateral_img = None
     if sessions:
         for s in sessions:
             if s.metrics:
                 for m in s.metrics:
-                    if m.image_path_cenital_orig:
+                    if not latest_cenital_img and m.image_path_cenital_orig:
                         latest_cenital_img = m.image_path_cenital_orig
+                    if not latest_lateral_img and m.image_path_lateral_orig:
+                        latest_lateral_img = m.image_path_lateral_orig
+                    if latest_cenital_img and latest_lateral_img:
                         break
-            if latest_cenital_img:
+            if latest_cenital_img and latest_lateral_img:
                 break
 
     return render_template('config.html', 
                            config=config, 
                            profiles=profiles, 
-                           selected_profile=selected_profile,
+                           selected_profile=selected_profile, 
                            plant_profiles_map=plant_profiles_map,
                            latest_cenital_img=latest_cenital_img,
+                           latest_lateral_img=latest_lateral_img,
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/users')

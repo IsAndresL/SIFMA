@@ -18,11 +18,11 @@ class SensorReading(db.Model):
     motor_state = Column(Integer, nullable=True, default=0) # Estado Motor: 1 (Encendido) / 0 (Apagado)
     
     # Variables Fisicoquímicas y de Calidad de Agua / Nutrientes
-    water_ph = Column(Float, nullable=True, default=6.2) # pH Solución (Potencial de Hidrógeno)
-    ec_conductivity = Column(Float, nullable=True, default=1650.0) # µS/cm (Electroconductividad)
-    turbidity_ntu = Column(Float, nullable=True, default=3.8) # NTU (Turbidez)
-    dissolved_oxygen_mg_l = Column(Float, nullable=True, default=7.4) # mg/L (Oxígeno Disuelto)
-    water_temp = Column(Float, nullable=True, default=20.0) # °C (Temperatura del agua)
+    water_ph = Column(Float, nullable=True, default=None) # pH Solución (Potencial de Hidrógeno)
+    ec_conductivity = Column(Float, nullable=True, default=None) # µS/cm (Electroconductividad)
+    turbidity_ntu = Column(Float, nullable=True, default=None) # NTU (Turbidez)
+    dissolved_oxygen_mg_l = Column(Float, nullable=True, default=None) # mg/L (Oxígeno Disuelto)
+    water_temp = Column(Float, nullable=True, default=None) # °C (Temperatura del agua)
 
     sessions = relationship("CaptureSession", back_populates="sensor_reading")
 
@@ -33,11 +33,11 @@ class SensorReading(db.Model):
         return {
             "id": self.id,
             "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S") if self.timestamp else None,
-            "water_ph": round(self.water_ph, 2) if self.water_ph is not None else 6.2,
-            "ec_conductivity": round(self.ec_conductivity, 1) if self.ec_conductivity is not None else 1650.0,
-            "turbidity_ntu": round(self.turbidity_ntu, 2) if self.turbidity_ntu is not None else 3.8,
-            "dissolved_oxygen_mg_l": round(self.dissolved_oxygen_mg_l, 2) if self.dissolved_oxygen_mg_l is not None else 7.4,
-            "water_temp": round(self.water_temp, 2) if self.water_temp is not None else 20.0,
+            "water_ph": round(self.water_ph, 2) if self.water_ph is not None else None,
+            "ec_conductivity": round(self.ec_conductivity, 1) if self.ec_conductivity is not None else None,
+            "turbidity_ntu": round(self.turbidity_ntu, 2) if self.turbidity_ntu is not None else None,
+            "dissolved_oxygen_mg_l": round(self.dissolved_oxygen_mg_l, 2) if self.dissolved_oxygen_mg_l is not None else None,
+            "water_temp": round(self.water_temp, 2) if self.water_temp is not None else None,
             "temperature": round(self.temperature, 2) if self.temperature is not None else 0.0,
             "humidity": round(self.humidity, 1) if self.humidity is not None else 0.0,
             "motor_state": int(self.motor_state) if self.motor_state is not None else int(self.motor_current if self.motor_current is not None else 0),

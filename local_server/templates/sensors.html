@@ -57,9 +57,13 @@
                     </label>
                     <div style="display: flex; gap: 8px;">
                         <select id="antenna-port-select" class="form-control" style="flex-grow: 1; font-size: 12.5px;">
-                            {% for p in available_ports %}
-                                <option value="{{ p }}" {% if p == telemetry_status.port %}selected{% endif %}>{{ p }}</option>
-                            {% endfor %}
+                            {% if available_ports %}
+                                {% for p in available_ports %}
+                                    <option value="{{ p }}" {% if p == telemetry_status.port %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="" disabled selected>No se detecta antena USB conectada</option>
+                            {% endif %}
                         </select>
                         <button type="button" class="btn btn-outline btn-sm" onclick="refreshAntennaPorts()" title="Escanear puertos USB">
                             <span class="material-icons-round" style="font-size: 16px;">refresh</span>
@@ -203,7 +207,7 @@
 <div class="kpi-row-grid" id="kpi-container-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px;">
     
     <!-- 1. pH Solución -->
-    {% set ph_stat = sensor_data.summary.get('water_ph', {'last': 6.12, 'min': 5.8, 'max': 6.8, 'avg': 6.15, 'status': 'pH Óptimo'}) %}
+    {% set ph_stat = sensor_data.summary.get('water_ph', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">1. pH Solución</span>
@@ -218,14 +222,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-ph-sub">
             Mín: <strong id="kpi-ph-min">{{ ph_stat.min }}</strong> | Máx: <strong id="kpi-ph-max">{{ ph_stat.max }}</strong> | Prom: <strong id="kpi-ph-avg">{{ ph_stat.avg }}</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in ph_stat.status %}positive{% else %}warning{% endif %}" id="kpi-ph-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in ph_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in ph_stat.status %}positive{% elif 'Sin datos' in ph_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-ph-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in ph_stat.status %}check_circle{% elif 'Sin datos' in ph_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-ph-status">{{ ph_stat.status }}</span>
         </div>
     </div>
 
     <!-- 2. Conductividad Eléctrica (EC) -->
-    {% set ec_stat = sensor_data.summary.get('ec_conductivity', {'last': 1649.6, 'min': 1400.0, 'max': 2200.0, 'avg': 1650.0, 'status': 'Nutrientes Óptimos'}) %}
+    {% set ec_stat = sensor_data.summary.get('ec_conductivity', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">2. Conductividad Eléctrica</span>
@@ -240,14 +244,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-ec-sub">
             Mín: <strong id="kpi-ec-min">{{ ec_stat.min }}</strong> | Máx: <strong id="kpi-ec-max">{{ ec_stat.max }}</strong> | Prom: <strong id="kpi-ec-avg">{{ ec_stat.avg }}</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in ec_stat.status %}positive{% else %}warning{% endif %}" id="kpi-ec-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in ec_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in ec_stat.status or 'Óptimos' in ec_stat.status %}positive{% elif 'Sin datos' in ec_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-ec-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in ec_stat.status or 'Óptimos' in ec_stat.status %}check_circle{% elif 'Sin datos' in ec_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-ec-status">{{ ec_stat.status }}</span>
         </div>
     </div>
 
     <!-- 3. Turbidez (NTU) -->
-    {% set turb_stat = sensor_data.summary.get('turbidity_ntu', {'last': 4.06, 'min': 1.5, 'max': 12.0, 'avg': 4.1, 'status': 'Agua Cristalina'}) %}
+    {% set turb_stat = sensor_data.summary.get('turbidity_ntu', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">3. Turbidez</span>
@@ -262,14 +266,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-turb-sub">
             Mín: <strong id="kpi-turb-min">{{ turb_stat.min }}</strong> | Máx: <strong id="kpi-turb-max">{{ turb_stat.max }}</strong> | Prom: <strong id="kpi-turb-avg">{{ turb_stat.avg }}</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Cristalina' in turb_stat.status %}positive{% else %}warning{% endif %}" id="kpi-turb-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if 'Cristalina' in turb_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Cristalina' in turb_stat.status %}positive{% elif 'Sin datos' in turb_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-turb-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Cristalina' in turb_stat.status %}check_circle{% elif 'Sin datos' in turb_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-turb-status">{{ turb_stat.status }}</span>
         </div>
     </div>
 
     <!-- 4. Oxígeno Disuelto (mg/L) -->
-    {% set do_stat = sensor_data.summary.get('dissolved_oxygen_mg_l', {'last': 7.6, 'min': 5.8, 'max': 9.2, 'avg': 7.5, 'status': 'Oxigenación Óptima'}) %}
+    {% set do_stat = sensor_data.summary.get('dissolved_oxygen_mg_l', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">4. Oxígeno Disuelto</span>
@@ -284,14 +288,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-do-sub">
             Mín: <strong id="kpi-do-min">{{ do_stat.min }}</strong> | Máx: <strong id="kpi-do-max">{{ do_stat.max }}</strong> | Prom: <strong id="kpi-do-avg">{{ do_stat.avg }}</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptima' in do_stat.status %}positive{% else %}warning{% endif %}" id="kpi-do-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptima' in do_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptima' in do_stat.status %}positive{% elif 'Sin datos' in do_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-do-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptima' in do_stat.status %}check_circle{% elif 'Sin datos' in do_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-do-status">{{ do_stat.status }}</span>
         </div>
     </div>
 
     <!-- 5. Temperatura de Agua (°C) -->
-    {% set wt_stat = sensor_data.summary.get('water_temp', {'last': 20.0, 'min': 17.5, 'max': 23.5, 'avg': 20.2, 'status': 'Óptima'}) %}
+    {% set wt_stat = sensor_data.summary.get('water_temp', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-water" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">5. Temperatura Agua</span>
@@ -306,14 +310,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-watertemp-sub">
             Mín: <strong id="kpi-watertemp-min">{{ wt_stat.min }}°C</strong> | Máx: <strong id="kpi-watertemp-max">{{ wt_stat.max }}°C</strong> | Prom: <strong id="kpi-watertemp-avg">{{ wt_stat.avg }}°C</strong>
         </div>
-        <div class="kpi-footer-badge positive" id="kpi-watertemp-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+        <div class="kpi-footer-badge {% if 'Óptima' in wt_stat.status %}positive{% elif 'Sin datos' in wt_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-watertemp-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptima' in wt_stat.status %}check_circle{% elif 'Sin datos' in wt_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-watertemp-status">{{ wt_stat.status }}</span>
         </div>
     </div>
 
     <!-- 6. Estado Motor (1: Encendido / 0: Apagado) -->
-    {% set mot_stat = sensor_data.summary.get('motor_state', {'last': 1, 'min': 0, 'max': 1, 'avg': 0.85, 'status': 'Motor Encendido (1)'}) %}
+    {% set mot_stat = sensor_data.summary.get('motor_state', {'last': 0, 'min': 0, 'max': 0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">6. Estado Motor</span>
@@ -328,14 +332,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-motor-sub">
             Actividad: <strong id="kpi-motor-avg">{{ (mot_stat.avg * 100)|round(0) }}% del tiempo</strong>
         </div>
-        <div class="kpi-footer-badge {% if mot_stat.last == 1 %}positive{% else %}neutral{% endif %}" id="kpi-motor-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if mot_stat.last == 1 %}check_circle{% else %}radio_button_unchecked{% endif %}</span>
+        <div class="kpi-footer-badge {% if mot_stat.last == 1 %}positive{% elif 'Sin datos' in mot_stat.status %}neutral{% else %}neutral{% endif %}" id="kpi-motor-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if mot_stat.last == 1 %}check_circle{% elif 'Sin datos' in mot_stat.status %}warning_amber{% else %}radio_button_unchecked{% endif %}</span>
             <span id="kpi-motor-status">{{ mot_stat.status }}</span>
         </div>
     </div>
 
     <!-- 7. Temperatura Exterior (°C) -->
-    {% set t_stat = sensor_data.summary.get('temperature', {'last': 25.49, 'min': 21.0, 'max': 31.0, 'avg': 25.8, 'status': 'Óptimo'}) %}
+    {% set t_stat = sensor_data.summary.get('temperature', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">7. Temp Exterior</span>
@@ -350,14 +354,14 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-temp-sub">
             Mín: <strong id="kpi-temp-min">{{ t_stat.min }}°C</strong> | Máx: <strong id="kpi-temp-max">{{ t_stat.max }}°C</strong> | Prom: <strong id="kpi-temp-avg">{{ t_stat.avg }}°C</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in t_stat.status %}positive{% else %}warning{% endif %}" id="kpi-temp-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in t_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in t_stat.status %}positive{% elif 'Sin datos' in t_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-temp-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in t_stat.status %}check_circle{% elif 'Sin datos' in t_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-temp-status">{{ t_stat.status }}</span>
         </div>
     </div>
 
     <!-- 8. Humedad Relativa Exterior (% HR) -->
-    {% set h_stat = sensor_data.summary.get('humidity', {'last': 83.2, 'min': 60.0, 'max': 92.0, 'avg': 78.5, 'status': 'Óptimo'}) %}
+    {% set h_stat = sensor_data.summary.get('humidity', {'last': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0, 'status': 'Sin datos'}) %}
     <div class="kpi-card kpi-card-ambient" style="padding: 12px 14px;">
         <div class="kpi-card-header" style="margin-bottom: 4px;">
             <span class="kpi-label" style="font-size: 11.5px;">8. Humedad Rel. Exterior</span>
@@ -372,8 +376,8 @@
         <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;" id="kpi-hum-sub">
             Mín: <strong id="kpi-hum-min">{{ h_stat.min }}%</strong> | Máx: <strong id="kpi-hum-max">{{ h_stat.max }}%</strong> | Prom: <strong id="kpi-hum-avg">{{ h_stat.avg }}%</strong>
         </div>
-        <div class="kpi-footer-badge {% if 'Óptimo' in h_stat.status %}positive{% else %}warning{% endif %}" id="kpi-hum-badge" style="font-size: 10px; padding: 2px 6px;">
-            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in h_stat.status %}check_circle{% else %}warning{% endif %}</span>
+        <div class="kpi-footer-badge {% if 'Óptimo' in h_stat.status %}positive{% elif 'Sin datos' in h_stat.status %}neutral{% else %}warning{% endif %}" id="kpi-hum-badge" style="font-size: 10px; padding: 2px 6px;">
+            <span class="material-icons-round" style="font-size: 12px;">{% if 'Óptimo' in h_stat.status %}check_circle{% elif 'Sin datos' in h_stat.status %}warning_amber{% else %}warning{% endif %}</span>
             <span id="kpi-hum-status">{{ h_stat.status }}</span>
         </div>
     </div>
@@ -601,21 +605,21 @@
         const labels = sliced.map(d => d.time);
         
         // 1. pH Solución
-        const phs = sliced.map(d => (d.water_ph !== undefined ? d.water_ph : 6.12));
+        const phs = sliced.map(d => (d.water_ph !== undefined && d.water_ph !== null ? d.water_ph : 0.0));
         // 2. Conductividad Eléctrica (EC)
-        const ecs = sliced.map(d => (d.ec_conductivity !== undefined ? d.ec_conductivity : 1649.6));
+        const ecs = sliced.map(d => (d.ec_conductivity !== undefined && d.ec_conductivity !== null ? d.ec_conductivity : 0.0));
         // 3. Turbidez (NTU)
-        const turbs = sliced.map(d => (d.turbidity_ntu !== undefined ? d.turbidity_ntu : 4.06));
+        const turbs = sliced.map(d => (d.turbidity_ntu !== undefined && d.turbidity_ntu !== null ? d.turbidity_ntu : 0.0));
         // 4. Oxígeno Disuelto (mg/L)
-        const dos = sliced.map(d => (d.dissolved_oxygen_mg_l !== undefined ? d.dissolved_oxygen_mg_l : 7.6));
+        const dos = sliced.map(d => (d.dissolved_oxygen_mg_l !== undefined && d.dissolved_oxygen_mg_l !== null ? d.dissolved_oxygen_mg_l : 0.0));
         // 5. Temperatura Agua (°C)
-        const waterTemps = sliced.map(d => (d.water_temp !== undefined ? d.water_temp : 20.0));
+        const waterTemps = sliced.map(d => (d.water_temp !== undefined && d.water_temp !== null ? d.water_temp : 0.0));
         // 6. Estado Motor (1/0)
-        const motorStates = sliced.map(d => (d.motor_state !== undefined ? d.motor_state : 1));
+        const motorStates = sliced.map(d => (d.motor_state !== undefined && d.motor_state !== null ? d.motor_state : 0));
         // 7. Temperatura Exterior (°C)
-        const temps = sliced.map(d => (d.temperature !== undefined ? d.temperature : 25.49));
+        const temps = sliced.map(d => (d.temperature !== undefined && d.temperature !== null ? d.temperature : 0.0));
         // 8. Humedad Relativa Exterior (% HR)
-        const hums = sliced.map(d => (d.humidity !== undefined ? d.humidity : 83.2));
+        const hums = sliced.map(d => (d.humidity !== undefined && d.humidity !== null ? d.humidity : 0.0));
 
         function createChart(ctxId, label, data, color, yUnit, isStep = false) {
             const ctx = document.getElementById(ctxId);
@@ -712,14 +716,14 @@
         const sliced = getSlicedData(rawTimelineData);
         const labels = sliced.map(d => d.time);
         
-        const phs = sliced.map(d => (d.water_ph !== undefined ? d.water_ph : 6.12));
-        const ecs = sliced.map(d => (d.ec_conductivity !== undefined ? d.ec_conductivity : 1649.6));
-        const turbs = sliced.map(d => (d.turbidity_ntu !== undefined ? d.turbidity_ntu : 4.06));
-        const dos = sliced.map(d => (d.dissolved_oxygen_mg_l !== undefined ? d.dissolved_oxygen_mg_l : 7.6));
-        const waterTemps = sliced.map(d => (d.water_temp !== undefined ? d.water_temp : 20.0));
-        const motorStates = sliced.map(d => (d.motor_state !== undefined ? d.motor_state : 1));
-        const temps = sliced.map(d => (d.temperature !== undefined ? d.temperature : 25.49));
-        const hums = sliced.map(d => (d.humidity !== undefined ? d.humidity : 83.2));
+        const phs = sliced.map(d => (d.water_ph !== undefined && d.water_ph !== null ? d.water_ph : 0.0));
+        const ecs = sliced.map(d => (d.ec_conductivity !== undefined && d.ec_conductivity !== null ? d.ec_conductivity : 0.0));
+        const turbs = sliced.map(d => (d.turbidity_ntu !== undefined && d.turbidity_ntu !== null ? d.turbidity_ntu : 0.0));
+        const dos = sliced.map(d => (d.dissolved_oxygen_mg_l !== undefined && d.dissolved_oxygen_mg_l !== null ? d.dissolved_oxygen_mg_l : 0.0));
+        const waterTemps = sliced.map(d => (d.water_temp !== undefined && d.water_temp !== null ? d.water_temp : 0.0));
+        const motorStates = sliced.map(d => (d.motor_state !== undefined && d.motor_state !== null ? d.motor_state : 0));
+        const temps = sliced.map(d => (d.temperature !== undefined && d.temperature !== null ? d.temperature : 0.0));
+        const hums = sliced.map(d => (d.humidity !== undefined && d.humidity !== null ? d.humidity : 0.0));
 
         const chartMap = [
             ['phTimelineChart', phs],
@@ -745,14 +749,14 @@
         if (lastP) {
             const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
             
-            setVal('kpi-ph-val', (lastP.water_ph !== undefined ? lastP.water_ph : 6.12).toFixed(2));
-            setVal('kpi-ec-val', (lastP.ec_conductivity !== undefined ? lastP.ec_conductivity : 1649.6).toFixed(1));
-            setVal('kpi-turb-val', (lastP.turbidity_ntu !== undefined ? lastP.turbidity_ntu : 4.06).toFixed(2));
-            setVal('kpi-do-val', (lastP.dissolved_oxygen_mg_l !== undefined ? lastP.dissolved_oxygen_mg_l : 7.6).toFixed(2));
-            setVal('kpi-watertemp-val', (lastP.water_temp !== undefined ? lastP.water_temp : 20.0).toFixed(1));
-            setVal('kpi-motor-val', (lastP.motor_state !== undefined ? lastP.motor_state : 1));
-            setVal('kpi-temp-val', lastP.temperature);
-            setVal('kpi-hum-val', lastP.humidity);
+            setVal('kpi-ph-val', (lastP.water_ph !== undefined && lastP.water_ph !== null ? lastP.water_ph : 0.0).toFixed(2));
+            setVal('kpi-ec-val', (lastP.ec_conductivity !== undefined && lastP.ec_conductivity !== null ? lastP.ec_conductivity : 0.0).toFixed(1));
+            setVal('kpi-turb-val', (lastP.turbidity_ntu !== undefined && lastP.turbidity_ntu !== null ? lastP.turbidity_ntu : 0.0).toFixed(2));
+            setVal('kpi-do-val', (lastP.dissolved_oxygen_mg_l !== undefined && lastP.dissolved_oxygen_mg_l !== null ? lastP.dissolved_oxygen_mg_l : 0.0).toFixed(2));
+            setVal('kpi-watertemp-val', (lastP.water_temp !== undefined && lastP.water_temp !== null ? lastP.water_temp : 0.0).toFixed(1));
+            setVal('kpi-motor-val', (lastP.motor_state !== undefined && lastP.motor_state !== null ? lastP.motor_state : 0));
+            setVal('kpi-temp-val', lastP.temperature || 0.0);
+            setVal('kpi-hum-val', lastP.humidity || 0.0);
 
             const badge = document.getElementById('timeline-count-badge');
             if (badge) badge.innerText = `${rawTimelineData.length} LECTURAS (${activeDate})`;
@@ -809,27 +813,111 @@
         try {
             const res = await fetch('/api/telemetry/ports');
             const data = await res.json();
-            if (data.status === 'success' && data.ports) {
-                const select = document.getElementById('antenna-port-select');
-                const currentVal = select.value;
+            const select = document.getElementById('antenna-port-select');
+            if (data.status === 'success' && select) {
+                const ports = data.ports || [];
                 select.innerHTML = '';
-                data.ports.forEach(p => {
+                if (ports.length === 0) {
                     const opt = document.createElement('option');
-                    opt.value = p;
-                    opt.textContent = p;
-                    if (p === currentVal || (currentVal === 'USB_ANTENNA_AUTO' && p.startsWith('COM'))) {
-                        opt.selected = true;
-                    }
+                    opt.value = '';
+                    opt.textContent = 'No se detecta antena USB conectada';
+                    opt.disabled = true;
+                    opt.selected = true;
                     select.appendChild(opt);
-                });
+                } else {
+                    ports.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        select.appendChild(opt);
+                    });
+                }
             }
         } catch (e) {
             console.error('Error al actualizar puertos:', e);
         }
     }
 
+    let livePollingTimer = null;
+    let isCurrentlyRecording = {{ 'true' if telemetry_status.is_recording else 'false' }};
+
+    function startLivePolling() {
+        if (livePollingTimer) clearInterval(livePollingTimer);
+        livePollingTimer = setInterval(checkLiveTelemetry, 1500);
+    }
+
+    function stopLivePolling() {
+        if (livePollingTimer) {
+            clearInterval(livePollingTimer);
+            livePollingTimer = null;
+        }
+    }
+
+    async function checkLiveTelemetry() {
+        try {
+            const sRes = await fetch('/api/telemetry/status');
+            const sData = await sRes.json();
+            
+            if (sData.status === 'success' && sData.telemetry) {
+                const tel = sData.telemetry;
+                const r = tel.latest_reading;
+                
+                const btnStart = document.getElementById('btn-start-telemetry');
+                const btnStop = document.getElementById('btn-stop-telemetry');
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.getElementById('antenna-live-status-text');
+
+                if (tel.is_recording) {
+                    if (btnStart) btnStart.style.display = 'none';
+                    if (btnStop) btnStop.style.display = 'inline-flex';
+                    if (statusDot) { statusDot.classList.remove('inactive'); statusDot.classList.add('active'); }
+                    if (statusText) { statusText.innerText = `Transmitiendo en Vivo (${tel.readings_count} lecturas)`; statusText.style.color = 'var(--accent-success)'; }
+
+                    if (r && tel.readings_count > 0) {
+                        const nowLabel = (r.timestamp && r.timestamp.includes(' ')) ? r.timestamp.split(' ')[1] : new Date().toLocaleTimeString();
+                        
+                        const newPoint = {
+                            time: nowLabel,
+                            timestamp: r.timestamp || new Date().toISOString(),
+                            water_ph: r.water_ph !== undefined && r.water_ph !== null ? r.water_ph : 0.0,
+                            ec_conductivity: r.ec_conductivity !== undefined && r.ec_conductivity !== null ? r.ec_conductivity : 0.0,
+                            turbidity_ntu: r.turbidity_ntu !== undefined && r.turbidity_ntu !== null ? r.turbidity_ntu : 0.0,
+                            dissolved_oxygen_mg_l: r.dissolved_oxygen_mg_l !== undefined && r.dissolved_oxygen_mg_l !== null ? r.dissolved_oxygen_mg_l : 0.0,
+                            water_temp: r.water_temp !== undefined && r.water_temp !== null ? r.water_temp : 0.0,
+                            motor_state: r.motor_state !== undefined && r.motor_state !== null ? r.motor_state : 0,
+                            temperature: r.temperature !== undefined && r.temperature !== null ? r.temperature : 0.0,
+                            humidity: r.humidity !== undefined && r.humidity !== null ? r.humidity : 0.0
+                        };
+
+                        if (!rawTimelineData.length || rawTimelineData[rawTimelineData.length - 1].time !== newPoint.time) {
+                            rawTimelineData.push(newPoint);
+                            if (rawTimelineData.length > 200) rawTimelineData.shift();
+                            updateChartsWithNewData(rawTimelineData);
+                        }
+                    }
+                } else {
+                    // Si ya se detuvo la captación, detener el sondeo en segundo plano
+                    stopLivePolling();
+                    if (btnStart) btnStart.style.display = 'inline-flex';
+                    if (btnStop) btnStop.style.display = 'none';
+                    if (statusDot) { statusDot.classList.remove('active'); statusDot.classList.add('inactive'); }
+                    if (statusText) { statusText.innerText = 'Antena Inactiva'; statusText.style.color = 'var(--text-muted)'; }
+                }
+            }
+        } catch (e) {
+            console.warn('Error en ciclo de actualización de telemetría:', e);
+        }
+    }
+
     async function toggleTelemetry(start) {
-        const port = document.getElementById('antenna-port-select').value;
+        const select = document.getElementById('antenna-port-select');
+        const port = select ? select.value : '';
+        
+        if (start && (!port || port.trim() === '')) {
+            alert('Atención: No se detecta ninguna antena receptora conectada por USB.\nConecte la antena a la computadora e intente nuevamente.');
+            return;
+        }
+
         const endpoint = start ? '/api/start_telemetry_recording' : '/api/stop_telemetry_recording';
         try {
             const res = await fetch(endpoint, {
@@ -838,7 +926,7 @@
                 body: JSON.stringify({ port: port })
             });
             const data = await res.json();
-            if (data.status === 'success') {
+            if (res.ok && data.status === 'success') {
                 const btnStart = document.getElementById('btn-start-telemetry');
                 const btnStop = document.getElementById('btn-stop-telemetry');
                 const statusDot = document.querySelector('.status-dot');
@@ -849,19 +937,22 @@
                     if (btnStop) btnStop.style.display = 'inline-flex';
                     if (statusDot) { statusDot.classList.remove('inactive'); statusDot.classList.add('active'); }
                     if (statusText) { statusText.innerText = 'Transmitiendo en Vivo'; statusText.style.color = 'var(--accent-success)'; }
+                    startLivePolling();
                 } else {
+                    stopLivePolling();
                     if (btnStart) btnStart.style.display = 'inline-flex';
                     if (btnStop) btnStop.style.display = 'none';
                     if (statusDot) { statusDot.classList.remove('active'); statusDot.classList.add('inactive'); }
                     if (statusText) { statusText.innerText = 'Antena Inactiva'; statusText.style.color = 'var(--text-muted)'; }
-                    // Recargar con los datos completos consolidados
                     setTimeout(() => window.location.reload(), 600);
                 }
             } else {
-                alert('Error: ' + data.message);
+                stopLivePolling();
+                alert('No se pudo iniciar la captación:\n' + (data.message || 'No se detectó antena o hubo un error al conectar.'));
             }
         } catch (e) {
-            alert('Error de comunicación con la antena.');
+            stopLivePolling();
+            alert('Error de comunicación con el servidor.');
         }
     }
 
@@ -886,61 +977,9 @@
         }
     }
 
-    // Monitoreo en tiempo real: Actualiza las 8 gráficas mientras la antena está captando
-    setInterval(async () => {
-        try {
-            const sRes = await fetch('/api/telemetry/status');
-            const sData = await sRes.json();
-            
-            if (sData.status === 'success' && sData.telemetry) {
-                const tel = sData.telemetry;
-                const r = tel.latest_reading;
-                
-                // Actualizar estado del botón e indicador
-                const btnStart = document.getElementById('btn-start-telemetry');
-                const btnStop = document.getElementById('btn-stop-telemetry');
-                const statusDot = document.querySelector('.status-dot');
-                const statusText = document.getElementById('antenna-live-status-text');
-
-                if (tel.is_recording) {
-                    if (btnStart) btnStart.style.display = 'none';
-                    if (btnStop) btnStop.style.display = 'inline-flex';
-                    if (statusDot) { statusDot.classList.remove('inactive'); statusDot.classList.add('active'); }
-                    if (statusText) { statusText.innerText = `Transmitiendo en Vivo (${tel.readings_count} lecturas)`; statusText.style.color = 'var(--accent-success)'; }
-
-                    if (r) {
-                        const nowLabel = (r.timestamp && r.timestamp.includes(' ')) ? r.timestamp.split(' ')[1] : new Date().toLocaleTimeString();
-                        
-                        const newPoint = {
-                            time: nowLabel,
-                            timestamp: r.timestamp || new Date().toISOString(),
-                            water_ph: r.water_ph !== undefined ? r.water_ph : 6.12,
-                            ec_conductivity: r.ec_conductivity !== undefined ? r.ec_conductivity : 1649.6,
-                            turbidity_ntu: r.turbidity_ntu !== undefined ? r.turbidity_ntu : 4.06,
-                            dissolved_oxygen_mg_l: r.dissolved_oxygen_mg_l !== undefined ? r.dissolved_oxygen_mg_l : 7.6,
-                            water_temp: r.water_temp !== undefined ? r.water_temp : 20.0,
-                            motor_state: r.motor_state !== undefined ? r.motor_state : 1,
-                            temperature: r.temperature !== undefined ? r.temperature : 25.49,
-                            humidity: r.humidity !== undefined ? r.humidity : 83.2
-                        };
-
-                        // Empujar a la serie activa y redibujar en vivo
-                        if (!rawTimelineData.length || rawTimelineData[rawTimelineData.length - 1].time !== newPoint.time) {
-                            rawTimelineData.push(newPoint);
-                            if (rawTimelineData.length > 200) rawTimelineData.shift();
-                            updateChartsWithNewData(rawTimelineData);
-                        }
-                    }
-                } else {
-                    if (btnStart) btnStart.style.display = 'inline-flex';
-                    if (btnStop) btnStop.style.display = 'none';
-                    if (statusDot) { statusDot.classList.remove('active'); statusDot.classList.add('inactive'); }
-                    if (statusText) { statusText.innerText = 'Antena Inactiva'; statusText.style.color = 'var(--text-muted)'; }
-                }
-            }
-        } catch (e) {
-            console.warn('Error en ciclo de actualización de telemetría:', e);
-        }
-    }, 1500);
+    // Iniciar sondeo únicamente si ya estaba grabando al abrir la vista
+    if (isCurrentlyRecording) {
+        startLivePolling();
+    }
 </script>
 {% endblock %}

@@ -46,6 +46,7 @@ class CropProfile(db.Model):
     lat_pixel_to_cm_ratio = Column(Float, default=0.038)
     lat_min_area = Column(Integer, default=60)
     lat_filter_isolated = Column(Boolean, default=True)
+    lat_draw_contours = Column(Boolean, default=False) # False: Imagen limpia solo con cotas métricas; True: Dibuja bordes rojos
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -82,6 +83,7 @@ class CropProfile(db.Model):
             "lat_b_max": getattr(self, 'lat_b_max', self.b_max),
             "lat_pixel_to_cm_ratio": getattr(self, 'lat_pixel_to_cm_ratio', self.pixel_to_cm_ratio),
             "lat_min_area": getattr(self, 'lat_min_area', 60),
-            "lat_filter_isolated": getattr(self, 'lat_filter_isolated', True)
+            "lat_filter_isolated": getattr(self, 'lat_filter_isolated', True),
+            "lat_draw_contours": getattr(self, 'lat_draw_contours', False)
         }
 
