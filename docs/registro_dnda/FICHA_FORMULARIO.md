@@ -101,3 +101,4 @@
    - Archivo: `docs/manual_usuario/MANUAL_DE_USUARIO.md` (convertido a `.pdf`).
 4. **Contrato de Cesión o Transferencia (Solo si aplica Opción B o C):**
    - Documento firmado: `docs/registro_dnda/BORRADOR_CESION_O_AUTORIZACION.md`.
+

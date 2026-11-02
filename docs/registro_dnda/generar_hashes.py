@@ -23,6 +23,7 @@ files_to_hash = [
     'docs/registro_dnda/LISTA_DE_VERIFICACION.md',
     'docs/registro_dnda/FICHA_FORMULARIO.md',
     'docs/registro_dnda/BORRADOR_CESION_O_AUTORIZACION.md',
+    'docs/INFORME_FINAL_ENTREGA.md',
     'docs/_trabajo/inventario_inicial.md',
     'docs/_trabajo/informe_comentarios.md',
     'docs/_trabajo/inventario_limpieza.md'
@@ -68,3 +69,4 @@ with open(OUTPUT_FILE, 'w', encoding='utf-8', newline='\n') as f:
     f.write('\n'.join(lines))
 
 print(f"Generated SHA-256 verification sums at: {OUTPUT_FILE}")
+

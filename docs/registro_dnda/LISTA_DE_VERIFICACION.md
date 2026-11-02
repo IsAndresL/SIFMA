@@ -58,3 +58,4 @@ Marque con una **X** cada elemento una vez haya sido verificado antes de radicar
 ### E. Integridad y Respaldo
 - [ ] **Huellas digitales criptográficas:** Se generaron los hashes SHA-256 de todos los archivos del paquete en `docs/registro_dnda/SUMAS_VERIFICACION_SHA256.txt`.
 - [ ] **Copia de seguridad local:** Se conserva una copia exacta del paquete en disco óptico o almacenamiento externo inmutable.
+

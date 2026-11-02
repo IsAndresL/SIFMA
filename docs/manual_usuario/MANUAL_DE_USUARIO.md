@@ -217,3 +217,4 @@ La vista de diagnóstico (`/about` o `/system_info`) detalla el entorno de ejecu
 2. En el panel de *Umbrales de Color HSV*, amplíe el rango de matiz mínimo ($H_{min}$) a 20 para permitir la detección de hojas amarillentas o en senescencia.
 3. Ajuste el *Canal A de LAB* a un valor inferior a 126 para anular reflejos blanquecinos intensos.
 4. Presione **"Guardar Calibración"** y reprocese el lote desde `/processing`.
+

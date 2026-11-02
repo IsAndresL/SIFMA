@@ -90,3 +90,4 @@ _________________________________________
 **Docente Asesor / Investigador Proponente**  
 `[COMPLETAR: Nombre del Docente]`  
 C.C. `[COMPLETAR]` de `[COMPLETAR]`  
+

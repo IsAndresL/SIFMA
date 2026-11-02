@@ -306,3 +306,4 @@ erDiagram
    El fenotipado agronómico en torres comerciales requiere reproducibilidad matemática certificable. Las redes neuronales profundas introducen un comportamiento estocástico de caja negra, pesan cientos de megabytes y demandan aceleración por GPU. El pipeline implementado en SIFMA entrega tiempos de respuesta menores a 2.5 segundos en CPUs de gama media, con invariabilidad de resultados y bajo consumo energético.
 4. **Almacenamiento Desacoplado en USB:**
    En entornos agrícolas reales, los invernaderos carecen de cableado de red o cobertura Wi-Fi estable. La arquitectura de nodos aislados que escriben en particiones USB portátiles garantiza tolerancia total a caídas de red y aislamiento eléctrico ante perturbaciones de la red eléctrica.
+
