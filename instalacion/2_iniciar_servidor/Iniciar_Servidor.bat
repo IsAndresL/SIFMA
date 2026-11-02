@@ -34,3 +34,4 @@ cd /d "%SERVER_DIR%"
 python app.py
 
 pause
+

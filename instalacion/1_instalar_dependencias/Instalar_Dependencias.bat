@@ -62,3 +62,4 @@ echo   - Ejecutar: instalacion\2_iniciar_servidor\Iniciar_Servidor.bat
 echo   - O (opcional): instalacion\3_crear_acceso_directo\Crear_Acceso_Directo.bat
 echo.
 pause
+

@@ -33,3 +33,4 @@ Write-Host "Destino: $targetBat"
 Write-Host "Directorio de trabajo: $workDir"
 Write-Host "Icono asignado: $iconPath"
 Write-Host ""
+

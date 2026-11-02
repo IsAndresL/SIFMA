@@ -1,0 +1,42 @@
+================================================================================
+SIFMA — REGISTRO DE SUMAS CRIPTOGRÁFICAS SHA-256 (FECHA CIERTA E INTEGRIDAD)
+================================================================================
+Obra: SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+Versión: 1.0.0
+Fecha de Generación: 2026-11-02 13:23:11
+Autores: Andrés Felipe Luna Camargo y Cristian David Peña Martínez
+Titular de Derechos Patrimoniales: [POR DEFINIR] (Pendiente formalización con Universidad del Magdalena)
+Algoritmo: SHA-256 (FIPS 180-4)
+Finalidad: Certificación de integridad de los documentos y códigos para depósito DNDA.
+================================================================================
+
+HASH SHA-256                                                      | TAMAÑO (BYTES) | RUTA RELATIVA DEL ARCHIVO
+---------------------------------------------------------------------------------------------------------
+30c5cc72110b77154e356e3b66bf18162e3d2e0b073591819687d9d1ff1545ed          6622  README.md
+adde35156e0ad25986de20239a264127ba977d8b4e1c257130803105ce630a46       1004700  docs/_trabajo/capturas_base/01_login.png
+e23fbeeabb226c8c99f50ffd2e4c25f24c1ec022a11bc18a6d0de74705397cf5        395876  docs/_trabajo/capturas_base/02_dashboard_resumen.png
+c203c695c369bd8660e03cdea5e0443ad143530f908bcbef6be6c379d675b97a        310236  docs/_trabajo/capturas_base/03_calendario_muestreos.png
+b22c68dcb2bf0fb60dc5cdb40bd4a40bfeed1b705678119f7a6af32a414310cf        286075  docs/_trabajo/capturas_base/04_procesamiento_vision.png
+c2062ba36b34aee7b6f2c82f21a693765ac42d3f74e1083fc99934fce95e3bb1        579494  docs/_trabajo/capturas_base/05_galeria_lotes.png
+68e118ca5fe42020511c5c50085320d647b35ccdf37e13978072f46881a9c8d3       1005546  docs/_trabajo/capturas_base/06_timelapse_evolutivo.png
+3050ac0cd12bead7d90ff51a1868b25783d498b5eaface54e540dd1725b2451e        537843  docs/_trabajo/capturas_base/07_sensores_ambientales.png
+be4f65bda46032c7c37135b97ecc0d0643d3adb4b1f48a19496624ebf5cd6d81        257797  docs/_trabajo/capturas_base/08_cruce_correlaciones.png
+c77c86c6b5b1c8e0ab4923a0cabfcda048dd7c005fbff6884a35ecb6e6274967        175012  docs/_trabajo/capturas_base/09_dossier_reporte_cientifico.png
+2a2fa58b4b3b849c841f325762952eaf15e7025fea157dbf64283d4e9771cb7b        526538  docs/_trabajo/capturas_base/10_parametros_cultivo.png
+9546e196494bbabce4f69e36364b06d8430a54a2c07c0eadbdcc0f9fe53ad0e6        544177  docs/_trabajo/capturas_base/11_usuarios_roles.png
+12533c975c331c592ccc2a176fa5ae6c8ae9cae3bd4cdb499ad6fd877a942af6        574248  docs/_trabajo/capturas_base/12_registro_auditoria.png
+9728a6dfac5766f3f6425dca2eca7a38f7d2d24ae6628772f3382c7aa840babc        346212  docs/_trabajo/capturas_base/13_informacion_sistema.png
+2c35e2814c0fc39e443873330c72dd76a6b102880c8b53f0d0b3e97df192f8fe         12205  docs/_trabajo/informe_comentarios.md
+93a19b2be47a93671ea9ec703a621509181196cff424c346d18f2088327b9d32         95537  docs/_trabajo/inventario_inicial.md
+6b91c81de4e4ad38a08828140ff79253b210eb6e2c3681cf218067336297ce91          9067  docs/_trabajo/inventario_limpieza.md
+3563bb4fea6da5511ca2aab6ab206ebeb0b5b673a902139c994cc760d0ad032a         17127  docs/arquitectura/DOCUMENTO_TECNICO.md
+9161bf26e367fc3a1f6554abd23c243c1c6f9e825aa1816622eeded990785b6d       1691704  docs/codigo_fuente/SIFMA_codigo_fuente_completo.pdf
+cac314b481fbba02f8cf2a989651069756c8b93b3e659075c9237b09ab673d78       1377760  docs/codigo_fuente/SIFMA_codigo_fuente_completo.txt
+a82aeec170da651bf4b400763e3fbbc6fd48a5b9a374911a559a09613464232c         13017  docs/manual_usuario/MANUAL_DE_USUARIO.md
+325482ae931c85fc5b9080d2358ba6d3b22de9aa44bc374250f907eb185ddaa6          6730  docs/registro_dnda/BORRADOR_CESION_O_AUTORIZACION.md
+308775919544c32bcf156f4c120e70d530574cc86a32dd4ac4352dc64dd59420          6597  docs/registro_dnda/FICHA_FORMULARIO.md
+2d5b1d19b7e04739ff0af9618968949c0b88f4aca8c0ba4edea22f95dd289807          4933  docs/registro_dnda/LISTA_DE_VERIFICACION.md
+b990242acb16cf044ea42b86a3241b01afc57b80b9cd58264d42367367b61244           369  local_server/requirements.txt
+
+---------------------------------------------------------------------------------------------------------
+Fin del registro de verificación criptográfica.
