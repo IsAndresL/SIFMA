@@ -7,17 +7,13 @@ import subprocess
 import importlib
 
 SERVER_REQUIRED_PACKAGES = [
-    ("flask", "Flask>=3.0.0"),
-    ("flask_sqlalchemy", "Flask-SQLAlchemy>=3.1.0"),
-    ("sqlalchemy", "SQLAlchemy>=2.0.25"),
-    ("cv2", "opencv-python>=4.9.0"),
-    ("plantcv", "plantcv>=4.1.0"),
-    ("numpy", "numpy>=1.26.0"),
-    ("matplotlib", "matplotlib>=3.8.0"),
-    ("pandas", "pandas>=2.2.0"),
-    ("scipy", "scipy>=1.11.0"),
-    ("serial", "pyserial>=3.5"),
-    ("requests", "requests>=2.31.0")
+    ("flask", "Flask==3.1.3"),
+    ("flask_sqlalchemy", "Flask-SQLAlchemy==3.1.1"),
+    ("sqlalchemy", "SQLAlchemy==2.0.52"),
+    ("cv2", "opencv-python==4.11.0.86"),
+    ("numpy", "numpy==2.4.6"),
+    ("serial", "pyserial==3.5"),
+    ("dotenv", "python-dotenv==1.2.4")
 ]
 
 def install_package(package_name: str) -> bool:

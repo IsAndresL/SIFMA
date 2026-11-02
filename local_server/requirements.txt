@@ -1,17 +1,12 @@
-# Dependencias del Servidor Local SIFMA
-# Compatible con Python 3.10, 3.11, 3.12 y 3.13 en Windows / Linux
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Dependencias oficiales verificadas para el Servidor Local SIFMA (Python 3.10 - 3.13)
 
-Flask>=3.0.0
-Flask-SQLAlchemy>=3.1.0
-SQLAlchemy>=2.0.25
-opencv-python>=4.9.0
-plantcv>=4.1.0
-numpy>=1.26.0
-matplotlib>=3.8.0
-pandas>=2.2.0
-scipy>=1.11.0
-pyserial>=3.5
-requests>=2.31.0
-Pillow>=10.0.0
-Werkzeug>=3.0.0
-python-dotenv>=1.0.0
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.52
+opencv-python==4.11.0.86
+numpy==2.4.6
+pyserial==3.5
+Werkzeug==3.1.8
+python-dotenv==1.2.4
