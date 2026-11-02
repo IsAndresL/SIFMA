@@ -6,7 +6,6 @@
 **Autores (desarrolladores del software):**  
 - Andrés Felipe Luna Camargo  
 - Cristian David Peña Martínez  
-**Titular de los derechos patrimoniales:** `[POR DEFINIR]` (pendiente de formalización con la Universidad del Magdalena)  
 
 ---
 
@@ -217,4 +216,75 @@ La vista de diagnóstico (`/about` o `/system_info`) detalla el entorno de ejecu
 2. En el panel de *Umbrales de Color HSV*, amplíe el rango de matiz mínimo ($H_{min}$) a 20 para permitir la detección de hojas amarillentas o en senescencia.
 3. Ajuste el *Canal A de LAB* a un valor inferior a 126 para anular reflejos blanquecinos intensos.
 4. Presione **"Guardar Calibración"** y reprocese el lote desde `/processing`.
+
+---
+
+## 16. Operación del Nodo Embebido en Campo (Raspberry Pi 5)
+
+El subsistema embebido de campo (`raspi_node/`) opera de manera autónoma en una computadora de placa reducida Raspberry Pi 5 instalada físicamente en la estructura de la torre hidropónica. Este subsistema garantiza la toma sincronizada de fotografías científicas sin depender de conectividad a redes de datos externas.
+
+### 16.1 Arquitectura Física del Nodo
+- **Cámara Cenital (Puerto `CAM/DISP 0`):** Sensor óptico de alta resolución instalado en la cúspide de la estructura con ángulo perpendicular hacia el plano horizontal del dosel vegetal.
+- **Cámara Lateral (Puerto `CAM/DISP 1`):** Sensor óptico alineado horizontalmente con el borde superior de la canastilla de cultivo para medir la altura apical y el diámetro basal del tallo.
+- **Pantalla Táctil Oficial DSI:** Permite la interacción táctil directa en campo sin requerir periféricos de escritorio (teclado ni ratón).
+- **Memoria USB Extraíble:** Unidad flash dedicada para almacenar de manera segura los lotes fotográficos diarios bajo la ruta `SIFMA_CAPTURES/YYYY-MM-DD/`.
+
+### 16.2 Despliegue e Instalación Asistida
+En una terminal de Raspberry Pi OS, ingrese al directorio del nodo y ejecute el instalador unificado:
+
+```bash
+cd ~/raspi_node
+bash instalacion/instalar_todo.sh
+```
+
+El script ejecuta en secuencia los tres módulos de configuración:
+1. `instalacion/1_configurar_camaras_dual.sh`: Configura el archivo `/boot/firmware/config.txt` con los overlays específicos del sensor Arducam (OV5647, IMX219, IMX708 o IMX477). *Requiere reiniciar el equipo con `sudo reboot`.*
+2. `instalacion/2_instalar_dependencias.sh`: Instala las librerías nativas de captura (`python3-picamera2`, `libcamera-apps`) y dependencias Python (`pillow`, `opencv-python-headless`, `psutil`).
+3. `instalacion/3_activar_servicio_autonomo.sh`: Registra el demonio del sistema `sifma-capture.service` en `systemd` para arranque desatendido al encender la torre, y crea los accesos directos en el Escritorio.
+
+### 16.3 Calibración y Enfoque Óptico de Cámaras
+Antes de dar inicio a un ciclo experimental, es indispensable verificar la nitidez y el plano focal:
+1. En el Escritorio de la Raspberry Pi, haga doble clic sobre el acceso directo **"SIFMA Calibración de Cámaras CSI"** (o ejecute `python3 calibrate_cameras.py`).
+2. Se iniciará una transmisión de video en tiempo real de ambas cámaras a 30 fotogramas por segundo.
+3. Gire manualmente el anillo de enfoque del lente de cada cámara hasta que el perímetro foliar y las nervaduras presenten nitidez máxima.
+4. Verifique que la canastilla central se encuentre dentro del encuadre y que no existan reflejos especulares intensos provenientes de luminarias directas.
+5. Cierre la herramienta de calibración.
+
+### 16.4 Operación Diaria con el Panel Táctil Lite
+Para la operación en campo sin teclado ni ratón:
+1. Haga doble clic en el acceso directo **"SIFMA Control Táctil Lite"** en la pantalla del nodo (o ejecute `python3 panel_touch_lite.py`).
+2. La interfaz de bajo consumo (<15 MB de RAM) presenta los siguientes controles táctiles:
+   - **Indicador de Estado:** Confirma si el demonio autónomo está en espera, capturando o en reposo.
+   - **Selector de Canastilla / Estrato:** Permite rotar el registro entre el Nivel 1 (Base) y el Nivel 4 (Cúspide).
+   - **Botón "Captura Manual":** Dispara una secuencia instantánea de fotografías fuera de las horas programadas.
+   - **Indicador de Unidad USB:** Muestra el espacio libre restante en la memoria USB insertada.
+
+### 16.5 Protocolo de Muestreo Autónomo y Extracción Segura de USB
+1. Al encender la torre hidropónica, el demonio `main_capture.py` arranca en segundo plano y espera un retardo inicial de seguridad de 10 segundos para estabilización de voltajes.
+2. En las franjas horarias programadas en `config.json` (por defecto: 07:05, 12:05 y 17:05), el sistema adquiere ráfagas dobles ortogonales sincronizadas.
+3. Las imágenes se almacenan organizadas por fecha:
+   ```text
+   SIFMA_CAPTURES/2026-11-02/
+   ├── plant1_2026-11-02_07-05-00_cenital_01.jpg
+   ├── plant1_2026-11-02_07-05-00_lateral_01.jpg
+   ├── plant1_2026-11-02_12-05-00_cenital_01.jpg
+   └── plant1_2026-11-02_12-05-00_lateral_01.jpg
+   ```
+4. El software ejecuta una llamada al sistema `os.sync()` tras finalizar la escritura de cada archivo, garantizando que no queden datos pendientes en la memoria caché del kernel.
+5. El operador puede retirar físicamente la memoria USB en cualquier momento fuera de las horas de muestreo programadas y conectarla a la estación de trabajo central para procesamiento en el módulo `/processing` de SIFMA.
+
+### 16.6 Comandos de Mantenimiento y Diagnóstico
+- **Verificar estado del servicio autónomo:**
+  ```bash
+  sudo systemctl status sifma-capture
+  ```
+- **Inspeccionar registros de eventos en tiempo real:**
+  ```bash
+  journalctl -u sifma-capture -f
+  ```
+- **Ejecutar un muestreo manual de prueba por terminal:**
+  ```bash
+  python3 main_capture.py --now
+  ```
+
 

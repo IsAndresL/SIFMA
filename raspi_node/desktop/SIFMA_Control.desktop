@@ -1,9 +1,10 @@
 [Desktop Entry]
 Name=SIFMA Control Táctil Lite
-Comment=Panel de Control Nativo Ultraligero para Raspberry Pi (Consumo < 15MB RAM)
-Exec=/usr/bin/python3 /home/nodo1/raspi_node/panel_touch_lite.py
+Comment=Panel de Control Nativo Ultraligero para Pantalla LCD DSI (<15 MB RAM)
+Exec=python3 panel_touch_lite.py
 Icon=camera-photo
 Terminal=false
 Type=Application
 Categories=Utility;Application;
 StartupNotify=true
+

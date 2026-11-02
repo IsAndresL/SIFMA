@@ -7,7 +7,6 @@
 **Autores (desarrolladores del código fuente):**  
 - Andrés Felipe Luna Camargo  
 - Cristian David Peña Martínez  
-**Titular de los derechos patrimoniales:** `[POR DEFINIR]` (pendiente de formalización entre los autores y la Universidad del Magdalena)  
 
 ---
 
