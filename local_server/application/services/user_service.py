@@ -31,14 +31,14 @@ class UserService:
     def get_user_by_id(self, user_id: int) -> Optional[User]:
         return self.user_repo.get_by_id(user_id)
 
-    def create_user(self, username: str, full_name: str, plain_password: str, role: str = "investigador", email: Optional[str] = None) -> User:
+    def create_user(self, username: str, full_name: str, plain_password: str, role: str = "investigador", email: Optional[str] = None, permissions: Optional[Dict[str, bool]] = None) -> User:
         username_clean = username.strip().lower()
         if self.user_repo.get_by_username(username_clean):
             raise ValueError(f"El nombre de usuario '{username_clean}' ya está en uso.")
         if email and self.user_repo.get_by_email(email):
             raise ValueError(f"El correo '{email}' ya está registrado.")
             
-        allowed_roles = ["admin", "investigador", "operador"]
+        allowed_roles = ["investigador", "operador", "personalizado"]
         if role not in allowed_roles:
             role = "investigador"
 
@@ -51,22 +51,33 @@ class UserService:
             role=role,
             is_active=True
         )
+        if permissions is not None:
+            new_user.set_permissions_dict(permissions)
+        else:
+            # Asigna los permisos por defecto según el rol elegido
+            new_user.set_permissions_dict({})
+            
         return self.user_repo.save(new_user)
 
-    def update_user(self, user_id: int, full_name: Optional[str] = None, role: Optional[str] = None, email: Optional[str] = None, is_active: Optional[bool] = None) -> Optional[User]:
+    def update_user(self, user_id: int, full_name: Optional[str] = None, role: Optional[str] = None, email: Optional[str] = None, is_active: Optional[bool] = None, permissions: Optional[Dict[str, bool]] = None) -> Optional[User]:
         user = self.user_repo.get_by_id(user_id)
         if not user:
             return None
             
         if full_name is not None:
             user.full_name = full_name.strip()
-        if role is not None and role in ["admin", "investigador", "operador"]:
-            user.role = role
+        if role is not None:
+            if user.is_super_admin:
+                user.role = "admin"
+            elif role in ["investigador", "operador", "personalizado"]:
+                user.role = role
         if email is not None:
             user.email = email.strip().lower() if email else None
+        if permissions is not None and not user.is_super_admin:
+            user.set_permissions_dict(permissions)
         if is_active is not None:
-            if user.username == "admin" and not is_active:
-                raise ValueError("No es posible desactivar la cuenta del Administrador Principal.")
+            if user.is_super_admin and not is_active:
+                raise ValueError("No es posible desactivar la cuenta del Super Usuario / Administrador Principal.")
             user.is_active = is_active
 
         return self.user_repo.save(user)
@@ -83,7 +94,76 @@ class UserService:
         user = self.user_repo.get_by_id(user_id)
         if not user:
             return False
-        if user.username == "admin":
-            raise ValueError("No es posible eliminar la cuenta del Administrador Principal.")
+        if user.is_super_admin or user.role == "admin":
+            raise ValueError("No es posible eliminar la cuenta del Super Usuario / Administrador Principal.")
+        
+        # Eliminar archivo de avatar si existe
+        if user.avatar_path:
+            self._delete_avatar_file_on_disk(user.avatar_path)
+            
         self.user_repo.delete(user)
         return True
+
+    def save_user_avatar(self, user_id: int, file_obj, static_folder: Optional[str] = None) -> str:
+        """Guarda la foto de perfil en disco y actualiza el avatar_path del usuario."""
+        import os
+        import time
+
+        user = self.user_repo.get_by_id(user_id)
+        if not user:
+            raise ValueError("Usuario no encontrado.")
+
+        if not file_obj or not file_obj.filename:
+            raise ValueError("No se recibió ningún archivo de imagen válido.")
+
+        ext = file_obj.filename.rsplit('.', 1)[-1].lower() if '.' in file_obj.filename else 'png'
+        if ext not in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
+            raise ValueError("Formato no soportado. Usa imágenes JPG, PNG o WebP.")
+
+        if not static_folder:
+            static_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static')
+        
+        avatars_dir = os.path.join(static_folder, 'uploads', 'avatars')
+        os.makedirs(avatars_dir, exist_ok=True)
+
+        # Eliminar avatar previo si existía
+        if user.avatar_path:
+            self._delete_avatar_file_on_disk(user.avatar_path, static_folder)
+
+        filename = f"avatar_{user.id}_{int(time.time())}.{ext}"
+        full_dest = os.path.join(avatars_dir, filename)
+        if hasattr(file_obj, 'save'):
+            file_obj.save(full_dest)
+        else:
+            with open(full_dest, 'wb') as f:
+                f.write(file_obj.read())
+
+        relative_path = f"static/uploads/avatars/{filename}"
+        user.avatar_path = relative_path
+        self.user_repo.save(user)
+        return user.avatar_url
+
+    def remove_user_avatar(self, user_id: int, static_folder: Optional[str] = None) -> bool:
+        """Elimina la foto de perfil del usuario y revierte a las iniciales."""
+        user = self.user_repo.get_by_id(user_id)
+        if not user or not user.avatar_path:
+            return False
+
+        self._delete_avatar_file_on_disk(user.avatar_path, static_folder)
+        user.avatar_path = None
+        self.user_repo.save(user)
+        return True
+
+    def _delete_avatar_file_on_disk(self, avatar_path: str, static_folder: Optional[str] = None):
+        """Elimina de forma segura el archivo del disco."""
+        import os
+        try:
+            if not static_folder:
+                static_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static')
+            
+            clean_rel = avatar_path.lstrip('/').replace('static/', '', 1)
+            full_path = os.path.join(static_folder, clean_rel)
+            if os.path.exists(full_path):
+                os.remove(full_path)
+        except Exception:
+            pass

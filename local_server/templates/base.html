@@ -45,66 +45,98 @@
             
             <div class="sidebar-scrollable">
                 <!-- SECCIÓN: GENERAL -->
+                {% if current_user.is_super_admin or current_user.permissions.dashboard or current_user.permissions.calendar %}
                 <div>
                     <div class="nav-section-title">General</div>
                     <div class="nav-group">
+                        {% if current_user.is_super_admin or current_user.permissions.dashboard %}
                         <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.path == '/' %}active{% endif %}" id="nav-dashboard" title="Resumen Diario">
                             <span class="material-icons-round">dashboard</span>
                             <span class="nav-link-text">Resumen Diario</span>
                         </a>
+                        {% endif %}
+                        {% if current_user.is_super_admin or current_user.permissions.calendar %}
                         <a href="{{ url_for('dashboard.calendar_view') }}" class="nav-link {% if '/calendar' in request.path %}active{% endif %}" id="nav-calendar" title="Calendario de Muestreos y Telemetría">
                             <span class="material-icons-round">calendar_month</span>
                             <span class="nav-link-text">Calendario</span>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- SECCIÓN: FENOTIPADO Y VISIÓN -->
+                {% if current_user.is_super_admin or current_user.permissions.processing or current_user.permissions.gallery or current_user.permissions.timelapse %}
                 <div>
                     <div class="nav-section-title">Fenotipado y Visión</div>
                     <div class="nav-group">
+                        {% if current_user.is_super_admin or current_user.permissions.processing %}
                         <a href="{{ url_for('dashboard.processing_panel') }}" class="nav-link {% if '/processing' in request.path %}active{% endif %}" id="nav-processing" title="Procesamiento">
                             <span class="material-icons-round">camera_enhance</span>
                             <span class="nav-link-text">Procesamiento</span>
                         </a>
+                        {% endif %}
+                        {% if current_user.is_super_admin or current_user.permissions.gallery %}
                         <a href="{{ url_for('dashboard.gallery') }}" class="nav-link {% if '/gallery' in request.path %}active{% endif %}" id="nav-gallery" title="Galería de Lotes">
                             <span class="material-icons-round">photo_library</span>
                             <span class="nav-link-text">Galería de Lotes</span>
                         </a>
+                        {% endif %}
+                        {% if current_user.is_super_admin or current_user.permissions.timelapse %}
                         <a href="{{ url_for('dashboard.timelapse_viewer') }}" class="nav-link {% if '/timelapse' in request.path %}active{% endif %}" id="nav-timelapse" title="Time-Lapse Evolutivo">
                             <span class="material-icons-round">slow_motion_video</span>
                             <span class="nav-link-text">Time-Lapse Evolutivo</span>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- SECCIÓN: TELEMETRÍA Y AMBIENTE -->
+                {% if current_user.is_super_admin or current_user.permissions.sensors or current_user.permissions.cross_analysis or current_user.permissions.reports %}
                 <div>
-                    <div class="nav-section-title">Telemetría y Ambiente</div>
+                    <div class="nav-section-title">Telemetría y Reportes</div>
                     <div class="nav-group">
+                        {% if current_user.is_super_admin or current_user.permissions.sensors %}
                         <a href="{{ url_for('dashboard.detailed_sensors') }}" class="nav-link {% if '/sensors' in request.path %}active{% endif %}" id="nav-sensors" title="Sensores Ambientales">
                             <span class="material-icons-round">sensors</span>
                             <span class="nav-link-text">Sensores Ambientales</span>
                         </a>
+                        {% endif %}
+                        {% if current_user.is_super_admin or current_user.permissions.cross_analysis %}
                         <a href="{{ url_for('dashboard.cross_analysis') }}" class="nav-link {% if '/cross_analysis' in request.path %}active{% endif %}" id="nav-cross-analysis" title="Cruce y Correlaciones">
                             <span class="material-icons-round">sync_alt</span>
                             <span class="nav-link-text">Cruce y Correlaciones</span>
                         </a>
+                        {% endif %}
+                        {% if current_user.is_super_admin or current_user.permissions.reports %}
+                        <a href="{{ url_for('dashboard.scientific_report_view') }}" class="nav-link {% if '/report' in request.path or '/dossier' in request.path or '/scientific_report' in request.path %}active{% endif %}" id="nav-reports" title="Dossier y Generador de Reportes">
+                            <span class="material-icons-round">assessment</span>
+                            <span class="nav-link-text">Dossier y Reportes</span>
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- SECCIÓN: ADMINISTRACIÓN Y CONFIGURACIÓN -->
                 <div>
                     <div class="nav-section-title">Configuración</div>
                     <div class="nav-group">
+                        {% if current_user.is_super_admin or current_user.permissions.config %}
                         <a href="{{ url_for('dashboard.configuration_panel') }}" class="nav-link {% if '/config' in request.path %}active{% endif %}" id="nav-config" title="Parámetros de Cultivo">
                             <span class="material-icons-round">tune</span>
                             <span class="nav-link-text">Parámetros de Cultivo</span>
                         </a>
-                        {% if current_user.role == 'admin' %}
+                        {% endif %}
+                        {% if current_user.is_super_admin %}
                         <a href="{{ url_for('dashboard.users_management') }}" class="nav-link {% if '/users' in request.path %}active{% endif %}" id="nav-users" title="Usuarios y Roles">
                             <span class="material-icons-round">group</span>
                             <span class="nav-link-text">Usuarios y Roles</span>
+                        </a>
+                        <a href="{{ url_for('dashboard.audit_logs') }}" class="nav-link {% if '/audit' in request.path or '/logs' in request.path %}active{% endif %}" id="nav-audit-logs" title="Registro de Actividad y Logs">
+                            <span class="material-icons-round">receipt_long</span>
+                            <span class="nav-link-text">Registro de Logs</span>
                         </a>
                         {% endif %}
                         <a href="{{ url_for('dashboard.system_info') }}" class="nav-link {% if '/about' in request.path or '/system_info' in request.path %}active{% endif %}" id="nav-about" title="Información & Créditos">
@@ -119,9 +151,13 @@
             <div class="sidebar-footer">
                 <!-- WIDGET EXPANDIDO DE USUARIO -->
                 <div class="user-profile-widget">
+                    {% if current_user.avatar_url %}
+                    <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name }}" class="user-avatar-circle" style="object-fit: cover; border: 2px solid var(--accent-success);" title="{{ current_user.role_display }}">
+                    {% else %}
                     <div class="user-avatar-circle" title="{{ current_user.role_display }}">
                         {{ current_user.avatar }}
                     </div>
+                    {% endif %}
                     <div class="user-info-text">
                         <div class="user-name" title="{{ current_user.name }}">{{ current_user.name }}</div>
                         <div class="user-role">{{ current_user.role_display }}</div>
@@ -133,9 +169,13 @@
 
                 <!-- ELEMENTOS INFERIORES CUANDO ESTÁ COLAPSADO: AVATAR + LOGOUT -->
                 <div class="sidebar-collapsed-bottom">
+                    {% if current_user.avatar_url %}
+                    <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name }}" class="user-avatar-circle" style="object-fit: cover; border: 2px solid var(--accent-success);" title="{{ current_user.name }} ({{ current_user.role_display }})">
+                    {% else %}
                     <div class="user-avatar-circle" title="{{ current_user.name }} ({{ current_user.role_display }})">
                         {{ current_user.avatar }}
                     </div>
+                    {% endif %}
                     <a href="{{ url_for('dashboard.logout') }}" class="user-logout-btn" title="Cerrar Sesión ({{ current_user.name }})">
                         <span class="material-icons-round">logout</span>
                     </a>

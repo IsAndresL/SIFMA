@@ -4,7 +4,8 @@ from .sensor_reading import SensorReading
 from .capture_session import CaptureSession
 from .biometric_metric import BiometricMetric
 from .agronomic_conclusion import AgronomicConclusion
-from .user import User
+from .user import User, ALL_MODULE_PERMISSIONS
+from .audit_log import AuditLog
 
 __all__ = [
     "Config",
@@ -13,5 +14,7 @@ __all__ = [
     "CaptureSession",
     "BiometricMetric",
     "AgronomicConclusion",
-    "User"
+    "User",
+    "ALL_MODULE_PERMISSIONS",
+    "AuditLog"
 ]

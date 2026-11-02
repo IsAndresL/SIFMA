@@ -9,7 +9,8 @@ from application.services import (
     AnalyticsApplicationService, 
     ConclusionApplicationService,
     UserService,
-    WeatherService
+    WeatherService,
+    AuditService
 )
 from infrastructure.database.repositories import (
     SensorRepository, 
@@ -24,6 +25,7 @@ analytics_service = AnalyticsApplicationService()
 conclusion_service = ConclusionApplicationService()
 user_service = UserService()
 weather_service = WeatherService.get_instance()
+audit_service = AuditService.get_instance()
 sensor_repo = SensorRepository()
 session_repo = CaptureSessionRepository()
 
@@ -40,15 +42,47 @@ def get_active_plant_id():
             pass
     return session.get('active_plant_id', 1)
 
+from domain.models.user import ALL_MODULE_PERMISSIONS
+
 def get_current_user_profile():
-    """Retorna los datos del usuario en sesión para renderizar el pie de la barra lateral."""
+    """Retorna los datos del usuario en sesión para renderizar el pie de la barra lateral y validar permisos."""
+    u_id = session.get("user_id")
+    perms = session.get("user_permissions")
+    user_role = session.get("user_role", "investigador")
+    is_admin = user_role == "admin" or session.get("username", "").lower() == "admin"
+    avatar_url = session.get("user_avatar_url")
+    avatar_initials = session.get("user_avatar", "AL")
+
+    if u_id:
+        u_obj = user_service.get_user_by_id(u_id)
+        if u_obj:
+            perms = u_obj.get_permissions_dict()
+            session['user_permissions'] = perms
+            session['user_role'] = u_obj.role
+            session['user_role_display'] = u_obj.role_display
+            session['is_super_admin'] = u_obj.is_super_admin
+            session['user_avatar'] = u_obj.avatar_initials
+            session['user_avatar_url'] = u_obj.avatar_url
+            is_admin = u_obj.is_super_admin
+            avatar_url = u_obj.avatar_url
+            avatar_initials = u_obj.avatar_initials
+
+    if not perms:
+        if is_admin:
+            perms = {k: True for k, _, _, _ in ALL_MODULE_PERMISSIONS}
+        else:
+            perms = {k: False for k, _, _, _ in ALL_MODULE_PERMISSIONS}
+
     return {
         "id": session.get("user_id", 1),
         "username": session.get("username", "admin"),
         "name": session.get("user_name", "Andres Luna"),
         "role": session.get("user_role", "admin"),
-        "role_display": session.get("user_role_display", "Administrador Principal"),
-        "avatar": session.get("user_avatar", "AL")
+        "role_display": session.get("user_role_display", "Super Usuario (Admin)"),
+        "is_super_admin": is_admin,
+        "avatar": avatar_initials,
+        "avatar_url": avatar_url,
+        "permissions": perms
     }
 
 def role_required(*allowed_roles):
@@ -59,10 +93,54 @@ def role_required(*allowed_roles):
             if not session.get('logged_in'):
                 return redirect(url_for('dashboard.login'))
             user_role = session.get('user_role', 'investigador')
-            if user_role not in allowed_roles and 'admin' not in user_role:
+            if user_role not in allowed_roles and user_role != 'admin' and session.get('username', '').lower() != 'admin':
                 return render_template('error.html', 
                                        error_title="Acceso Restringido", 
-                                       error_message="No posees los privilegios requeridos para acceder a esta sección."), 403
+                                       error_message="Esta sección es exclusiva del Super Usuario / Administrador Principal."), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def permission_required(permission_key: str, module_name: str = "este módulo"):
+    """Decorador para proteger rutas según los permisos granulares asignados por el Super Usuario."""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not session.get('logged_in'):
+                return redirect(url_for('dashboard.login'))
+            
+            # Super Admin tiene acceso total irrestricto
+            if session.get('user_role') == 'admin' or session.get('username', '').lower() == 'admin':
+                return f(*args, **kwargs)
+
+            perms = session.get('user_permissions')
+            if not perms or not isinstance(perms, dict):
+                u_id = session.get("user_id")
+                if u_id:
+                    u_obj = user_service.get_user_by_id(u_id)
+                    if u_obj:
+                        perms = u_obj.get_permissions_dict()
+                        session['user_permissions'] = perms
+            
+            perms = perms or {}
+            if not perms.get(permission_key, False):
+                # Si el usuario intenta entrar al index('/') pero no tiene dashboard, redirigir a su primer módulo habilitado
+                if request.endpoint == 'dashboard.index':
+                    for alt_key, alt_endpoint in [
+                        ('calendar', 'dashboard.calendar_view'),
+                        ('sensors', 'dashboard.detailed_sensors'),
+                        ('cross_analysis', 'dashboard.cross_analysis'),
+                        ('gallery', 'dashboard.gallery'),
+                        ('timelapse', 'dashboard.timelapse_viewer'),
+                        ('processing', 'dashboard.processing_panel'),
+                        ('config', 'dashboard.configuration_panel')
+                    ]:
+                        if perms.get(alt_key):
+                            return redirect(url_for(alt_endpoint))
+
+                return render_template('error.html', 
+                                       error_title="Acceso Restringido", 
+                                       error_message=f"Tu cuenta no posee permisos para acceder a '{module_name}'. Solicita al Administrador Principal que te habilite esta función."), 403
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -77,7 +155,8 @@ def inject_user_context():
         "current_user": get_current_user_profile(),
         "active_plant_id": active_pid,
         "active_crop_profile": active_prof,
-        "plant_profiles_map": plant_profiles_map
+        "plant_profiles_map": plant_profiles_map,
+        "all_permissions_list": ALL_MODULE_PERMISSIONS
     }
 
 @dashboard_bp.before_request
@@ -121,19 +200,52 @@ def login():
             session['user_role'] = user.role
             session['user_role_display'] = user.role_display
             session['user_avatar'] = user.avatar_initials
+            session['user_permissions'] = user.get_permissions_dict()
+            session['is_super_admin'] = user.is_super_admin
             session.permanent = True
+
+            # Registrar en logs de auditoría
+            audit_service.log(
+                action="LOGIN",
+                module="AUTENTICACION",
+                description=f"Inicio de sesión exitoso en la plataforma SIFMA.",
+                level="info",
+                user_id=user.id,
+                username=user.username,
+                user_fullname=user.full_name,
+                user_role=user.role_display,
+                action_display="Inicio de Sesión"
+            )
+
             return redirect(url_for('dashboard.index'))
         else:
+            audit_service.log(
+                action="LOGIN_FAILED",
+                module="AUTENTICACION",
+                description=f"Intento fallido de inicio de sesión con el identificador '{username}'.",
+                level="warning",
+                username=username or "desconocido",
+                action_display="Fallo de Autenticación"
+            )
             error = "Usuario o contraseña incorrectos, o cuenta inactiva."
             
     return render_template('login.html', error=error)
 
 @dashboard_bp.route('/logout')
 def logout():
+    u_name = session.get('username', 'usuario')
+    audit_service.log(
+        action="LOGOUT",
+        module="AUTENTICACION",
+        description=f"El usuario '@{u_name}' cerró su sesión.",
+        level="info",
+        action_display="Cierre de Sesión"
+    )
     session.clear()
     return redirect(url_for('dashboard.login'))
 
 @dashboard_bp.route('/')
+@permission_required('dashboard', 'Resumen Diario')
 def index():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -165,6 +277,7 @@ def index():
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/sensors')
+@permission_required('sensors', 'Sensores Ambientales')
 def detailed_sensors():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -185,6 +298,7 @@ def detailed_sensors():
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/calendar')
+@permission_required('calendar', 'Calendario de Muestreos')
 def calendar_view():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -203,6 +317,7 @@ def calendar_view():
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/benchmark')
+@permission_required('cross_analysis', 'Benchmark Comparativo')
 def inter_plant_benchmark():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -216,6 +331,7 @@ def inter_plant_benchmark():
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/timelapse')
+@permission_required('timelapse', 'Time-Lapse Evolutivo')
 def timelapse_viewer():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -228,12 +344,17 @@ def timelapse_viewer():
                            selected_profile=selected_profile,
                            active_plant_id=active_plant_id)
 
+@dashboard_bp.route('/reports')
+@dashboard_bp.route('/dossier')
 @dashboard_bp.route('/scientific_report')
 @dashboard_bp.route('/report/scientific')
+@permission_required('reports', 'Dossier y Reportes')
 def scientific_report_view():
     config = system_service.get_config()
-    active_plant_id = get_active_plant_id()
+    req_plant_id = request.args.get('plant_id', type=int)
+    active_plant_id = req_plant_id if (req_plant_id and 1 <= req_plant_id <= app_settings.MAX_PLANT_NODES) else get_active_plant_id()
     selected_profile = system_service.get_profile_for_plant(active_plant_id)
+    plant_profiles_map = system_service.get_all_plant_profiles_map()
     raw_date = request.args.get('date', '').strip()
     target_date = raw_date if raw_date else 'auto'
     
@@ -243,9 +364,11 @@ def scientific_report_view():
                            config=config,
                            dossier=dossier,
                            selected_profile=selected_profile,
+                           plant_profiles_map=plant_profiles_map,
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/processing')
+@permission_required('processing', 'Procesamiento de Imágenes')
 def processing_panel():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -278,6 +401,7 @@ def processing_panel():
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/gallery')
+@permission_required('gallery', 'Galería de Lotes')
 def gallery():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -308,6 +432,7 @@ def gallery():
                            active_plant_id=active_plant_id)
 
 @dashboard_bp.route('/cross_analysis')
+@permission_required('cross_analysis', 'Cruce y Correlaciones')
 def cross_analysis():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -341,7 +466,7 @@ def cross_analysis():
                            available_ports=available_ports)
 
 @dashboard_bp.route('/config', methods=['GET', 'POST'])
-@role_required('admin')
+@permission_required('config', 'Parámetros de Cultivo')
 def configuration_panel():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
@@ -537,4 +662,144 @@ def system_info():
                            selected_profile=selected_profile,
                            active_plant_id=active_plant_id,
                            system_meta=system_metadata)
+
+@dashboard_bp.route('/audit-logs')
+@dashboard_bp.route('/logs')
+@role_required('admin')
+def audit_logs():
+    """Vista de registro de auditoría, trazabilidad y logs de movimientos (exclusiva para Super Administrador)."""
+    search_query = request.args.get('search', '').strip()
+    module_filter = request.args.get('module', '').strip()
+    level_filter = request.args.get('level', '').strip()
+    action_filter = request.args.get('action', '').strip()
+    date_filter = request.args.get('date', '').strip()
+
+    start_date = None
+    end_date = None
+    if date_filter:
+        try:
+            start_date = datetime.strptime(date_filter, '%Y-%m-%d')
+            end_date = start_date.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            pass
+
+    logs = audit_service.get_logs(
+        limit=300,
+        module=module_filter if module_filter else None,
+        action=action_filter if action_filter else None,
+        level=level_filter if level_filter else None,
+        search=search_query if search_query else None,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    stats = audit_service.get_stats()
+    config = system_service.get_config()
+    active_plant_id = get_active_plant_id()
+
+    # Módulos y niveles disponibles para filtros
+    available_modules = ["AUTENTICACION", "USUARIOS", "CONFIGURACION", "LOTES", "FENOTIPADO", "TELEMETRIA", "REPORTES", "SISTEMA"]
+    available_levels = [
+        ("info", "Informativo"),
+        ("success", "Éxito / Creación"),
+        ("warning", "Advertencia / Pausa"),
+        ("danger", "Crítico / Eliminación")
+    ]
+
+    return render_template(
+        'audit_logs.html',
+        logs=logs,
+        stats=stats,
+        search_query=search_query,
+        module_filter=module_filter,
+        level_filter=level_filter,
+        action_filter=action_filter,
+        date_filter=date_filter,
+        available_modules=available_modules,
+        available_levels=available_levels,
+        config=config,
+        active_plant_id=active_plant_id
+    )
+
+@dashboard_bp.route('/audit-logs/export')
+@role_required('admin')
+def export_audit_logs():
+    """Exporta los logs de auditoría filtrados en formato CSV descargable."""
+    from flask import Response
+    
+    search_query = request.args.get('search', '').strip()
+    module_filter = request.args.get('module', '').strip()
+    level_filter = request.args.get('level', '').strip()
+    date_filter = request.args.get('date', '').strip()
+
+    start_date = None
+    end_date = None
+    if date_filter:
+        try:
+            start_date = datetime.strptime(date_filter, '%Y-%m-%d')
+            end_date = start_date.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            pass
+
+    logs = audit_service.get_logs(
+        limit=2000,
+        module=module_filter if module_filter else None,
+        level=level_filter if level_filter else None,
+        search=search_query if search_query else None,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    csv_data = audit_service.generate_csv(logs)
+    filename = f"sifma_auditoria_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+    # Registrar la exportación en el propio log
+    audit_service.log(
+        action="EXPORT_DATA",
+        module="REPORTES",
+        description=f"Exportó {len(logs)} registros de auditoría a CSV.",
+        level="info",
+        action_display="Exportación de Logs"
+    )
+
+    return Response(
+        csv_data,
+        mimetype="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Type": "text/csv; charset=utf-8"
+        }
+    )
+
+@dashboard_bp.route('/api/audit-logs/<int:log_id>', methods=['DELETE'])
+@role_required('admin')
+def delete_single_audit_log(log_id: int):
+    """Elimina un log de auditoría individual."""
+    from flask import jsonify
+    success = audit_service.delete_log(log_id)
+    if not success:
+        return jsonify({"status": "error", "message": "Registro de log no encontrado."}), 404
+    return jsonify({"status": "success", "message": f"Registro de auditoría #{log_id} eliminado exitosamente."})
+
+@dashboard_bp.route('/api/audit-logs/clear', methods=['POST', 'DELETE'])
+@role_required('admin')
+def clear_all_audit_logs():
+    """Vacía completamente la tabla de logs de auditoría."""
+    from flask import jsonify
+    count = audit_service.clear_all_logs()
+    
+    # Registrar la acción de vaciado
+    audit_service.log(
+        action="CLEAR_LOGS",
+        module="SISTEMA",
+        description=f"El Administrador Principal vació el historial de auditoría ({count} registros eliminados).",
+        level="warning",
+        action_display="Vaciado de Logs"
+    )
+
+    return jsonify({
+        "status": "success", 
+        "message": f"Se han eliminado {count} registros del historial de logs.",
+        "deleted_count": count
+    })
 

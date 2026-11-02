@@ -4,6 +4,7 @@ from .sensor_repository import SensorRepository
 from .session_repository import CaptureSessionRepository
 from .conclusion_repository import ConclusionRepository
 from .user_repository import UserRepository
+from .audit_repository import AuditRepository
 
 __all__ = [
     "ConfigRepository",
@@ -11,5 +12,6 @@ __all__ = [
     "SensorRepository",
     "CaptureSessionRepository",
     "ConclusionRepository",
-    "UserRepository"
+    "UserRepository",
+    "AuditRepository"
 ]

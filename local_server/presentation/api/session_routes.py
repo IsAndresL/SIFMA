@@ -1,10 +1,12 @@
 import os
 from flask import request, jsonify, session, current_app
 from infrastructure.database.repositories import CaptureSessionRepository, SensorRepository
+from application.services import AuditService
 from . import api_bp
 
 session_repo = CaptureSessionRepository()
 sensor_repo = SensorRepository()
+audit_service = AuditService.get_instance()
 
 @api_bp.route('/api/sessions/<int:session_id>', methods=['DELETE'])
 def delete_capture_session(session_id: int):
@@ -12,6 +14,8 @@ def delete_capture_session(session_id: int):
     if not session_record:
         return jsonify({"status": "error", "message": "Sesión no encontrada."}), 404
 
+    period_name = session_record.period
+    p_id = session_record.plant_id
     static_folder = current_app.static_folder
     batch_dirs_to_clean = set()
     
@@ -35,6 +39,15 @@ def delete_capture_session(session_id: int):
             pass
 
     session_repo.delete(session_record)
+
+    audit_service.log(
+        action="DELETE_BATCH",
+        module="LOTES",
+        description=f"Eliminó la sesión de captura ID {session_id} ('{period_name}') de la Canastilla #{p_id}.",
+        level="danger",
+        action_display="Eliminación de Sesión"
+    )
+
     return jsonify({"status": "success", "message": "Período de fotos y métricas eliminados exitosamente."})
 
 @api_bp.route('/api/sessions/by_date', methods=['DELETE'])
@@ -46,6 +59,15 @@ def delete_sessions_by_date():
         return jsonify({"status": "error", "message": "Parámetro 'date' es requerido."}), 400
 
     count = session_repo.delete_by_date(date_str, int(plant_id))
+
+    audit_service.log(
+        action="DELETE_BATCH",
+        module="LOTES",
+        description=f"Eliminó {count} períodos de capturas del día '{date_str}' de la Canastilla #{plant_id}.",
+        level="danger",
+        action_display="Eliminación de Lote por Fecha"
+    )
+
     return jsonify({"status": "success", "message": f"Se eliminaron {count} períodos de fotos correspondientes a la fecha {date_str}."})
 
 @api_bp.route('/api/telemetry/by_date', methods=['DELETE'])
@@ -55,4 +77,13 @@ def delete_telemetry_by_date():
         return jsonify({"status": "error", "message": "Parámetro 'date' es requerido."}), 400
 
     deleted_count = sensor_repo.delete_by_date(date_str)
+
+    audit_service.log(
+        action="DELETE_TELEMETRY",
+        module="TELEMETRIA",
+        description=f"Eliminó {deleted_count} lecturas de sensores de la fecha '{date_str}'.",
+        level="danger",
+        action_display="Eliminación de Telemetría"
+    )
+
     return jsonify({"status": "success", "message": f"Se eliminaron {deleted_count} lecturas de sensores ({date_str}).", "deleted_count": deleted_count})

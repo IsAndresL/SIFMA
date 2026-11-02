@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Científico - {{ dossier.report_id }} - SIFMA</title>
+    <title>Dossier y Reporte Científico - {{ dossier.report_id }} - SIFMA</title>
     
     <!-- Favicon Oficial SIFMA -->
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}">
 
-    <!-- Google Fonts: Philosopher (marca y títulos oficiales) + Literata & JetBrains Mono -->
+    <!-- Google Fonts: Philosopher + Inter / Literata & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400;1,7..72,600&family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <!-- Chart.js para Renderizado de Gráficas Científicas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
@@ -23,6 +26,7 @@
             --border-color: #cbd5e1;
             --border-dark: #334155;
             --bg-subtle: #f8fafc;
+            --accent-primary: #0f172a;
             --accent-emerald: #059669;
             --accent-blue: #0284c7;
         }
@@ -39,12 +43,12 @@
             background: #e2e8f0;
             font-size: 11.5px;
             line-height: 1.45;
-            padding: 24px;
+            padding: 20px 24px;
         }
 
         /* CONTENEDOR TIPO HOJA A4 */
         .report-page-sheet {
-            max-width: 960px;
+            max-width: 980px;
             margin: 0 auto 30px auto;
             background: #ffffff;
             padding: 36px 42px;
@@ -54,18 +58,18 @@
             position: relative;
         }
 
-        /* BARRA SUPERIOR DE HERRAMIENTAS (FLOTANTE EN PANTALLA, OCULTA AL IMPRIMIR) */
+        /* BARRA SUPERIOR DE HERRAMIENTAS (FLOTANTE EN PANTALLA) */
         .toolbar-screen-only {
-            max-width: 960px;
+            max-width: 980px;
             margin: 0 auto 16px auto;
             background: #0f172a;
             color: #ffffff;
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
             flex-wrap: wrap;
             gap: 12px;
         }
@@ -75,41 +79,98 @@
             align-items: center;
             gap: 6px;
             padding: 7px 14px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.15s ease;
             border: none;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-primary-action {
-            background: var(--accent-emerald);
+            background: #059669;
             color: #ffffff;
         }
-
-        .btn-primary-action:hover {
-            background: #047857;
-        }
+        .btn-primary-action:hover { background: #047857; }
 
         .btn-sign-action {
             background: #2563eb;
             color: #ffffff;
         }
+        .btn-sign-action:hover { background: #1d4ed8; }
 
-        .btn-sign-action:hover {
-            background: #1d4ed8;
+        .btn-config-action {
+            background: #334155;
+            color: #ffffff;
         }
+        .btn-config-action:hover { background: #1e293b; }
 
         .btn-outline-action {
             background: transparent;
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
+        .btn-outline-action:hover { background: rgba(255, 255, 255, 0.1); }
 
-        .btn-outline-action:hover {
-            background: rgba(255, 255, 255, 0.1);
+        /* PANEL DE CONFIGURACIÓN Y FILTROS MODULARES */
+        .config-drawer {
+            max-width: 980px;
+            margin: 0 auto 16px auto;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 18px 22px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            font-family: 'Inter', sans-serif;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .config-drawer.collapsed {
+            display: none;
+        }
+
+        .config-section-title {
+            font-size: 11.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 6px 12px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            color: #334155;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background 0.15s ease;
+        }
+        .checkbox-item:hover {
+            background: #f1f5f9;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: #0f172a;
+            cursor: pointer;
         }
 
         /* ENCABEZADO INSTITUCIONAL */
@@ -147,7 +208,7 @@
         }
 
         .report-header-title p {
-            font-size: 10.5px;
+            font-size: 10px;
             color: var(--text-muted);
             font-weight: 600;
             text-transform: uppercase;
@@ -167,7 +228,7 @@
             font-size: 11.5px;
         }
 
-        /* METADATOS DE LA MUESTRA (TABLA GRID) */
+        /* METADATOS DE LA MUESTRA */
         .meta-grid-table {
             width: 100%;
             border-collapse: collapse;
@@ -198,15 +259,16 @@
         .section-block {
             margin-bottom: 24px;
             page-break-inside: avoid;
+            transition: all 0.2s ease;
         }
 
         .section-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 800;
             color: var(--text-main);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding-bottom: 6px;
+            padding-bottom: 5px;
             border-bottom: 1.5px solid var(--border-color);
             margin-bottom: 12px;
             display: flex;
@@ -218,12 +280,12 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: var(--text-main);
             color: #ffffff;
-            border-radius: 4px;
-            font-size: 11px;
+            border-radius: 3px;
+            font-size: 10px;
         }
 
         /* TABLAS CIENTÍFICAS */
@@ -242,7 +304,9 @@
             padding: 6px 8px;
             border-top: 1.5px solid var(--border-dark);
             border-bottom: 1.5px solid var(--border-dark);
-            font-size: 10.5px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .scientific-table td {
@@ -255,17 +319,66 @@
             border-bottom: 1.5px solid var(--border-dark);
         }
 
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+        .text-center { text-align: center !important; }
+        .text-right { text-align: right !important; }
+        .font-mono { font-family: 'JetBrains Mono', monospace !important; font-size: 10px; }
 
-        /* REGISTRO FOTOGRÁFICO COMPARATIVO */
-        .photo-comp-card {
+        /* DIAGNÓSTICO CIENTÍFICO (SIN RAYITAS LATERALES DE COLOR) */
+        .insight-box {
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 11px;
+            line-height: 1.45;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 14px;
+            background: var(--bg-subtle);
+            color: var(--text-main);
+        }
+
+        /* CONTENEDOR DE GRÁFICAS */
+        .charts-report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+
+        .chart-report-card {
             background: #ffffff;
-            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            page-break-inside: avoid;
+        }
+
+        .chart-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #f1f5f9;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .chart-report-canvas-wrapper {
+            position: relative;
+            height: 130px;
+            width: 100%;
+        }
+
+        /* REGISTRO FOTOGRÁFICO */
+        .photo-comp-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 14px;
             page-break-inside: avoid;
         }
 
@@ -273,13 +386,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 11px;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1.5px solid var(--border-color);
-            background: #f8fafc;
-            padding: 6px 10px;
-            border-radius: 5px;
+            font-size: 10.5px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .photo-duo-container {
@@ -289,227 +399,205 @@
         }
 
         .photo-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
+            text-align: center;
         }
 
         .photo-frame {
-            width: 100%;
-            height: 200px;
-            background: #0f172a;
-            border-radius: 6px;
             border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #0f172a;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            height: 140px;
         }
 
         .photo-frame img {
             max-width: 100%;
             max-height: 100%;
-            width: auto;
-            height: auto;
             object-fit: contain;
-            object-position: center;
             display: block;
         }
 
         .photo-box-caption {
-            font-size: 10px;
-            font-weight: 600;
+            font-size: 9.5px;
             color: var(--text-muted);
-            margin-top: 5px;
-            text-align: center;
+            margin-top: 4px;
+            font-weight: 600;
         }
-
         .photo-box-caption.proc {
-            color: #dc2626;
+            color: var(--text-main);
             font-weight: 700;
         }
 
-        /* ALERTAS / INSIGHTS */
-        .insight-box {
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin-bottom: 8px;
+        /* PREGUNTAS Y CONCLUSIONES (SIN RAYITAS DE COLOR) */
+        .question-card {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+            position: relative;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .question-title {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 11.5px;
+            flex: 1;
+        }
+
+        .question-tools-screen {
+            display: flex;
+            gap: 4px;
+        }
+
+        .question-btn-mini {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
             font-size: 11px;
-            line-height: 1.4;
-            border-left: 3px solid;
+            display: inline-flex;
+            align-items: center;
+        }
+        .question-btn-mini:hover {
+            color: #dc2626;
+            background: #fee2e2;
         }
 
-        .insight-box.warning {
-            background: #fffbeb;
-            border-color: #d97706;
-            color: #92400e;
+        .question-response-area {
+            width: 100%;
+            font-family: inherit;
+            font-size: 11px;
+            color: var(--text-main);
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            padding: 8px;
+            min-height: 48px;
+            resize: vertical;
+            line-height: 1.45;
         }
 
-        .insight-box.positive {
-            background: #ecfdf5;
-            border-color: var(--accent-emerald);
-            color: #065f46;
-        }
-
-        /* SECCIÓN DE FIRMAS DIGITALES */
+        /* BLOQUE DE FIRMAS */
         .signatures-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            margin-top: 35px;
-            padding-top: 15px;
+            gap: 40px;
+            margin-top: 30px;
+            padding-top: 20px;
             page-break-inside: avoid;
         }
 
         .signature-line {
             text-align: center;
-            position: relative;
         }
 
         .signature-box-area {
-            height: 90px;
+            height: 70px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             position: relative;
         }
 
         .signature-stamp-img {
-            max-height: 82px;
-            max-width: 220px;
+            max-height: 65px;
+            max-width: 180px;
             object-fit: contain;
-            display: block;
-            margin: 0 auto;
             filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
         }
 
         .signature-placeholder-btn {
-            width: 100%;
-            height: 65px;
-            border: 1.5px dashed #94a3b8;
-            border-radius: 6px;
+            border: 1px dashed #94a3b8;
             background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
             color: #64748b;
-            font-size: 10.5px;
+            font-size: 11px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .signature-placeholder-btn:hover {
-            border-color: #2563eb;
-            color: #2563eb;
-            background: rgba(37, 99, 235, 0.04);
-        }
-
-        .signature-actions-hover {
-            position: absolute;
-            top: 0;
-            right: 0;
-            display: none;
-            gap: 4px;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .signature-box-area:hover .signature-actions-hover {
-            display: flex;
-        }
-
-        .sig-mini-btn {
-            background: transparent;
-            border: none;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            padding: 2px 4px;
+            padding: 6px 12px;
             border-radius: 3px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-
-        .sig-mini-btn:hover {
-            background: rgba(255,255,255,0.2);
+        .signature-placeholder-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #475569;
         }
 
         .signature-rule {
             border-top: 1.5px solid var(--border-dark);
-            margin-top: 2px;
             padding-top: 6px;
+        }
+        .signature-rule strong {
+            display: block;
+            font-size: 11.5px;
+            color: var(--text-main);
+        }
+        .signature-rule span {
+            font-size: 10px;
+            color: var(--text-muted);
         }
 
         .editable-field {
             outline: none;
-            border-radius: 3px;
-            padding: 1px 4px;
-            transition: background 0.15s ease;
+            border-bottom: 1px dashed transparent;
+            transition: border 0.15s ease;
         }
-
         .editable-field:hover, .editable-field:focus {
-            background: #f1f5f9;
+            border-bottom-color: #0f172a;
+            background: rgba(15, 23, 42, 0.04);
         }
 
-        .editable-field:focus {
-            box-shadow: 0 0 0 1.5px #2563eb;
-        }
-
-        /* MODAL DEL FIRMADOR DIGITAL DE DOCUMENTOS */
+        /* MODAL DE FIRMA DIGITAL */
         .sig-modal-backdrop {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(15, 23, 42, 0.7);
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(4px);
-            z-index: 9999;
+            display: none;
             align-items: center;
             justify-content: center;
+            z-index: 9999;
             padding: 20px;
         }
 
         .sig-modal-card {
             background: #ffffff;
-            border-radius: 12px;
+            border-radius: 8px;
+            max-width: 520px;
             width: 100%;
-            max-width: 540px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            border: 1px solid var(--border-color);
             overflow: hidden;
-            animation: modalFadeIn 0.2s ease-out;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            font-family: 'Inter', sans-serif;
         }
 
         .sig-modal-header {
-            padding: 16px 20px;
             background: #0f172a;
             color: #ffffff;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .sig-modal-header h3 {
-            font-size: 15px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .sig-modal-body {
@@ -519,193 +607,236 @@
         .sig-tabs-nav {
             display: flex;
             border-bottom: 2px solid #e2e8f0;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .sig-tab-btn {
             flex: 1;
-            padding: 10px 14px;
-            font-size: 12px;
-            font-weight: 700;
+            padding: 10px;
             background: transparent;
             border: none;
+            font-weight: 700;
+            font-size: 12px;
+            color: #64748b;
             cursor: pointer;
-            color: var(--text-muted);
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            transition: all 0.15s ease;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
         }
-
         .sig-tab-btn.active {
-            color: #2563eb;
-            border-bottom-color: #2563eb;
+            color: #0f172a;
+            border-bottom-color: #0f172a;
         }
 
         .sig-tab-content {
             display: none;
         }
-
         .sig-tab-content.active {
             display: block;
         }
 
-        /* DROPZONE DE ARCHIVO */
         .sig-dropzone {
-            border: 2px dashed #94a3b8;
-            border-radius: 8px;
-            padding: 24px;
-            text-align: center;
+            border: 2px dashed #cbd5e1;
             background: #f8fafc;
+            border-radius: 6px;
+            padding: 24px 16px;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        .sig-dropzone:hover, .sig-dropzone.dragover {
-            border-color: #2563eb;
-            background: rgba(37, 99, 235, 0.05);
-        }
-
-        /* CANVAS DE FIRMA A MANO ALZADA */
         .sig-canvas-wrapper {
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
             background: #ffffff;
+            overflow: hidden;
+            height: 160px;
             position: relative;
-            touch-action: none;
         }
 
         #signature-pad {
             width: 100%;
-            height: 180px;
+            height: 100%;
             display: block;
-            cursor: crosshair;
-        }
-
-        .sig-canvas-tools {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 8px;
-            font-size: 11px;
-        }
-
-        .sig-color-picker {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .sig-color-dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .sig-color-dot.active {
-            border-color: #0f172a;
-            transform: scale(1.15);
+            touch-action: none;
         }
 
         /* ESTILOS DE IMPRESIÓN Y EXPORTACIÓN A PDF */
         @media print {
             body {
-                background: #ffffff !important;
-                padding: 0 !important;
-                font-size: 10pt !important;
+                background: #ffffff;
+                padding: 0;
+                color: #000000;
             }
 
-            .toolbar-screen-only {
+            .toolbar-screen-only, 
+            .config-drawer, 
+            .question-tools-screen, 
+            .signature-placeholder-btn,
+            .sig-modal-backdrop,
+            .no-print {
                 display: none !important;
-            }
-
-            .sig-modal-backdrop {
-                display: none !important;
-            }
-
-            .signature-placeholder-btn {
-                display: none !important;
-            }
-
-            .signature-actions-hover {
-                display: none !important;
-            }
-
-            .editable-field:hover, .editable-field:focus {
-                background: transparent !important;
-                box-shadow: none !important;
             }
 
             .report-page-sheet {
-                box-shadow: none !important;
-                border: none !important;
-                padding: 0 !important;
-                max-width: 100% !important;
-                margin: 0 !important;
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
             }
 
-            .section-block {
-                page-break-inside: avoid;
-            }
-
-            .photo-comp-card {
-                page-break-inside: avoid;
-            }
-
-            .signatures-row {
+            .section-block, .photo-comp-card, .signatures-row, .chart-report-card, .question-card {
                 page-break-inside: avoid;
             }
 
             @page {
                 size: A4 portrait;
-                margin: 15mm 12mm 15mm 12mm;
+                margin: 12mm 10mm 12mm 10mm;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR FLOTANTE PARA PANTALLA (NO SALE EN PDF) -->
+    <!-- 1. BARRA SUPERIOR DE ACCIONES (FLOTANTE EN PANTALLA) -->
     <div class="toolbar-screen-only">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <a href="/cross_analysis?plant_id={{ active_plant_id }}" class="btn-action btn-outline-action">
+            <a href="{{ url_for('dashboard.index') }}" class="btn-action btn-outline-action" title="Volver al Panel Principal">
                 <span class="material-icons-round" style="font-size: 16px;">arrow_back</span>
                 <span>Volver a SIFMA</span>
             </a>
-            <span style="font-weight: 700; font-size: 13px;">Ficha Técnica Científica: {{ dossier.target_date }}</span>
+            <span style="font-weight: 700; font-size: 13px; font-family: 'Inter', sans-serif;">
+                Dossier & Reportes: Canastilla #{{ dossier.plant_id }} ({{ dossier.target_date }})
+            </span>
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <!-- Selector de Fecha de la Ficha -->
-            <select onchange="window.location.href='/report/scientific?date=' + this.value + '&plant_id={{ active_plant_id }}'" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 5px 8px; border-radius: 4px; font-size: 11.5px;">
+            
+            <!-- Selector de Canastilla / Torre -->
+            <select onchange="window.location.href='/reports?plant_id=' + this.value + '&date={{ dossier.target_date }}'" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                {% for pid in range(1, 5) %}
+                    <option value="{{ pid }}" {% if dossier.plant_id == pid %}selected{% endif %} style="color: #000;">
+                        Canastilla #{{ pid }} ({{ plant_profiles_map[pid].display_name if plant_profiles_map and pid in plant_profiles_map else 'Torre ' ~ pid }})
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Selector de Fecha -->
+            <select onchange="window.location.href='/reports?plant_id={{ dossier.plant_id }}&date=' + this.value" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
                 {% for d in dossier.available_dates %}
                     <option value="{{ d }}" {% if dossier.target_date == d %}selected{% endif %} style="color: #000;">Fecha: {{ d }}</option>
                 {% endfor %}
             </select>
 
-            <!-- Botón del Firmador Digital -->
-            <button type="button" class="btn-action btn-sign-action" onclick="openSignatureModal(1)">
-                <span class="material-icons-round" style="font-size: 16px;">draw</span>
-                <span>Firmar Documento</span>
+            <!-- Botón de Personalización -->
+            <button type="button" class="btn-action btn-config-action" onclick="toggleConfigDrawer()" title="Personalizar secciones, gráficas y fotos">
+                <span class="material-icons-round" style="font-size: 16px;">tune</span>
+                <span>Personalizar Reporte</span>
             </button>
 
-            <!-- Botón de Impresión Directa / Guardar PDF -->
-            <button type="button" class="btn-action btn-primary-action" onclick="window.print()">
-                <span class="material-icons-round" style="font-size: 16px;">print</span>
-                <span>Imprimir / Exportar PDF</span>
+            <!-- Botón de Firmador Digital -->
+            <button type="button" class="btn-action btn-sign-action" onclick="openSignatureModal(1)" title="Estampar firma digital del investigador o validador">
+                <span class="material-icons-round" style="font-size: 16px;">draw</span>
+                <span>Firmar</span>
             </button>
+
+            <!-- Botón de Impresión / PDF -->
+            <button type="button" class="btn-action btn-primary-action" onclick="window.print()" title="Imprimir o Guardar como PDF">
+                <span class="material-icons-round" style="font-size: 16px;">picture_as_pdf</span>
+                <span>Imprimir / PDF</span>
+            </button>
+
         </div>
     </div>
 
-    <!-- CUERPO DE LA FICHA TÉCNICA CIENTÍFICA -->
-    <div class="report-page-sheet">
+    <!-- 2. PANEL DESPLEGABLE DE PERSONALIZACIÓN Y SELECCIÓN MODULAR -->
+    <div id="config-drawer" class="config-drawer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: #0f172a; font-size: 18px;">checklist</span>
+                <strong style="font-size: 12.5px; color: var(--text-main);">Configuración Modular del Documento</strong>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="setAllCheckboxes(true)" style="background: transparent; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; color: #475569;">
+                    Seleccionar Todo
+                </button>
+                <button type="button" onclick="toggleConfigDrawer()" style="background: transparent; border: none; color: #64748b; cursor: pointer;">
+                    <span class="material-icons-round" style="font-size: 18px;">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- FILA 1: SECCIONES PRINCIPALES DEL INFORME -->
+        <div class="config-section-title">
+            <span class="material-icons-round" style="font-size: 15px; color: #0f172a;">view_agenda</span>
+            <span>1. Secciones del Documento</span>
+        </div>
+        <div class="checkbox-grid">
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-meta" checked onchange="toggleSection('sec-meta', this.checked)"> Metadatos y Datos del Lote</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-diagnostico" checked onchange="toggleSection('sec-diagnostico', this.checked)"> Diagnóstico Agronómico</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-sensors-table" checked onchange="toggleSection('sec-sensors-table', this.checked)"> Matriz 8 Sensores Ambientales</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-biometric-table" checked onchange="toggleSection('sec-biometric-table', this.checked)"> Matriz 4 Métricas de Cámara</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-pearson" checked onchange="toggleSection('sec-pearson', this.checked)"> Matriz de Correlación Pearson</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-charts" checked onchange="toggleSection('sec-charts', this.checked)"> Curvas y Gráficas de Tendencia</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-sessions" checked onchange="toggleSection('sec-sessions', this.checked)"> Desglose Lote a Lote</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-photos" checked onchange="toggleSection('sec-photos', this.checked)"> Registro Fotográfico Comparativo</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-conclusions" checked onchange="toggleSection('sec-conclusions', this.checked)"> Preguntas, Conclusiones y Bitácora</label>
+            <label class="checkbox-item"><input type="checkbox" id="chk-sec-signatures" checked onchange="toggleSection('sec-signatures', this.checked)"> Bloque de Firmas de Validación</label>
+        </div>
+
+        <!-- FILA 2: DESGLOSE INDIVIDUAL DE GRÁFICAS (SIN EMOJIS) -->
+        <div class="config-section-title" style="margin-top: 6px;">
+            <span class="material-icons-round" style="font-size: 15px; color: #0f172a;">show_chart</span>
+            <span>2. Desglose Individual de Gráficas</span>
+        </div>
+        <div class="checkbox-grid">
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-temp" checked onchange="toggleChartCard('chart-card-temp', this.checked)"> Temperatura (°C)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-hum" checked onchange="toggleChartCard('chart-card-hum', this.checked)"> Humedad Relativa (%)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-uv" checked onchange="toggleChartCard('chart-card-uv', this.checked)"> Radiación Solar / UV (lux)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-curr" checked onchange="toggleChartCard('chart-card-curr', this.checked)"> Corriente de Bomba (A)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-ph" checked onchange="toggleChartCard('chart-card-ph', this.checked)"> pH de Solución Nutritiva</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-ec" checked onchange="toggleChartCard('chart-card-ec', this.checked)"> Conductividad Eléctrica (EC)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-turb" checked onchange="toggleChartCard('chart-card-turb', this.checked)"> Turbidez del Agua (NTU)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-do" checked onchange="toggleChartCard('chart-card-do', this.checked)"> Oxígeno Disuelto (DO)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-area" checked onchange="toggleChartCard('chart-card-area', this.checked)"> Área Foliar Cenital (cm²)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-height" checked onchange="toggleChartCard('chart-card-height', this.checked)"> Altura de Planta (cm)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-stem" checked onchange="toggleChartCard('chart-card-stem', this.checked)"> Diámetro de Tallo (mm)</label>
+            <label class="checkbox-item"><input type="checkbox" class="chk-chart" id="chk-chart-health" checked onchange="toggleChartCard('chart-card-health', this.checked)"> Índice de Salud Foliar (%)</label>
+        </div>
+
+        <!-- FILA 3: FILTRO DE FOTOGRAFÍAS -->
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; padding-top: 12px; border-top: 1px solid #f1f5f9; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="font-size: 16px; color: #0f172a;">photo_camera</span>
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Filtro de Fotografías:</label>
+                <select id="select-photo-filter" onchange="applyPhotoDisplayFilter(this.value)" style="padding: 5px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 11.5px; font-weight: 600;">
+                    <option value="all">Todas las Tomas del Día</option>
+                    <option value="last" selected>Solo la Última Toma (Reporte Compacto)</option>
+                    <option value="morning">Tomas de la Mañana (06:00 - 12:00)</option>
+                    <option value="afternoon">Tomas de la Tarde (12:00 - 18:00)</option>
+                    <option value="none">Ocultar Fotografías (Solo Datos)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Vistas:</label>
+                <select id="select-photo-views" onchange="applyPhotoViewFilter(this.value)" style="padding: 5px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 11.5px; font-weight: 600;">
+                    <option value="both" selected>Cenital + Lateral (Completo)</option>
+                    <option value="cenital">Solo Cenital</option>
+                    <option value="lateral">Solo Lateral</option>
+                </select>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 3. CUERPO DEL DOCUMENTO CIENTÍFICO (HOJA A4) -->
+    <div class="report-page-sheet" id="report-sheet">
         
-        <!-- ENCABEZADO CIENTÍFICO INSTITUCIONAL CON LOGO SIFMA VECTORIAL -->
+        <!-- ENCABEZADO CIENTÍFICO INSTITUCIONAL -->
         <header class="report-header">
             <div class="report-logo-box">
                 <div class="report-logo-svg-wrapper">
@@ -719,34 +850,36 @@
             <div class="report-meta-box">
                 <div>INFORME ID: <strong>{{ dossier.report_id }}</strong></div>
                 <div>FECHA DE EMISIÓN: <strong>{{ dossier.generated_at }}</strong></div>
-                <div>VERSIÓN ALGORITMO: <strong>SIFMA-CV v1.1 (Otsu + LAB + HSV)</strong></div>
+                <div>PIPELINE: <strong>SIFMA-CV v1.1 (Otsu + LAB + HSV)</strong></div>
             </div>
         </header>
 
-        <!-- METADATOS TÉCNICOS DE LA JORNADA -->
-        <table class="meta-grid-table">
-            <tr>
-                <td class="meta-label">CANASTILLA / NODO:</td>
-                <td class="meta-val">Canastilla #{{ dossier.plant_id }} ({{ dossier.level_name }})</td>
-                <td class="meta-label">ESPECIE EVALUADA:</td>
-                <td class="meta-val">{{ dossier.display_name }} ({{ dossier.crop_key | capitalize }})</td>
-            </tr>
-            <tr>
-                <td class="meta-label">FECHA DE MUESTREO:</td>
-                <td class="meta-val"><strong>{{ dossier.target_date }}</strong></td>
-                <td class="meta-label">SESIONES REGISTRADAS:</td>
-                <td class="meta-val">{{ dossier.detailed_sessions | length }} Lotes fotográficos</td>
-            </tr>
-            <tr>
-                <td class="meta-label">INVESTIGADOR PRINCIPAL:</td>
-                <td class="meta-val"><span id="meta-evaluator-name" class="editable-field" contenteditable="true">{{ current_user.name if current_user else 'Ing. Andrés Luna' }}</span></td>
-                <td class="meta-label">ESTRUCTURA DE CULTIVO:</td>
-                <td class="meta-val">Torre Hidropónica Vertical - Módulo Central</td>
-            </tr>
-        </table>
+        <!-- SECCIÓN: METADATOS TÉCNICOS DE LA JORNADA -->
+        <div id="sec-meta" class="section-block">
+            <table class="meta-grid-table">
+                <tr>
+                    <td class="meta-label">CANASTILLA / NODO:</td>
+                    <td class="meta-val">Canastilla #{{ dossier.plant_id }} ({{ dossier.level_name }})</td>
+                    <td class="meta-label">ESPECIE EVALUADA:</td>
+                    <td class="meta-val">{{ dossier.display_name }} ({{ dossier.crop_key | capitalize }})</td>
+                </tr>
+                <tr>
+                    <td class="meta-label">FECHA DE MUESTREO:</td>
+                    <td class="meta-val"><strong>{{ dossier.target_date }}</strong></td>
+                    <td class="meta-label">SESIONES REGISTRADAS:</td>
+                    <td class="meta-val">{{ dossier.detailed_sessions | length }} Lotes fotográficos</td>
+                </tr>
+                <tr>
+                    <td class="meta-label">INVESTIGADOR PRINCIPAL:</td>
+                    <td class="meta-val"><span id="meta-evaluator-name" class="editable-field" contenteditable="true">{{ current_user.name if current_user else 'Ing. Andrés Luna' }}</span></td>
+                    <td class="meta-label">ESTRUCTURA DE CULTIVO:</td>
+                    <td class="meta-val">Torre Hidropónica Vertical - Módulo Central</td>
+                </tr>
+            </table>
+        </div>
 
-        <!-- SECCIÓN 1: RESUMEN EJECUTIVO & ALERTAS AGRONÓMICAS -->
-        <div class="section-block">
+        <!-- SECCIÓN 1: DIAGNÓSTICO AGRONÓMICO & ALERTAS (FORMAL, SIN RAYITAS) -->
+        <div id="sec-diagnostico" class="section-block">
             <div class="section-title">
                 <span class="section-num">1</span>
                 <span>Diagnóstico Agronómico Automatizado de la Jornada</span>
@@ -754,28 +887,28 @@
 
             {% if dossier.automated_insights %}
                 {% for insight in dossier.automated_insights %}
-                    <div class="insight-box {{ insight.type }}">
+                    <div class="insight-box">
                         <strong>{{ insight.title }}:</strong> {{ insight.detail }}
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="insight-box positive">
+                <div class="insight-box">
                     <strong>Condiciones Normales:</strong> Los parámetros ambientales y biométricos se mantuvieron estables dentro de los rangos fisiológicos previstos para la jornada.
                 </div>
             {% endif %}
         </div>
 
-        <!-- SECCIÓN 2: MATRIZ ESTADÍSTICA DE TELEMETRÍA AMBIENTAL -->
-        <div class="section-block">
+        <!-- SECCIÓN 2: MATRIZ ESTADÍSTICA DE TELEMETRÍA AMBIENTAL (8 SENSORES) -->
+        <div id="sec-sensors-table" class="section-block">
             <div class="section-title">
                 <span class="section-num">2</span>
-                <span>Matriz Estadística Descriptiva de Microclima (Sensores Ambientales)</span>
+                <span>Matriz Estadística Descriptiva de Microclima (8 Sensores Ambientales)</span>
             </div>
 
             <table class="scientific-table">
                 <thead>
                     <tr>
-                        <th>Parámetro Físico</th>
+                        <th>Parámetro Físico / Calidad</th>
                         <th class="text-center">Símbolo</th>
                         <th class="text-center">Unidad</th>
                         <th class="text-center">Rango Óptimo</th>
@@ -813,11 +946,11 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 3: MATRIZ ESTADÍSTICA BIOMÉTRICA FENOTÍPICA -->
-        <div class="section-block">
+        <!-- SECCIÓN 3: MATRIZ ESTADÍSTICA BIOMÉTRICA FENOTÍPICA (4 MÉTRICAS DE CÁMARA) -->
+        <div id="sec-biometric-table" class="section-block">
             <div class="section-title">
                 <span class="section-num">3</span>
-                <span>Matriz Estadística Descriptiva de Biometría Foliar (Visión Artificial)</span>
+                <span>Matriz Estadística Descriptiva de Biometría Foliar (4 Mediciones de Visión)</span>
             </div>
 
             <table class="scientific-table">
@@ -854,8 +987,8 @@
             </table>
         </div>
 
-        <!-- SECCIÓN 4: MATRIZ DE CORRELACIÓN DE PEARSON MULTIVARIABLE -->
-        <div class="section-block">
+        <!-- SECCIÓN 4: MATRIZ DE CORRELACIÓN DE PEARSON -->
+        <div id="sec-pearson" class="section-block">
             <div class="section-title">
                 <span class="section-num">4</span>
                 <span>Matriz de Correlación Lineal de Pearson (Cruce Sensor vs Planta)</span>
@@ -874,9 +1007,7 @@
                         <tr>
                             <td><strong>{{ c.pair }}</strong></td>
                             <td class="text-center font-mono">
-                                <strong style="color: {% if c.r >= 0.3 %}var(--accent-emerald){% elif c.r <= -0.3 %}#dc2626{% else %}var(--text-muted){% endif %};">
-                                    {{ c.r }}
-                                </strong>
+                                <strong>{{ c.r }}</strong>
                             </td>
                             <td>{{ c.desc }}</td>
                         </tr>
@@ -885,10 +1016,154 @@
             </table>
         </div>
 
-        <!-- SECCIÓN 5: DESGLOSE MUESTRA A MUESTRA DE LA JORNADA -->
-        <div class="section-block">
+        <!-- SECCIÓN 5: CURVAS Y GRÁFICAS DE TENDENCIA (SIN EMOJIS) -->
+        <div id="sec-charts" class="section-block">
             <div class="section-title">
                 <span class="section-num">5</span>
+                <span>Curvas y Gráficas Estadísticas de la Jornada</span>
+            </div>
+
+            <div class="charts-report-grid">
+                
+                <!-- Gráfica 1: Temperatura -->
+                <div class="chart-report-card" id="chart-card-temp">
+                    <div class="chart-report-header">
+                        <span>Temperatura Ambiental (°C)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[0].stats.mean }} °C</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-temp"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 2: Humedad -->
+                <div class="chart-report-card" id="chart-card-hum">
+                    <div class="chart-report-header">
+                        <span>Humedad Relativa (%)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[1].stats.mean }} %</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-hum"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 3: Radiación UV -->
+                <div class="chart-report-card" id="chart-card-uv">
+                    <div class="chart-report-header">
+                        <span>Radiación Solar / UV (lux)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[2].stats.mean }} lux</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-uv"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 4: Corriente Bomba -->
+                <div class="chart-report-card" id="chart-card-curr">
+                    <div class="chart-report-header">
+                        <span>Corriente de Bomba (A)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[3].stats.mean }} A</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-curr"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 5: pH Solución -->
+                <div class="chart-report-card" id="chart-card-ph">
+                    <div class="chart-report-header">
+                        <span>pH de Solución Nutritiva</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[5].stats.mean }} pH</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-ph"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 6: EC Conductividad -->
+                <div class="chart-report-card" id="chart-card-ec">
+                    <div class="chart-report-header">
+                        <span>Conductividad Eléctrica (EC)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[4].stats.mean }} µS/cm</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-ec"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 7: Turbidez -->
+                <div class="chart-report-card" id="chart-card-turb">
+                    <div class="chart-report-header">
+                        <span>Turbidez del Agua (NTU)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[6].stats.mean }} NTU</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-turb"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 8: Oxígeno Disuelto -->
+                <div class="chart-report-card" id="chart-card-do">
+                    <div class="chart-report-header">
+                        <span>Oxígeno Disuelto (DO)</span>
+                        <span class="font-mono">{{ dossier.sensor_stats_table[7].stats.mean }} mg/L</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-do"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 9: Área Foliar -->
+                <div class="chart-report-card" id="chart-card-area">
+                    <div class="chart-report-header">
+                        <span>Área Foliar Cenital (cm²)</span>
+                        <span class="font-mono">{{ dossier.biometric_stats_table[0].stats.mean }} cm²</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-area"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 10: Altura de Planta -->
+                <div class="chart-report-card" id="chart-card-height">
+                    <div class="chart-report-header">
+                        <span>Altura de Planta (cm)</span>
+                        <span class="font-mono">{{ dossier.biometric_stats_table[1].stats.mean }} cm</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-height"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 11: Diámetro de Tallo -->
+                <div class="chart-report-card" id="chart-card-stem">
+                    <div class="chart-report-header">
+                        <span>Diámetro de Tallo (mm)</span>
+                        <span class="font-mono">{{ dossier.biometric_stats_table[2].stats.mean }} mm</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-stem"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 12: Salud Foliar -->
+                <div class="chart-report-card" id="chart-card-health">
+                    <div class="chart-report-header">
+                        <span>Índice de Salud Foliar (%)</span>
+                        <span class="font-mono">{{ dossier.biometric_stats_table[3].stats.mean }} %</span>
+                    </div>
+                    <div class="chart-report-canvas-wrapper">
+                        <canvas id="canvas-report-health"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECCIÓN 6: DESGLOSE MUESTRA A MUESTRA DE LA JORNADA -->
+        <div id="sec-sessions" class="section-block">
+            <div class="section-title">
+                <span class="section-num">6</span>
                 <span>Desglose Sincronizado Lote a Lote (Período por Período)</span>
             </div>
 
@@ -926,128 +1201,172 @@
             </table>
         </div>
 
-        <!-- SECCIÓN 6: REGISTRO FOTOGRÁFICO COMPARATIVO (ORIGINAL VS PROCESADA) -->
-        <div class="section-block">
-            <div class="section-title">
-                <span class="section-num">6</span>
-                <span>Registro Fotográfico Comparativo (Original Sin Procesar vs Procesada con Contorno)</span>
-            </div>
-
-            {% for photo in dossier.photo_comparisons %}
-                <div class="photo-comp-card">
-                    <div class="photo-comp-header">
-                        <div>
-                            <span style="font-weight: 800; text-transform: uppercase;">Muestreo: {{ photo.period }}</span>
-                            <span style="color: var(--text-muted); margin-left: 6px; font-family: 'JetBrains Mono', monospace;">({{ photo.time }})</span>
-                        </div>
-                        <div>
-                            <span>Área: <strong>{{ photo.area_cm2 }} cm²</strong></span>
-                            <span style="margin: 0 6px; color: var(--border-color);">|</span>
-                            <span>Altura: <strong>{{ photo.height_cm }} cm</strong></span>
-                            <span style="margin: 0 6px; color: var(--border-color);">|</span>
-                            <span>Salud: <strong>{{ photo.health_index }}%</strong></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Par Cenital -->
-                    <div style="margin-bottom: 14px;">
-                        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">
-                            1. Vista Cenital (Segmentación de Área Foliar & Clorofila)
-                        </div>
-                        <div class="photo-duo-container">
-                            <!-- Cenital Original -->
-                            <div class="photo-box">
-                                <div class="photo-frame">
-                                    <img src="{{ photo.cenital_orig }}" alt="Cenital Original">
-                                </div>
-                                <div class="photo-box-caption">Original RAW (Sin Procesar)</div>
-                            </div>
-
-                            <!-- Cenital Procesada -->
-                            <div class="photo-box">
-                                <div class="photo-frame">
-                                    <img src="{{ photo.cenital_proc }}" alt="Cenital Procesada">
-                                </div>
-                                <div class="photo-box-caption proc">Segmentada (Contorno Rojo OpenCV + Máscara)</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Par Lateral -->
-                    <div>
-                        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">
-                            2. Vista Lateral (Estimación de Altura de Planta & Tallo)
-                        </div>
-                        <div class="photo-duo-container">
-                            <!-- Lateral Original -->
-                            <div class="photo-box">
-                                <div class="photo-frame">
-                                    <img src="{{ photo.lateral_orig }}" alt="Lateral Original">
-                                </div>
-                                <div class="photo-box-caption">Original RAW (Sin Procesar)</div>
-                            </div>
-
-                            <!-- Lateral Procesada -->
-                            <div class="photo-box">
-                                <div class="photo-frame">
-                                    <img src="{{ photo.lateral_proc }}" alt="Lateral Procesada">
-                                </div>
-                                <div class="photo-box-caption proc">Calibrada (Perfil Rojo OpenCV & Eje de Altura)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-
-        <!-- SECCIÓN 7: ANOTACIONES DE LA BITÁCORA DEL INVESTIGADOR -->
-        {% if dossier.conclusions %}
-        <div class="section-block">
+        <!-- SECCIÓN 7: REGISTRO FOTOGRÁFICO COMPARATIVO (CÁMARAS) -->
+        <div id="sec-photos" class="section-block">
             <div class="section-title">
                 <span class="section-num">7</span>
-                <span>Anotaciones y Observaciones del Investigador en Bitácora</span>
+                <span>Registro Fotográfico Comparativo (Original Sin Procesar vs Segmentada)</span>
             </div>
 
-            {% for c in dossier.conclusions %}
-                <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px;">
-                        <span>Evaluador: {{ c.author }}</span>
-                        <span style="color: var(--text-muted);">{{ c.created_at }}</span>
-                    </div>
-                    {% if c.growth_obs %}
-                        <div style="margin-bottom: 4px;"><strong>Crecimiento y Vigor:</strong> {{ c.growth_obs }}</div>
-                    {% endif %}
-                    {% if c.climate_obs %}
-                        <div style="margin-bottom: 4px;"><strong>Respuesta Ambiental:</strong> {{ c.climate_obs }}</div>
-                    {% endif %}
-                    {% if c.nutrition_obs %}
-                        <div style="margin-bottom: 4px;"><strong>Riego y Nutrición:</strong> {{ c.nutrition_obs }}</div>
-                    {% endif %}
-                    {% if c.general_conclusion %}
-                        <div style="margin-bottom: 4px;"><strong>Conclusión General:</strong> {{ c.general_conclusion }}</div>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+            <div id="photos-cards-container">
+                {% if dossier.photo_comparisons %}
+                    {% for photo in dossier.photo_comparisons %}
+                        <div class="photo-comp-card" data-time="{{ photo.time }}" data-period="{{ photo.period }}" data-index="{{ loop.index0 }}" data-is-last="{{ 'true' if loop.last else 'false' }}">
+                            <div class="photo-comp-header">
+                                <div>
+                                    <span style="font-weight: 800; text-transform: uppercase;">Muestreo: {{ photo.period }}</span>
+                                    <span style="color: var(--text-muted); margin-left: 6px; font-family: 'JetBrains Mono', monospace;">({{ photo.time }})</span>
+                                </div>
+                                <div>
+                                    <span>Área: <strong>{{ photo.area_cm2 }} cm²</strong></span>
+                                    <span style="margin: 0 6px; color: var(--border-color);">|</span>
+                                    <span>Altura: <strong>{{ photo.height_cm }} cm</strong></span>
+                                    <span style="margin: 0 6px; color: var(--border-color);">|</span>
+                                    <span>Salud: <strong>{{ photo.health_index }}%</strong></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Par Cenital -->
+                            <div class="photo-pair-cenital" style="margin-bottom: 14px;">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">
+                                    1. Vista Cenital (Segmentación de Área Foliar & Clorofila)
+                                </div>
+                                <div class="photo-duo-container">
+                                    <div class="photo-box">
+                                        <div class="photo-frame">
+                                            <img src="{{ photo.cenital_orig }}" alt="Cenital Original">
+                                        </div>
+                                        <div class="photo-box-caption">Original RAW (Sin Procesar)</div>
+                                    </div>
+                                    <div class="photo-box">
+                                        <div class="photo-frame">
+                                            <img src="{{ photo.cenital_proc }}" alt="Cenital Procesada">
+                                        </div>
+                                        <div class="photo-box-caption proc">Segmentada (Contorno OpenCV + Máscara)</div>
+                                    </div>
+                                </div>
+                            </div>
 
-        <!-- SECCIÓN 8: BLOQUE DE FIRMAS DE VALIDACIÓN CIENTÍFICA -->
-        <div class="signatures-row">
+                            <!-- Par Lateral -->
+                            <div class="photo-pair-lateral">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">
+                                    2. Vista Lateral (Estimación de Altura de Planta & Tallo)
+                                </div>
+                                <div class="photo-duo-container">
+                                    <div class="photo-box">
+                                        <div class="photo-frame">
+                                            <img src="{{ photo.lateral_orig }}" alt="Lateral Original">
+                                        </div>
+                                        <div class="photo-box-caption">Original RAW (Sin Procesar)</div>
+                                    </div>
+                                    <div class="photo-box">
+                                        <div class="photo-frame">
+                                            <img src="{{ photo.lateral_proc }}" alt="Lateral Procesada">
+                                        </div>
+                                        <div class="photo-box-caption proc">Calibrada (Perfil OpenCV & Eje de Altura)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="background: var(--bg-subtle); padding: 18px; border-radius: 4px; border: 1px dashed var(--border-color); text-align: center; color: var(--text-muted);">
+                        No se registraron capturas fotográficas procesadas en la fecha seleccionada.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SECCIÓN 8: PREGUNTAS TÉCNICAS, CONCLUSIONES Y BITÁCORA LIBRE (FORMAL) -->
+        <div id="sec-conclusions" class="section-block">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border-color); padding-bottom: 5px; margin-bottom: 12px;">
+                <div class="section-title" style="border: none; margin: 0; padding: 0;">
+                    <span class="section-num">8</span>
+                    <span>Preguntas Agronómicas, Conclusiones y Bitácora del Investigador</span>
+                </div>
+                <button type="button" class="btn-action btn-outline-action no-print" onclick="openAddQuestionModal()" style="color: var(--text-main); border-color: var(--border-color); padding: 4px 8px; font-size: 11px;">
+                    <span class="material-icons-round" style="font-size: 14px; color: #0f172a;">add_circle</span>
+                    <span>+ Añadir Pregunta</span>
+                </button>
+            </div>
+
+            <!-- Contenedor dinámico de preguntas -->
+            <div id="questions-container">
+                <!-- Pregunta 1 Predeterminada -->
+                <div class="question-card" id="qcard-1">
+                    <div class="question-header">
+                        <div class="question-title" id="qtitle-1" contenteditable="true">
+                            1. ¿El desarrollo vegetativo (área foliar y elongación) se ajustó a la curva teórica del cultivo?
+                        </div>
+                        <div class="question-tools-screen no-print">
+                            <button type="button" class="question-btn-mini" onclick="removeQuestionCard('qcard-1')" title="Eliminar pregunta">
+                                <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="question-response-area" id="qresp-1" placeholder="Escribe aquí las observaciones sobre el crecimiento foliar, vigor y morfometría..." oninput="autoSaveQuestions()">El cultivo mantuvo una tasa de expansión foliar estable con un índice de salud superior al promedio de referencia, sin presentar clorosis ni anomalías visuales en el dosel.</textarea>
+                </div>
+
+                <!-- Pregunta 2 Predeterminada -->
+                <div class="question-card" id="qcard-2">
+                    <div class="question-header">
+                        <div class="question-title" id="qtitle-2" contenteditable="true">
+                            2. ¿Cómo influyeron las condiciones ambientales y de iluminación en la fisiología del lote?
+                        </div>
+                        <div class="question-tools-screen no-print">
+                            <button type="button" class="question-btn-mini" onclick="removeQuestionCard('qcard-2')" title="Eliminar pregunta">
+                                <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="question-response-area" id="qresp-2" placeholder="Escribe aquí la respuesta agronómica sobre temperatura, humedad y radiación..." oninput="autoSaveQuestions()">El microclima se mantuvo dentro de la zona de confort térmico. Los niveles de radiación y fotoperiodo favorecieron una transpiración adecuada sin estrés por desecación.</textarea>
+                </div>
+
+                <!-- Pregunta 3 Predeterminada -->
+                <div class="question-card" id="qcard-3">
+                    <div class="question-header">
+                        <div class="question-title" id="qtitle-3" contenteditable="true">
+                            3. ¿La solución nutritiva (pH, EC, oxígeno) y el bombeo presentaron niveles óptimos?
+                        </div>
+                        <div class="question-tools-screen no-print">
+                            <button type="button" class="question-btn-mini" onclick="removeQuestionCard('qcard-3')" title="Eliminar pregunta">
+                                <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="question-response-area" id="qresp-3" placeholder="Escribe aquí la respuesta sobre electroconductividad, pH y recirculación..." oninput="autoSaveQuestions()">La conductividad eléctrica y el pH se mantuvieron en rangos balanceados para la absorción de micronutrientes, asegurando una correcta oxigenación radical.</textarea>
+                </div>
+            </div>
+
+            <!-- CAMPO LIBRE: BITÁCORA Y EVENTOS DE MANEJO DE CAMPO (SIN RAYITAS) -->
+            <div class="question-card" id="card-field-notes">
+                <div class="question-header">
+                    <div class="question-title">
+                        Bitácora de Campo y Eventos de Manejo (Notas del Investigador)
+                    </div>
+                </div>
+                <textarea class="question-response-area" id="free-field-notes" placeholder="Registra eventos especiales del día (ej. '10:30 AM: Rotación de canastilla al nivel superior', '14:00 PM: Recarga de solución N-P-K', 'Ajuste de fotoperiodo a 16h')..." oninput="autoSaveQuestions()" style="min-height: 55px;">Sin incidencias operativas extraordinarias durante la jornada. Se verificó el funcionamiento regular de las boquillas de aspersión y el flujo de recirculación.</textarea>
+            </div>
+
+        </div>
+
+        <!-- SECCIÓN 9: BLOQUE DE FIRMAS DE VALIDACIÓN CIENTÍFICA -->
+        <div id="sec-signatures" class="signatures-row">
             <!-- FIRMA 1: INVESTIGADOR -->
             <div class="signature-line" id="sig-col-1">
                 <div class="signature-box-area" id="sig-area-1">
                     <div id="sig-slot-empty-1" class="signature-placeholder-btn" onclick="openSignatureModal(1)">
-                        <span class="material-icons-round" style="font-size: 18px;">draw</span>
+                        <span class="material-icons-round" style="font-size: 16px;">draw</span>
                         <span>Clic para Estampar Firma del Investigador</span>
                     </div>
                     <div id="sig-slot-filled-1" style="display: none; width: 100%;">
                         <img id="sig-img-preview-1" class="signature-stamp-img" src="" alt="Firma Investigador">
-                        <div class="signature-actions-hover">
-                            <button type="button" class="sig-mini-btn" onclick="openSignatureModal(1)">
+                        <div class="signature-actions-hover no-print" style="margin-top: 4px;">
+                            <button type="button" class="question-btn-mini" onclick="openSignatureModal(1)">
                                 <span class="material-icons-round" style="font-size: 12px;">edit</span>
                                 <span>Cambiar</span>
                             </button>
-                            <button type="button" class="sig-mini-btn" onclick="removeSignature(1)">
+                            <button type="button" class="question-btn-mini" onclick="removeSignature(1)">
                                 <span class="material-icons-round" style="font-size: 12px;">delete</span>
                                 <span>Quitar</span>
                             </button>
@@ -1064,17 +1383,17 @@
             <div class="signature-line" id="sig-col-2">
                 <div class="signature-box-area" id="sig-area-2">
                     <div id="sig-slot-empty-2" class="signature-placeholder-btn" onclick="openSignatureModal(2)">
-                        <span class="material-icons-round" style="font-size: 18px;">draw</span>
+                        <span class="material-icons-round" style="font-size: 16px;">draw</span>
                         <span>Clic para Estampar Firma del Evaluador</span>
                     </div>
                     <div id="sig-slot-filled-2" style="display: none; width: 100%;">
                         <img id="sig-img-preview-2" class="signature-stamp-img" src="" alt="Firma Validador">
-                        <div class="signature-actions-hover">
-                            <button type="button" class="sig-mini-btn" onclick="openSignatureModal(2)">
+                        <div class="signature-actions-hover no-print" style="margin-top: 4px;">
+                            <button type="button" class="question-btn-mini" onclick="openSignatureModal(2)">
                                 <span class="material-icons-round" style="font-size: 12px;">edit</span>
                                 <span>Cambiar</span>
                             </button>
-                            <button type="button" class="sig-mini-btn" onclick="removeSignature(2)">
+                            <button type="button" class="question-btn-mini" onclick="removeSignature(2)">
                                 <span class="material-icons-round" style="font-size: 12px;">delete</span>
                                 <span>Quitar</span>
                             </button>
@@ -1090,11 +1409,47 @@
 
     </div>
 
+    <!-- MODAL PARA AGREGAR NUEVA PREGUNTA PERSONALIZADA -->
+    <div id="add-question-modal" class="sig-modal-backdrop" onclick="handleQuestionModalBackdrop(event)">
+        <div class="sig-modal-card">
+            <div class="sig-modal-header">
+                <h3 style="font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons-round">help_outline</span>
+                    <span>Añadir Pregunta / Observación al Reporte</span>
+                </h3>
+                <button type="button" style="background: transparent; border: none; color: #ffffff; cursor: pointer;" onclick="closeAddQuestionModal()">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+            <div class="sig-modal-body">
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 4px;">
+                        Título o Enunciado de la Pregunta:
+                    </label>
+                    <input type="text" id="new-q-title" placeholder="Ej. ¿Qué efecto tuvo el cambio de nutrientes en el tallo?" style="width: 100%; padding: 8px 10px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 4px;">
+                        Respuesta / Observación Inicial:
+                    </label>
+                    <textarea id="new-q-response" placeholder="Redacta la conclusión o respuesta técnica aquí..." style="width: 100%; padding: 8px 10px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px; min-height: 70px; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn-action btn-outline-action" style="color: #0f172a; border-color: #cbd5e1;" onclick="closeAddQuestionModal()">Cancelar</button>
+                    <button type="button" class="btn-action btn-primary-action" onclick="saveNewCustomQuestion()">
+                        <span class="material-icons-round" style="font-size: 15px;">add</span>
+                        <span>Insertar en Reporte</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DEL FIRMADOR DIGITAL DE DOCUMENTOS -->
     <div id="signature-modal" class="sig-modal-backdrop" onclick="handleBackdropClick(event)">
         <div class="sig-modal-card">
             <div class="sig-modal-header">
-                <h3>
+                <h3 style="font-size: 13px; display: flex; align-items: center; gap: 6px;">
                     <span class="material-icons-round">edit_document</span>
                     <span>Firmador Digital de Reporte Científico</span>
                 </h3>
@@ -1104,18 +1459,16 @@
             </div>
 
             <div class="sig-modal-body">
-                <!-- Selector de Destinatario de la Firma -->
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 4px;">
                         Estampar firma en:
                     </label>
-                    <select id="modal-target-signee" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12px; font-weight: 600;">
+                    <select id="modal-target-signee" style="width: 100%; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 12px; font-weight: 600;">
                         <option value="1">Firmante 1: Investigador Responsable</option>
-                        <option value="2">Firmante 2: Investigador / Profesor / Validador</option>
+                        <option value="2">Firmante 2: Asesor Científico / Evaluador</option>
                     </select>
                 </div>
 
-                <!-- Pestañas de modo -->
                 <div class="sig-tabs-nav">
                     <button type="button" class="sig-tab-btn active" id="tab-btn-upload" onclick="switchSigTab('upload')">
                         <span class="material-icons-round" style="font-size: 16px;">upload_file</span>
@@ -1127,11 +1480,11 @@
                     </button>
                 </div>
 
-                <!-- CONTENIDO PESTAÑA 1: SUBIR IMAGEN DE FIRMA -->
+                <!-- Pestaña 1: Subir Firma -->
                 <div id="sig-tab-upload" class="sig-tab-content active">
                     <input type="file" id="sig-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleSignatureFile(event)">
                     <div class="sig-dropzone" onclick="document.getElementById('sig-file-input').click()">
-                        <span class="material-icons-round" style="font-size: 36px; color: #2563eb; margin-bottom: 6px;">cloud_upload</span>
+                        <span class="material-icons-round" style="font-size: 36px; color: #0f172a; margin-bottom: 6px;">cloud_upload</span>
                         <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">
                             Haz clic o arrastra aquí la imagen de tu firma
                         </div>
@@ -1141,24 +1494,20 @@
                     </div>
 
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="chk-remove-white-bg" checked style="accent-color: #2563eb; width: 14px; height: 14px; cursor: pointer;">
+                        <input type="checkbox" id="chk-remove-white-bg" checked style="accent-color: #0f172a; width: 14px; height: 14px; cursor: pointer;">
                         <label for="chk-remove-white-bg" style="font-size: 11.5px; color: var(--text-main); cursor: pointer;">
-                            <strong>Remover fondo blanco automáticamente</strong> (ideal para fotos de firmas en papel)
+                            <strong>Remover fondo blanco automáticamente</strong> (ideal para firmas en papel)
                         </label>
                     </div>
                 </div>
 
-                <!-- CONTENIDO PESTAÑA 2: DIBUJAR FIRMA EN PANTALLA -->
+                <!-- Pestaña 2: Dibujar Firma -->
                 <div id="sig-tab-draw" class="sig-tab-content">
                     <div class="sig-canvas-wrapper">
                         <canvas id="signature-pad"></canvas>
                     </div>
-                    <div class="sig-canvas-tools">
-                        <div class="sig-color-picker">
-                            <span style="color: var(--text-muted); font-size: 11px; margin-right: 4px;">Tinta:</span>
-                            <div class="sig-color-dot active" style="background: #0f172a;" onclick="setPenColor('#0f172a', this)" title="Negro Tinta"></div>
-                            <div class="sig-color-dot" style="background: #1e3a8a;" onclick="setPenColor('#1e3a8a', this)" title="Azul Marino"></div>
-                        </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                        <span style="font-size: 11px; color: var(--text-muted);">Usa el cursor o tu dedo en pantalla táctil</span>
                         <button type="button" onclick="clearSignatureCanvas()" style="background: transparent; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; color: #64748b;">
                             <span class="material-icons-round" style="font-size: 12px; vertical-align: middle;">refresh</span>
                             <span>Limpiar Lienzo</span>
@@ -1166,50 +1515,53 @@
                     </div>
                 </div>
 
-                <!-- PREVIEW DE LA FIRMA A APLICAR -->
-                <div id="sig-crop-preview-box" style="display: none; margin-top: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; text-align: center;">
+                <!-- Preview de firma -->
+                <div id="sig-crop-preview-box" style="display: none; margin-top: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; text-align: center;">
                     <div style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
                         VISTA PREVIA DEL SELLO DIGITAL
                     </div>
                     <img id="sig-modal-preview-img" src="" style="max-height: 70px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));">
                 </div>
 
-                <!-- RECUERDO LOCAL -->
                 <div style="margin-top: 14px; display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="chk-remember-sig" checked style="accent-color: #2563eb; width: 14px; height: 14px; cursor: pointer;">
+                    <input type="checkbox" id="chk-remember-sig" checked style="accent-color: #0f172a; width: 14px; height: 14px; cursor: pointer;">
                     <label for="chk-remember-sig" style="font-size: 11px; color: var(--text-muted); cursor: pointer;">
                         Recordar esta firma digital en este navegador para futuros reportes
                     </label>
                 </div>
 
-                <!-- BOTONES DE ACCIÓN DEL MODAL -->
                 <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn-action btn-outline-action" style="color: var(--text-main); border-color: var(--border-color);" onclick="closeSignatureModal()">
                         <span>Cancelar</span>
                     </button>
                     <button type="button" class="btn-action btn-primary-action" onclick="applySignatureFromModal()">
                         <span class="material-icons-round" style="font-size: 15px;">check_circle</span>
-                        <span>Estampar Firma en el Documento</span>
+                        <span>Estampar Firma</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPTS DEL FIRMADOR DIGITAL -->
+    <!-- SCRIPTS DINÁMICOS DEL DOSSIER -->
     <script>
+        const DOSSIER_DATA = {{ dossier | tojson | safe }};
         let currentTargetSignee = 1;
         let activeTab = 'upload';
         let isDrawing = false;
         let penColor = '#0f172a';
         let canvas, ctx;
         let stagedSignatureDataUrl = null;
+        let customQuestionCounter = 10;
 
         document.addEventListener('DOMContentLoaded', () => {
             initSignatureCanvas();
             loadSavedSignatures();
+            initReportCharts();
+            applyPhotoDisplayFilter('last');
+            loadSavedQuestions();
 
-            // Sincronizar nombre de evaluador editable con la firma 1
+            // Sincronizar nombre editable con firma 1
             const metaName = document.getElementById('meta-evaluator-name');
             const sigName1 = document.getElementById('sig-name-1');
             if (metaName && sigName1) {
@@ -1221,6 +1573,208 @@
                 });
             }
         });
+
+        function toggleConfigDrawer() {
+            const drawer = document.getElementById('config-drawer');
+            if (drawer) {
+                drawer.classList.toggle('collapsed');
+            }
+        }
+
+        function setAllCheckboxes(val) {
+            document.querySelectorAll('.checkbox-grid input[type="checkbox"]').forEach(chk => {
+                chk.checked = val;
+                chk.dispatchEvent(new Event('change'));
+            });
+        }
+
+        function toggleSection(sectionId, isVisible) {
+            const sec = document.getElementById(sectionId);
+            if (sec) {
+                sec.style.display = isVisible ? 'block' : 'none';
+            }
+        }
+
+        function toggleChartCard(cardId, isVisible) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.style.display = isVisible ? 'block' : 'none';
+            }
+        }
+
+        function applyPhotoDisplayFilter(filterType) {
+            const container = document.getElementById('sec-photos');
+            const cards = document.querySelectorAll('.photo-comp-card');
+            
+            if (filterType === 'none') {
+                if (container) container.style.display = 'none';
+                return;
+            } else {
+                if (container) container.style.display = 'block';
+            }
+
+            cards.forEach(card => {
+                const isLast = card.dataset.isLast === 'true';
+                const timeStr = card.dataset.time || '';
+                const hour = parseInt(timeStr.split(':')[0] || '0', 10);
+
+                if (filterType === 'all') {
+                    card.style.display = 'block';
+                } else if (filterType === 'last') {
+                    card.style.display = isLast ? 'block' : 'none';
+                } else if (filterType === 'morning') {
+                    card.style.display = (hour >= 6 && hour < 12) ? 'block' : 'none';
+                } else if (filterType === 'afternoon') {
+                    card.style.display = (hour >= 12 && hour <= 18) ? 'block' : 'none';
+                }
+            });
+        }
+
+        function applyPhotoViewFilter(viewType) {
+            const cenitals = document.querySelectorAll('.photo-pair-cenital');
+            const laterals = document.querySelectorAll('.photo-pair-lateral');
+
+            cenitals.forEach(c => {
+                c.style.display = (viewType === 'both' || viewType === 'cenital') ? 'block' : 'none';
+            });
+            laterals.forEach(l => {
+                l.style.display = (viewType === 'both' || viewType === 'lateral') ? 'block' : 'none';
+            });
+        }
+
+        function initReportCharts() {
+            if (!DOSSIER_DATA || !DOSSIER_DATA.chart_series) return;
+            const cs = DOSSIER_DATA.chart_series;
+            const sensorLabels = cs.sensors.timestamps || [];
+            const visionLabels = cs.vision.periods || cs.vision.timestamps || [];
+
+            function makeSparkChart(canvasId, labels, data, color, fill = true) {
+                const el = document.getElementById(canvasId);
+                if (!el) return;
+                const ctx2d = el.getContext('2d');
+                new Chart(ctx2d, {
+                    type: 'line',
+                    data: {
+                        labels: labels.length ? labels : ['00:00', '06:00', '12:00', '18:00'],
+                        datasets: [{
+                            data: data.length ? data : [0, 0, 0, 0],
+                            borderColor: color,
+                            backgroundColor: fill ? color.replace(')', ', 0.08)').replace('rgb', 'rgba') : 'transparent',
+                            borderWidth: 1.8,
+                            pointRadius: data.length <= 10 ? 2.5 : 1,
+                            pointBackgroundColor: color,
+                            fill: fill,
+                            tension: 0.25
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { size: 8 } } },
+                            y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 8 } } }
+                        }
+                    }
+                });
+            }
+
+            // Sensores (8) - Colores sobrios y formales
+            makeSparkChart('canvas-report-temp', sensorLabels, cs.sensors.temp, 'rgb(185, 28, 28)');
+            makeSparkChart('canvas-report-hum', sensorLabels, cs.sensors.hum, 'rgb(3, 105, 161)');
+            makeSparkChart('canvas-report-uv', sensorLabels, cs.sensors.uv, 'rgb(194, 65, 12)');
+            makeSparkChart('canvas-report-curr', sensorLabels, cs.sensors.current, 'rgb(71, 85, 105)');
+            makeSparkChart('canvas-report-ph', sensorLabels, cs.sensors.ph, 'rgb(109, 40, 217)');
+            makeSparkChart('canvas-report-ec', sensorLabels, cs.sensors.ec, 'rgb(15, 118, 110)');
+            makeSparkChart('canvas-report-turb', sensorLabels, cs.sensors.turb, 'rgb(161, 98, 7)');
+            makeSparkChart('canvas-report-do', sensorLabels, cs.sensors.do, 'rgb(4, 120, 87)');
+
+            // Visión / Cámara (4) - Colores sobrios
+            makeSparkChart('canvas-report-area', visionLabels, cs.vision.foliar_area, 'rgb(4, 120, 87)');
+            makeSparkChart('canvas-report-height', visionLabels, cs.vision.height, 'rgb(3, 105, 161)');
+            makeSparkChart('canvas-report-stem', visionLabels, cs.vision.stem, 'rgb(120, 53, 15)');
+            makeSparkChart('canvas-report-health', visionLabels, cs.vision.health, 'rgb(21, 128, 61)');
+        }
+
+        function removeQuestionCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.remove();
+                autoSaveQuestions();
+            }
+        }
+
+        function openAddQuestionModal() {
+            document.getElementById('add-question-modal').style.display = 'flex';
+            document.getElementById('new-q-title').value = '';
+            document.getElementById('new-q-response').value = '';
+        }
+
+        function closeAddQuestionModal() {
+            document.getElementById('add-question-modal').style.display = 'none';
+        }
+
+        function handleQuestionModalBackdrop(e) {
+            if (e.target.id === 'add-question-modal') closeAddQuestionModal();
+        }
+
+        function saveNewCustomQuestion() {
+            const title = document.getElementById('new-q-title').value.trim();
+            const resp = document.getElementById('new-q-response').value.trim();
+            if (!title) {
+                alert('Ingresa el título de la pregunta.');
+                return;
+            }
+
+            customQuestionCounter++;
+            const qId = `qcard-${customQuestionCounter}`;
+            const container = document.getElementById('questions-container');
+
+            const cardHtml = `
+                <div class="question-card" id="${qId}">
+                    <div class="question-header">
+                        <div class="question-title" id="qtitle-${customQuestionCounter}" contenteditable="true">
+                            ${title}
+                        </div>
+                        <div class="question-tools-screen no-print">
+                            <button type="button" class="question-btn-mini" onclick="removeQuestionCard('${qId}')" title="Eliminar pregunta">
+                                <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="question-response-area" id="qresp-${customQuestionCounter}" placeholder="Escribe tu respuesta aquí..." oninput="autoSaveQuestions()">${resp}</textarea>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            closeAddQuestionModal();
+            autoSaveQuestions();
+        }
+
+        function autoSaveQuestions() {
+            const key = `sifma_dossier_notes_${DOSSIER_DATA.plant_id}_${DOSSIER_DATA.target_date}`;
+            const data = {
+                free_notes: document.getElementById('free-field-notes')?.value || '',
+                q1: document.getElementById('qresp-1')?.value || '',
+                q2: document.getElementById('qresp-2')?.value || '',
+                q3: document.getElementById('qresp-3')?.value || ''
+            };
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function loadSavedQuestions() {
+            const key = `sifma_dossier_notes_${DOSSIER_DATA.plant_id}_${DOSSIER_DATA.target_date}`;
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if (data.free_notes && document.getElementById('free-field-notes')) {
+                    document.getElementById('free-field-notes').value = data.free_notes;
+                }
+                if (data.q1 && document.getElementById('qresp-1')) document.getElementById('qresp-1').value = data.q1;
+                if (data.q2 && document.getElementById('qresp-2')) document.getElementById('qresp-2').value = data.q2;
+                if (data.q3 && document.getElementById('qresp-3')) document.getElementById('qresp-3').value = data.q3;
+            } catch (e) {}
+        }
 
         function initSignatureCanvas() {
             canvas = document.getElementById('signature-pad');
@@ -1243,10 +1797,7 @@
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                return {
-                    x: clientX - rect.left,
-                    y: clientY - rect.top
-                };
+                return { x: clientX - rect.left, y: clientY - rect.top };
             }
 
             function startDraw(e) {
@@ -1275,24 +1826,9 @@
             canvas.addEventListener('mousedown', startDraw);
             canvas.addEventListener('mousemove', draw);
             window.addEventListener('mouseup', stopDraw);
-
             canvas.addEventListener('touchstart', startDraw, { passive: false });
             canvas.addEventListener('touchmove', draw, { passive: false });
             canvas.addEventListener('touchend', stopDraw);
-        }
-
-        function setPenColor(color, dotElem) {
-            penColor = color;
-            if (ctx) ctx.strokeStyle = color;
-            document.querySelectorAll('.sig-color-dot').forEach(d => d.classList.remove('active'));
-            if (dotElem) dotElem.classList.add('active');
-        }
-
-        function clearSignatureCanvas() {
-            if (!canvas || !ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            stagedSignatureDataUrl = null;
-            document.getElementById('sig-crop-preview-box').style.display = 'none';
         }
 
         function switchSigTab(tab) {
@@ -1303,9 +1839,7 @@
             document.getElementById('sig-tab-draw').classList.toggle('active', tab === 'draw');
 
             if (tab === 'draw') {
-                setTimeout(() => {
-                    initSignatureCanvas();
-                }, 50);
+                setTimeout(() => { initSignatureCanvas(); }, 50);
             }
         }
 
@@ -1322,10 +1856,15 @@
             clearSignatureCanvas();
         }
 
+        function clearSignatureCanvas() {
+            if (!canvas || !ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stagedSignatureDataUrl = null;
+            document.getElementById('sig-crop-preview-box').style.display = 'none';
+        }
+
         function handleBackdropClick(e) {
-            if (e.target.id === 'signature-modal') {
-                closeSignatureModal();
-            }
+            if (e.target.id === 'signature-modal') closeSignatureModal();
         }
 
         function handleSignatureFile(e) {
@@ -1337,14 +1876,12 @@
                 const img = new Image();
                 img.onload = () => {
                     const removeWhite = document.getElementById('chk-remove-white-bg').checked;
-                    
                     if (removeWhite) {
                         const tempCanvas = document.createElement('canvas');
                         tempCanvas.width = img.width;
                         tempCanvas.height = img.height;
                         const tempCtx = tempCanvas.getContext('2d');
                         tempCtx.drawImage(img, 0, 0);
-                        
                         const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                         const data = imgData.data;
 
@@ -1421,7 +1958,6 @@
         function loadSavedSignatures() {
             const sig1 = localStorage.getItem('sifma_saved_signature_1');
             const sig2 = localStorage.getItem('sifma_saved_signature_2');
-
             if (sig1) renderSignatureSlot(1, sig1);
             if (sig2) renderSignatureSlot(2, sig2);
         }

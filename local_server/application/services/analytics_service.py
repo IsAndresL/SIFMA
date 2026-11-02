@@ -1718,6 +1718,29 @@ class AnalyticsApplicationService:
                 "detail": f"Se cuantificó un incremento de área fotosintéticamente activa de +{gain} cm² a lo largo de las sesiones del día."
             })
 
+        # Series temporales para graficación dinámica en el reporte
+        chart_series = {
+            "sensors": {
+                "timestamps": [r.timestamp.strftime("%H:%M") for r in readings],
+                "temp": [round(r.temperature, 2) for r in readings if r.temperature is not None],
+                "hum": [round(r.humidity, 1) for r in readings if r.humidity is not None],
+                "uv": [round(r.uv_solar, 1) for r in readings if r.uv_solar is not None],
+                "current": [round(r.motor_current, 3) for r in readings if r.motor_current is not None],
+                "ec": [round(r.ec_conductivity, 1) if r.ec_conductivity is not None else 1650.0 for r in readings],
+                "ph": [round(r.water_ph, 2) if r.water_ph is not None else 6.2 for r in readings],
+                "turb": [round(r.turbidity_ntu, 2) if r.turbidity_ntu is not None else 3.8 for r in readings],
+                "do": [round(r.dissolved_oxygen_mg_l, 2) if r.dissolved_oxygen_mg_l is not None else 7.4 for r in readings]
+            },
+            "vision": {
+                "timestamps": [s.timestamp.strftime("%H:%M") for s in sessions],
+                "periods": [s.period or f"Muestreo #{s.id}" for s in sessions],
+                "foliar_area": [round(s.get_average_metric().foliar_area_cm2, 2) if s.get_average_metric() else 0.0 for s in sessions],
+                "height": [round(s.get_average_metric().plant_height_cm, 2) if s.get_average_metric() else 0.0 for s in sessions],
+                "stem": [round(s.get_average_metric().stem_diameter_mm, 2) if s.get_average_metric() else 0.0 for s in sessions],
+                "health": [round(s.get_average_metric().health_index, 1) if s.get_average_metric() else 100.0 for s in sessions]
+            }
+        }
+
         report_id = f"SIFMA-REP-{target_date.replace('-', '')}-CAN{plant_id}"
 
         return {
@@ -1736,6 +1759,7 @@ class AnalyticsApplicationService:
             "photo_comparisons": photo_comparisons,
             "conclusions": [c.to_dict() for c in conclusions],
             "automated_insights": automated_insights,
+            "chart_series": chart_series,
             "has_data": (len(sessions) > 0 or len(readings) > 0),
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }

@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro de Auditoría y Logs del Sistema{% endblock %}
+{% block heading %}Registro de Actividad y Logs de Auditoría{% endblock %}
+{% block subheading %}Trazabilidad cronológica de movimientos, modificaciones de cuentas, configuración y operaciones críticas{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('dashboard.export_audit_logs', search=search_query, module=module_filter, level=level_filter, date=date_filter) }}" class="btn btn-outline btn-sm" title="Descargar registro de actividad en CSV">
+        <span class="material-icons-round">file_download</span>
+        <span>Exportar CSV</span>
+    </a>
+    <button class="btn btn-danger btn-sm" onclick="handleClearAllLogs()" title="Vaciar todo el historial de registros de logs">
+        <span class="material-icons-round">delete_sweep</span>
+        <span>Vaciar Logs</span>
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="window.location.reload()" title="Refrescar registros">
+        <span class="material-icons-round">refresh</span>
+        <span>Actualizar</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+    <!-- 1. TARJETAS KPI DE ACTIVIDAD -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+        
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(5, 150, 105, 0.1); color: var(--accent-success); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">receipt_long</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Movimientos</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;" id="kpi-total-logs">{{ stats.total_logs }}</div>
+            </div>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(2, 132, 199, 0.1); color: #0284c7; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">today</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Actividad Hoy</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;">{{ stats.today_logs }}</div>
+            </div>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(225, 29, 72, 0.1); color: var(--accent-danger); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">warning_amber</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Acciones Críticas</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;">{{ stats.critical_logs }}</div>
+            </div>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(124, 58, 237, 0.1); color: #7c3aed; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">people</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Usuarios Activos Hoy</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;">{{ stats.active_users_today }}</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 2. BARRA DE BÚSQUEDA Y FILTROS -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <form method="GET" action="{{ url_for('dashboard.audit_logs') }}" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+            
+            <!-- Búsqueda de texto -->
+            <div style="flex: 1; min-width: 220px;">
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; display: block;">Buscar en Registros</label>
+                <div style="position: relative;">
+                    <span class="material-icons-round" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-muted);">search</span>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Buscar por usuario, acción, detalle o IP..." class="form-input-control" style="padding-left: 34px; font-size: 12.5px;">
+                </div>
+            </div>
+
+            <!-- Filtro por Módulo -->
+            <div style="min-width: 160px;">
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; display: block;">Módulo</label>
+                <select name="module" class="form-input-control" style="font-size: 12.5px;">
+                    <option value="">Todos los Módulos</option>
+                    {% for mod in available_modules %}
+                    <option value="{{ mod }}" {% if module_filter == mod %}selected{% endif %}>{{ mod }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtro por Nivel -->
+            <div style="min-width: 160px;">
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; display: block;">Severidad / Tipo</label>
+                <select name="level" class="form-input-control" style="font-size: 12.5px;">
+                    <option value="">Todos los Tipos</option>
+                    {% for lvl_val, lvl_lbl in available_levels %}
+                    <option value="{{ lvl_val }}" {% if level_filter == lvl_val %}selected{% endif %}>{{ lvl_lbl }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtro por Fecha -->
+            <div style="min-width: 150px;">
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; display: block;">Fecha Específica</label>
+                <input type="date" name="date" value="{{ date_filter }}" class="form-input-control" style="font-size: 12.5px;">
+            </div>
+
+            <!-- Botones Filtrar y Limpiar -->
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn btn-primary btn-sm" style="height: 38px;">
+                    <span class="material-icons-round" style="font-size: 18px;">filter_alt</span>
+                    <span>Filtrar</span>
+                </button>
+                {% if search_query or module_filter or level_filter or date_filter %}
+                <a href="{{ url_for('dashboard.audit_logs') }}" class="btn btn-outline btn-sm" style="height: 38px;" title="Limpiar todos los filtros">
+                    <span class="material-icons-round" style="font-size: 18px;">clear_all</span>
+                    <span>Limpiar</span>
+                </a>
+                {% endif %}
+            </div>
+
+        </form>
+    </div>
+
+    <!-- 3. TABLA DE REGISTRO DE AUDITORÍA -->
+    <div class="users-table-container" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <table class="users-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: var(--bg-card-subtle); border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); width: 140px;">Fecha y Hora</th>
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); width: 210px;">Usuario Responsable</th>
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); width: 120px;">Módulo</th>
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); width: 170px;">Acción Realizada</th>
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">Descripción / Movimiento</th>
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); text-align: right; width: 100px;">Origen (IP)</th>
+                    <th style="padding: 12px 16px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); text-align: right; width: 60px;">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="audit-logs-tbody">
+                {% if logs and logs|length > 0 %}
+                    {% for l in logs %}
+                    <tr id="log-row-{{ l.id }}" style="border-bottom: 1px solid var(--border-color); transition: all 0.2s ease;" onmouseover="this.style.background='var(--bg-card-subtle)'" onmouseout="this.style.background='transparent'">
+                        
+                        <!-- Fecha y Hora -->
+                        <td style="padding: 12px 16px; vertical-align: middle;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">schedule</span>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--text-heading); font-size: 12.5px;">{{ l.timestamp.strftime('%d/%m/%Y') }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">{{ l.timestamp.strftime('%H:%M:%S') }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Usuario -->
+                        <td style="padding: 12px 16px; vertical-align: middle;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                {% if l.user and l.user.avatar_url %}
+                                <img src="{{ l.user.avatar_url }}" alt="{{ l.user_fullname or l.username }}" class="user-avatar-circle" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
+                                {% else %}
+                                <div class="user-avatar-circle" style="width: 32px; height: 32px; font-size: 11px; background: {% if l.user_role == 'admin' or l.username == 'admin' %}linear-gradient(135deg, #059669, #10b981){% else %}var(--border-color){% endif %}; color: #ffffff; flex-shrink: 0;">
+                                    {{ l.user_fullname[:2].upper() if l.user_fullname else l.username[:2].upper() }}
+                                </div>
+                                {% endif %}
+                                <div style="min-width: 0;">
+                                    <div style="font-weight: 700; color: var(--text-heading); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ l.user_fullname or l.username }}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                                        <span>@{{ l.username }}</span>
+                                        {% if l.user_role %}
+                                        <span class="badge {% if l.user_role == 'admin' %}badge-primary{% elif l.user_role == 'investigador' %}badge-success{% else %}badge-info{% endif %}" style="font-size: 9px; padding: 1px 4px;">
+                                            {{ l.user_role }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Módulo -->
+                        <td style="padding: 12px 16px; vertical-align: middle;">
+                            <span class="badge badge-info" style="font-size: 10.5px; font-weight: 700; padding: 3px 7px; text-transform: uppercase; letter-spacing: 0.4px;">
+                                {{ l.module }}
+                            </span>
+                        </td>
+
+                        <!-- Acción -->
+                        <td style="padding: 12px 16px; vertical-align: middle;">
+                            <span class="badge {{ l.level_badge_class }}" style="font-size: 11px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;">
+                                <span class="material-icons-round" style="font-size: 14px;">{{ l.action_icon }}</span>
+                                <span>{{ l.action_display or l.action }}</span>
+                            </span>
+                        </td>
+
+                        <!-- Descripción -->
+                        <td style="padding: 12px 16px; vertical-align: middle;">
+                            <div style="font-size: 12.5px; color: var(--text-heading); line-height: 1.4;">
+                                {{ l.description }}
+                            </div>
+                        </td>
+
+                        <!-- Origen / IP -->
+                        <td style="padding: 12px 16px; vertical-align: middle; text-align: right;">
+                            <span style="font-size: 11.5px; font-family: monospace; color: var(--text-muted); background: var(--bg-card-subtle); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color);">
+                                {{ l.ip_address or '127.0.0.1' }}
+                            </span>
+                        </td>
+
+                        <!-- Acción Individual: Eliminar Log -->
+                        <td style="padding: 12px 16px; vertical-align: middle; text-align: right;">
+                            <button class="btn btn-outline btn-sm" style="padding: 4px 6px; font-size: 11px; color: var(--accent-danger); border-color: transparent;" onclick="handleDeleteSingleLog({{ l.id }})" title="Eliminar este registro individual">
+                                <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                            </button>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr id="empty-logs-row">
+                        <td colspan="7" style="text-align: center; padding: 48px 20px;">
+                            <div style="max-width: 320px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                <span class="material-icons-round" style="font-size: 48px; color: var(--text-muted); opacity: 0.5;">find_in_page</span>
+                                <div style="font-size: 15px; font-weight: 700; color: var(--text-heading);">No se encontraron registros de logs</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">No hay acciones registradas o el historial ha sido vaciado.</div>
+                                {% if search_query or module_filter or level_filter or date_filter %}
+                                <a href="{{ url_for('dashboard.audit_logs') }}" class="btn btn-outline btn-sm" style="margin-top: 6px;">
+                                    <span class="material-icons-round">clear_all</span>
+                                    <span>Ver Todos los Registros</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function handleDeleteSingleLog(logId) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar este registro de auditoría (#${logId})?`)) return;
+
+    try {
+        const res = await fetch(`/api/audit-logs/${logId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const row = document.getElementById(`log-row-${logId}`);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    row.remove();
+                    const tbody = document.getElementById('audit-logs-tbody');
+                    if (tbody && tbody.querySelectorAll('tr[id^="log-row-"]').length === 0) {
+                        window.location.reload();
+                    }
+                }, 200);
+            }
+            if (window.showToast) {
+                window.showToast({
+                    type: 'info',
+                    title: 'Registro Eliminado',
+                    message: data.message
+                });
+            }
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Error al eliminar registro de log.');
+    }
+}
+
+async function handleClearAllLogs() {
+    if (!confirm('⚠️ ¿Estás seguro de que deseas VACIAR TODO EL HISTORIAL de auditoría?\n\nEsta acción eliminará de forma irreversible todos los registros de movimientos almacenados.')) {
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/audit-logs/clear', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            if (window.showToast) {
+                window.showToast({
+                    type: 'warning',
+                    title: 'Historial Vaciado',
+                    message: data.message
+                });
+            } else {
+                alert(data.message);
+            }
+            setTimeout(() => window.location.reload(), 700);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Error al vaciar los logs de auditoría.');
+    }
+}
+</script>
+{% endblock %}

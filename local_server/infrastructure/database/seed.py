@@ -10,6 +10,7 @@ def init_db_data(app):
     from domain.models.config import Config
     from domain.models.crop_profile import CropProfile
     from domain.models.user import User
+    from domain.models.audit_log import AuditLog
 
     with app.app_context():
         db.create_all()
@@ -57,7 +58,9 @@ def init_db_data(app):
                 "ALTER TABLE config ADD COLUMN lateral_stem_roi_height FLOAT DEFAULT 0.0500",
                 "ALTER TABLE config ADD COLUMN lateral_stem_roi_x FLOAT DEFAULT 0.5000",
                 "ALTER TABLE config ADD COLUMN lateral_stem_roi_width FLOAT DEFAULT 0.2000",
-                "ALTER TABLE config ADD COLUMN lateral_stem_mode VARCHAR(20) DEFAULT 'auto_edge'"
+                "ALTER TABLE config ADD COLUMN lateral_stem_mode VARCHAR(20) DEFAULT 'auto_edge'",
+                "ALTER TABLE users ADD COLUMN permissions TEXT DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) DEFAULT NULL"
             ]:
                 try:
                     conn.execute(db.text(col_sql))
@@ -65,37 +68,68 @@ def init_db_data(app):
                 except Exception:
                     pass
 
-        # 1. Sembrar/Sincronizar Administrador Principal desde .env / config
+        # 1. Sembrar/Sincronizar Super Usuario ÚNICO (Administrador Principal) desde .env / config
         from core.config import config as app_cfg
         admin_username = app_cfg.ADMIN_USERNAME.strip().lower()
-        
-        # Eliminar cualquier usuario 'admin' antiguo o residual si el nuevo es diferente
-        for old_u in User.query.all():
-            if old_u.username.lower() != admin_username:
-                db.session.delete(old_u)
-        db.session.commit()
+        admin_email = app_cfg.ADMIN_EMAIL.strip().lower() if app_cfg.ADMIN_EMAIL else None
 
+        # Priorizar búsqueda: 1) por username exacto, 2) por email exacto, 3) por rol 'admin'
         admin_user = User.query.filter_by(username=admin_username).first()
+        if not admin_user and admin_email:
+            admin_user = User.query.filter_by(email=admin_email).first()
         if not admin_user:
+            admin_user = User.query.filter_by(role="admin").first()
+
+        if admin_user:
+            # 1. Eliminar cualquier otro registro conflictivo que posea el mismo username o email
+            conflict_filter = (User.id != admin_user.id) & (User.username == admin_username)
+            if admin_email:
+                conflict_filter = conflict_filter | ((User.id != admin_user.id) & (User.email == admin_email))
+            
+            conflicting_users = User.query.filter(conflict_filter).all()
+            for cu in conflicting_users:
+                logger.warning(f"Eliminando registro de usuario conflictivo ID {cu.id} ({cu.username})")
+                db.session.delete(cu)
+
+            # 2. Eliminar cualquier OTRO usuario que tenga rol 'admin' (garantiza un único Super Administrador)
+            other_admins = User.query.filter(User.role == "admin", User.id != admin_user.id).all()
+            for oa in other_admins:
+                logger.warning(f"Eliminando Super Admin residual/antiguo ID {oa.id} ({oa.username})")
+                db.session.delete(oa)
+
+            db.session.flush()
+
+            admin_user.username = admin_username
+            admin_user.full_name = app_cfg.ADMIN_FULLNAME
+            admin_user.email = admin_email
+            admin_user.password_hash = SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD)
+            admin_user.role = "admin"
+            admin_user.is_active = True
+            admin_user.set_permissions_dict({})
+            db.session.commit()
+            logger.info(f"Super Usuario único '{admin_username}' sincronizado exitosamente desde .env.")
+        else:
+            # Eliminar posibles registros huérfanos antes de insertar
+            conflict_filter = (User.username == admin_username)
+            if admin_email:
+                conflict_filter = conflict_filter | (User.email == admin_email)
+            conflicting_users = User.query.filter(conflict_filter).all()
+            for cu in conflicting_users:
+                db.session.delete(cu)
+            db.session.flush()
+
             admin_user = User(
                 username=admin_username,
                 full_name=app_cfg.ADMIN_FULLNAME,
-                email=app_cfg.ADMIN_EMAIL,
+                email=admin_email,
                 password_hash=SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD),
                 role="admin",
                 is_active=True
             )
+            admin_user.set_permissions_dict({})
             db.session.add(admin_user)
             db.session.commit()
-            logger.info(f"Usuario Administrador Principal '{app_cfg.ADMIN_USERNAME}' creado exitosamente.")
-        else:
-            admin_user.full_name = app_cfg.ADMIN_FULLNAME
-            admin_user.email = app_cfg.ADMIN_EMAIL
-            admin_user.password_hash = SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD)
-            admin_user.role = "admin"
-            admin_user.is_active = True
-            db.session.commit()
-            logger.info(f"Credenciales de Administrador Principal '{app_cfg.ADMIN_USERNAME}' actualizadas.")
+            logger.info(f"Super Usuario Administrador '{admin_username}' creado exitosamente.")
         
         # 2. Configuración inicial del sistema
         if not Config.query.first():
