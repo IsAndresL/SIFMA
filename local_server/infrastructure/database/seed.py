@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from infrastructure.database.connection import db
 from core.security import SecurityService
 from core.logger import logger
@@ -109,7 +113,6 @@ def init_db_data(app):
             db.session.commit()
             logger.info(f"Super Usuario único '{admin_username}' sincronizado exitosamente desde .env.")
         else:
-            # Eliminar posibles registros huérfanos antes de insertar
             conflict_filter = (User.username == admin_username)
             if admin_email:
                 conflict_filter = conflict_filter | (User.email == admin_email)
@@ -131,7 +134,6 @@ def init_db_data(app):
             db.session.commit()
             logger.info(f"Super Usuario Administrador '{admin_username}' creado exitosamente.")
         
-        # 2. Configuración inicial del sistema
         if not Config.query.first():
             default_config = Config(
                 server_url="http://127.0.0.1:5000",

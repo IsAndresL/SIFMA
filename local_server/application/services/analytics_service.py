@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import io
 import csv
 import calendar
@@ -210,7 +214,6 @@ class AnalyticsApplicationService:
                             "has_data": True
                         }
 
-        # 4. Procesar telemetría ambiental del día
         temps = [r.temperature for r in readings if r.temperature is not None]
         hums = [r.humidity for r in readings if r.humidity is not None]
         uvs = [r.uv_solar for r in readings if r.uv_solar is not None]
@@ -257,7 +260,6 @@ class AnalyticsApplicationService:
         except Exception:
             pass
 
-        # 5. Generar series temporales para las gráficas del día
         thermal_labels = []
         thermal_temps = []
         thermal_min_band = []
@@ -1718,7 +1720,6 @@ class AnalyticsApplicationService:
                 "detail": f"Se cuantificó un incremento de área fotosintéticamente activa de +{gain} cm² a lo largo de las sesiones del día."
             })
 
-        # Series temporales para graficación dinámica en el reporte
         chart_series = {
             "sensors": {
                 "timestamps": [r.timestamp.strftime("%H:%M") for r in readings],

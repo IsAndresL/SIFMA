@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from datetime import datetime
 from sqlalchemy import Column, Integer, Float, DateTime
 from sqlalchemy.orm import relationship

@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from datetime import datetime
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort
@@ -109,7 +113,6 @@ def permission_required(permission_key: str, module_name: str = "este módulo"):
             if not session.get('logged_in'):
                 return redirect(url_for('dashboard.login'))
             
-            # Super Admin tiene acceso total irrestricto
             if session.get('user_role') == 'admin' or session.get('username', '').lower() == 'admin':
                 return f(*args, **kwargs)
 
@@ -190,7 +193,6 @@ def login():
         username = (request.form.get('username') or '').strip().lower()
         password = request.form.get('password') or ''
         
-        # 1. Autenticar contra la base de datos de usuarios
         user = user_service.authenticate(username, password)
         if user:
             session['logged_in'] = True
@@ -204,7 +206,6 @@ def login():
             session['is_super_admin'] = user.is_super_admin
             session.permanent = True
 
-            # Registrar en logs de auditoría
             audit_service.log(
                 action="LOGIN",
                 module="AUTENTICACION",
@@ -250,7 +251,6 @@ def index():
     config = system_service.get_config()
     active_plant_id = get_active_plant_id()
     
-    # Obtener fecha seleccionada o automática
     target_date = request.args.get('date', 'auto')
     
     # Obtener el análisis diario consolidado para la fecha seleccionada
@@ -753,7 +753,6 @@ def export_audit_logs():
     csv_data = audit_service.generate_csv(logs)
     filename = f"sifma_auditoria_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 
-    # Registrar la exportación en el propio log
     audit_service.log(
         action="EXPORT_DATA",
         module="REPORTES",
@@ -788,7 +787,6 @@ def clear_all_audit_logs():
     from flask import jsonify
     count = audit_service.clear_all_logs()
     
-    # Registrar la acción de vaciado
     audit_service.log(
         action="CLEAR_LOGS",
         module="SISTEMA",

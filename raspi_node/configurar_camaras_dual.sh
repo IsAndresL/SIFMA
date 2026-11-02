@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 # ====================================================================
 # Script de Habilitacion de Camaras Duales Arducam en Raspberry Pi 5
 # Configura los puertos flexores CAM/DISP 0 y CAM/DISP 1

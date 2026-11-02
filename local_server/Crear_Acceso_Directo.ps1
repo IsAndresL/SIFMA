@@ -1,7 +1,7 @@
-# ========================================================
-# SIFMA - Generador de Acceso Directo en el Escritorio
-# Funciona en cualquier computador detectando la ruta actual
-# ========================================================
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 $scriptDir = $PSScriptRoot
 if (-not $scriptDir) {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

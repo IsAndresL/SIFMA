@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import sys
 import json
@@ -9,7 +13,6 @@ import platform
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file
 
-# Asegurar importaciones relativas
 NODE_DIR = os.path.dirname(os.path.abspath(__file__))
 if NODE_DIR not in sys.path:
     sys.path.insert(0, NODE_DIR)

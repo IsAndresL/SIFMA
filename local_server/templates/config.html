@@ -1,3 +1,9 @@
+<!--
+  SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+  Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+  Año: 2026.
+-->
+
 {% extends 'base.html' %}
 
 {% block title %}Parámetros de Cultivo{% endblock %}
@@ -283,7 +289,7 @@
                     <div style="position: relative; background: #0f172a; border-radius: 10px; overflow: hidden; border: 2px solid #334155; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                         <canvas id="roi-canvas" style="display: block; max-width: 100%; height: auto; margin: 0 auto; cursor: crosshair;"></canvas>
                         <div id="roi-canvas-overlay-hint" style="position: absolute; bottom: 8px; left: 8px; right: 8px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); color: #f8fafc; font-size: 11px; padding: 4px 10px; border-radius: 6px; pointer-events: none; display: flex; justify-content: space-between;">
-                            <span>🖱️ Clic/Arrastrar: Mover Centro (X, Y)</span>
+                            <span>Clic/Arrastrar: Mover Centro (X, Y)</span>
                             <span id="roi-coords-display">X: 50.0% | Y: 44.1% | R: 14.5%</span>
                         </div>
                     </div>

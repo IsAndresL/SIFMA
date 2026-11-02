@@ -1,19 +1,24 @@
 @echo off
+
+:: SIFMA â€” Sistema Integral de Fenotipado y Monitoreo AgrÃ­cola
+:: Autores: AndrÃ©s Felipe Luna Camargo, Cristian David PeÃ±a MartÃ­nez
+:: AÃ±o: 2026.
+
 chcp 65001 > nul
 title SIFMA - Instalador de Dependencias y Servidor Local
 
 echo ========================================================
-echo        SIFMA - SISTEMA DE FENOTIPADO Y TELEMETRÍA
+echo        SIFMA - SISTEMA DE FENOTIPADO Y TELEMETRÃA
 echo           Instalador Automatizado para Campo
 echo ========================================================
 echo.
 
-:: 1. Verificar si Python está instalado
+:: 1. Verificar si Python estÃ¡ instalado
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Python no está instalado o no se encuentra en el PATH.
+    echo [ERROR] Python no estÃ¡ instalado o no se encuentra en el PATH.
     echo Por favor instala Python 3.10, 3.11, 3.12 o 3.13 desde https://www.python.org/downloads/
-    echo Asegúrate de marcar la casilla "Add Python to PATH" durante la instalación.
+    echo AsegÃºrate de marcar la casilla "Add Python to PATH" durante la instalaciÃ³n.
     echo.
     pause
     exit /b 1
@@ -43,12 +48,12 @@ echo [4/5] Creando acceso directo en el Escritorio...
 powershell -ExecutionPolicy Bypass -File "%~dp0Crear_Acceso_Directo.ps1"
 
 echo.
-echo [5/5] Limpiando archivos temporales y cachés...
+echo [5/5] Limpiando archivos temporales y cachÃ©s...
 for /d /r "%~dp0" %%d in (__pycache__) do @if exist "%%d" rd /s /q "%%d" 2>nul
 
 echo.
 echo ========================================================
-echo   ¡DESPLIEGUE E INSTALACIÓN COMPLETADA CON ÉXITO!
+echo   Â¡DESPLIEGUE E INSTALACIÃ“N COMPLETADA CON Ã‰XITO!
 echo ========================================================
 echo.
 echo Para iniciar SIFMA en cualquier momento:

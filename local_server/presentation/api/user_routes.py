@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from flask import request, jsonify, session
 from application.services import UserService, AuditService
 from core.security import SecurityService
@@ -26,7 +30,6 @@ def create_new_user():
     if not require_admin():
         return jsonify({"status": "error", "message": "Acceso restringido a Administradores."}), 403
 
-    # Soportar payload JSON o FormData multipart
     data = {}
     if request.is_json:
         data = request.json or {}
@@ -59,7 +62,6 @@ def create_new_user():
             permissions=permissions
         )
 
-        # Si se adjuntó foto de perfil en el FormData
         avatar_file = request.files.get('avatar') or request.files.get('file')
         if avatar_file and avatar_file.filename:
             try:
@@ -67,7 +69,6 @@ def create_new_user():
             except Exception as e:
                 pass
         
-        # Registrar en logs de auditoría
         perms_count = sum(1 for v in (permissions or {}).values() if v) if permissions else "estándar"
         audit_service.log(
             action="CREATE_USER",
@@ -214,7 +215,6 @@ def delete_user(user_id: int):
 
 @api_bp.route('/api/users/<int:user_id>/avatar', methods=['POST'])
 def upload_user_avatar(user_id: int):
-    # Solo el Super Admin o el propio usuario puede cambiar su avatar
     is_admin = require_admin()
     current_uid = session.get('user_id')
     if not is_admin and current_uid != user_id:
@@ -228,7 +228,6 @@ def upload_user_avatar(user_id: int):
         avatar_url = user_service.save_user_avatar(user_id, avatar_file)
         target_user = user_service.get_user_by_id(user_id)
 
-        # Si el usuario editado es el de la sesión actual, actualizar sesión
         if current_uid == user_id:
             session['user_avatar_url'] = avatar_url
 

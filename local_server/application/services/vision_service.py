@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import glob
 import json
@@ -340,7 +344,6 @@ class VisionApplicationService:
         default_lat_orig = lateral_paths_list[0]["orig"] if lateral_paths_list else ""
         default_lat_proc = lateral_paths_list[0]["proc"] if lateral_paths_list else ""
         
-        # Persistencia en base de datos
         session_id = self._save_capture_session_with_metrics(
             period=period,
             crop_type=profile.crop_type,

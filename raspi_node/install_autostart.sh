@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 # ====================================================================
 # Script de Instalacion SIFMA LITE en Raspberry Pi (Bajo Consumo)
 # ====================================================================

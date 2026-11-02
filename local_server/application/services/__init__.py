@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from .system_service import SystemService
 from .telemetry_service import TelemetryApplicationService
 from .vision_service import VisionApplicationService

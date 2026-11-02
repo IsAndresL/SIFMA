@@ -1,8 +1,11 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import sys
 import subprocess
 import importlib
 
-# Mapeo de (nombre_modulo_python, nombre_paquete_pip)
 RASPI_REQUIRED_PACKAGES = [
     ("flask", "flask>=3.0.0"),
     ("cv2", "opencv-python-headless>=4.8.0"),
@@ -17,7 +20,6 @@ def install_package(package_name: str) -> bool:
     base_cmd = [sys.executable, "-m", "pip", "install", package_name]
     
     try:
-        # Intento estándar
         res = subprocess.run(base_cmd, capture_output=True, text=True)
         if res.returncode == 0:
             print(f"[AUTO-INSTALADOR SIFMA] '{package_name}' instalado exitosamente.")

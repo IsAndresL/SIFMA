@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import csv
 import time
@@ -43,7 +47,6 @@ class TelemetryApplicationService:
         if self.is_recording:
             return {"status": "already_running", "file": self.current_csv_file}
 
-        # 1. Validar si hay puertos COM reales disponibles
         available = self.get_available_ports()
         if not available:
             return {
@@ -54,7 +57,6 @@ class TelemetryApplicationService:
         self.selected_port = port
         self.adapter.port = port
 
-        # 2. Intentar establecer conexión serie real
         if not self.adapter._connect():
             return {
                 "status": "error",
@@ -173,7 +175,6 @@ class TelemetryApplicationService:
                             hum_val
                         ])
 
-                # 2. Guardar en SQLite si app_context está activo
                 if app:
                     with app.app_context():
                         reading = SensorReading(

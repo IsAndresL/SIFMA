@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from domain.models import User
@@ -15,7 +19,6 @@ class UserService:
         if not identifier or not plain_password:
             return None
         clean_id = identifier.strip().lower()
-        # Buscar por username O por email
         user = self.user_repo.get_by_username(clean_id) or self.user_repo.get_by_email(clean_id)
         if not user or not user.is_active:
             return None
@@ -97,7 +100,6 @@ class UserService:
         if user.is_super_admin or user.role == "admin":
             raise ValueError("No es posible eliminar la cuenta del Super Usuario / Administrador Principal.")
         
-        # Eliminar archivo de avatar si existe
         if user.avatar_path:
             self._delete_avatar_file_on_disk(user.avatar_path)
             
@@ -126,7 +128,6 @@ class UserService:
         avatars_dir = os.path.join(static_folder, 'uploads', 'avatars')
         os.makedirs(avatars_dir, exist_ok=True)
 
-        # Eliminar avatar previo si existía
         if user.avatar_path:
             self._delete_avatar_file_on_disk(user.avatar_path, static_folder)
 

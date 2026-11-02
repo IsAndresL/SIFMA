@@ -1,3 +1,9 @@
+<!--
+  SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+  Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+  Año: 2026.
+-->
+
 {% extends 'base.html' %}
 
 {% block title %}Registro de Auditoría y Logs del Sistema{% endblock %}
@@ -282,7 +288,7 @@ async function handleDeleteSingleLog(logId) {
 }
 
 async function handleClearAllLogs() {
-    if (!confirm('⚠️ ¿Estás seguro de que deseas VACIAR TODO EL HISTORIAL de auditoría?\n\nEsta acción eliminará de forma irreversible todos los registros de movimientos almacenados.')) {
+    if (!confirm('¿Está seguro de que desea VACIAR TODO EL HISTORIAL de auditoría?\n\nEsta acción eliminará de forma irreversible todos los registros de movimientos almacenados.')) {
         return;
     }
 

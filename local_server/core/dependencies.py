@@ -1,8 +1,11 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import sys
 import subprocess
 import importlib
 
-# Mapeo de (nombre_modulo_python, nombre_paquete_pip) para el Servidor Local SIFMA
 SERVER_REQUIRED_PACKAGES = [
     ("flask", "Flask>=3.0.0"),
     ("flask_sqlalchemy", "Flask-SQLAlchemy>=3.1.0"),

@@ -1,8 +1,11 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import sys
 from flask import Flask
 
-# Asegurar sys.path para importaciones modulares
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 if SERVER_DIR not in sys.path:
     sys.path.insert(0, SERVER_DIR)
@@ -27,17 +30,14 @@ def create_app():
         template_folder=os.path.join(SERVER_DIR, "templates")
     )
     
-    # Configuración desde AppConfig
     app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.SQLALCHEMY_TRACK_MODIFICATIONS
     app.config['SECRET_KEY'] = config.SECRET_KEY
     
-    # Asegurar directorios de almacenamiento
     os.makedirs(config.UPLOAD_DIR, exist_ok=True)
     os.makedirs(config.PROCESSED_DIR, exist_ok=True)
     os.makedirs(config.TELEMETRY_DIR, exist_ok=True)
     
-    # Inicializar ORM
     db.init_app(app)
     
     with app.app_context():
@@ -49,11 +49,9 @@ def create_app():
             cursor.execute("PRAGMA synchronous=NORMAL")
             cursor.close()
     
-    # Registrar Blueprints de presentación (Web y APIs REST)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(api_bp)
     
-    # Ruta directa para el favicon del navegador
     from flask import send_from_directory
     @app.route('/favicon.ico')
     def favicon():

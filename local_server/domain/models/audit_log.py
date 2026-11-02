@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 from datetime import datetime
 from typing import Dict, Any, Optional
 from infrastructure.database.connection import db
@@ -17,7 +21,6 @@ class AuditLog(db.Model):
     user_fullname = db.Column(db.String(150), nullable=True)
     user_role = db.Column(db.String(50), nullable=True)
     
-    # Categorización y detalle
     action = db.Column(db.String(80), nullable=False, index=True) # e.g. LOGIN, LOGOUT, CREATE_USER, DELETE_USER, etc.
     action_display = db.Column(db.String(120), nullable=True)     # e.g. "Creación de Usuario"
     module = db.Column(db.String(60), nullable=False, index=True) # e.g. USUARIOS, AUTENTICACION, CONFIGURACION, LOTES
@@ -26,7 +29,6 @@ class AuditLog(db.Model):
     ip_address = db.Column(db.String(60), nullable=True)          # Dirección IP del cliente
     level = db.Column(db.String(20), default='info', nullable=False) # 'info', 'success', 'warning', 'danger'
 
-    # Relación opcional con el usuario
     user = db.relationship('User', backref=db.backref('audit_logs', lazy='dynamic'), foreign_keys=[user_id])
 
     def __init__(

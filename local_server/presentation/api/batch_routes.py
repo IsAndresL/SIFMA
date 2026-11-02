@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import json
 import shutil
@@ -205,7 +209,6 @@ def upload_manual_batch():
             else:
                 regular_files.append((f, safe_name))
 
-        # 1. Si se subieron archivos ZIP
         if zip_files:
             for f_obj, z_name in zip_files:
                 z_path = os.path.join(temp_dir, z_name)
@@ -255,7 +258,6 @@ def upload_manual_batch():
                     )
                     processed_results.append(r_batch)
 
-        # 2. Si se subieron archivos de imagen regulares
         if regular_files:
             regular_dir = os.path.join(temp_dir, "regular_images")
             os.makedirs(regular_dir, exist_ok=True)

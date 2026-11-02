@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import sys
 import json
@@ -7,7 +11,6 @@ import threading
 import platform
 from datetime import datetime
 
-# Asegurar importaciones relativas
 NODE_DIR = os.path.dirname(os.path.abspath(__file__))
 if NODE_DIR not in sys.path:
     sys.path.insert(0, NODE_DIR)
@@ -88,17 +91,14 @@ class SifmaLiteTouchApp(tk.Tk):
         self.refresh_timer()
 
     def setup_ui(self):
-        # 1. Barra Superior (Header)
         header_frame = tk.Frame(self, bg="#111a2e", padx=12, pady=8, highlightbackground="#1e2d4d", highlightthickness=1)
         header_frame.pack(fill=tk.X, padx=8, pady=(8, 4))
 
-        # Título y Versión
         title_box = tk.Frame(header_frame, bg="#111a2e")
         title_box.pack(side=tk.LEFT)
         tk.Label(title_box, text="SIFMA LITE", font=("Segoe UI", 14, "bold"), fg="#10b981", bg="#111a2e").pack(anchor="w")
         tk.Label(title_box, text="Centro Táctil Raspberry Pi (Bajo Consumo)", font=("Segoe UI", 8), fg="#94a3b8", bg="#111a2e").pack(anchor="w")
 
-        # Badges de Estado
         status_box = tk.Frame(header_frame, bg="#111a2e")
         status_box.pack(side=tk.RIGHT)
 
@@ -111,15 +111,12 @@ class SifmaLiteTouchApp(tk.Tk):
         self.lbl_clock = tk.Label(status_box, text="--:--:--", font=("Courier", 11, "bold"), fg="#f8fafc", bg="#111a2e", padx=6)
         self.lbl_clock.pack(side=tk.LEFT, padx=4)
 
-        # 2. Contenedor Principal (2 Columnas)
         main_box = tk.Frame(self, bg="#0a0f18")
         main_box.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
 
-        # Columna Izquierda: Presets y Temporizador
         left_col = tk.Frame(main_box, bg="#111a2e", padx=10, pady=10, highlightbackground="#1e2d4d", highlightthickness=1)
         left_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 4))
 
-        # Presets Rápidos
         tk.Label(left_col, text="PRESETS RAPIDOS A 1 CLIC", font=("Segoe UI", 9, "bold"), fg="#34d399", bg="#111a2e").pack(anchor="w", pady=(0, 4))
         preset_box = tk.Frame(left_col, bg="#111a2e")
         preset_box.pack(fill=tk.X, pady=(0, 8))
@@ -133,7 +130,6 @@ class SifmaLiteTouchApp(tk.Tk):
         btn_pre3 = tk.Button(preset_box, text="Agronomico\n(3 turnos / 5 fotos)", font=("Segoe UI", 8, "bold"), bg="#374151", fg="#ffffff", activebackground="#4b5563", activeforeground="#ffffff", relief="flat", padx=6, pady=6, command=lambda: self.apply_preset("agronomico"))
         btn_pre3.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
 
-        # Modo de Captura (Intervalo vs Horas)
         tk.Label(left_col, text="TIPO DE PROGRAMADOR", font=("Segoe UI", 9, "bold"), fg="#94a3b8", bg="#111a2e").pack(anchor="w", pady=(4, 2))
         mode_box = tk.Frame(left_col, bg="#111a2e")
         mode_box.pack(fill=tk.X, pady=(0, 6))
@@ -144,7 +140,6 @@ class SifmaLiteTouchApp(tk.Tk):
         self.btn_mode_sched = tk.Button(mode_box, text="Horas Programadas", font=("Segoe UI", 9, "bold"), relief="flat", pady=6, command=lambda: self.set_mode("scheduled"))
         self.btn_mode_sched.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
 
-        # Frecuencia de Intervalo (Minutos)
         self.interval_frame = tk.Frame(left_col, bg="#111a2e")
         self.interval_frame.pack(fill=tk.X, pady=(0, 6))
 
@@ -164,7 +159,6 @@ class SifmaLiteTouchApp(tk.Tk):
         self.lbl_interval_val.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4)
         tk.Button(stepper_box, text="+15m", font=("Segoe UI", 9, "bold"), bg="#1e293b", fg="#fff", relief="flat", padx=8, pady=4, command=lambda: self.step_interval(15)).pack(side=tk.LEFT)
 
-        # Horas Programadas (Grid)
         self.sched_frame = tk.Frame(left_col, bg="#111a2e")
         tk.Label(self.sched_frame, text="HORAS ACTIVAS (Clic para activar/desactivar)", font=("Segoe UI", 8, "bold"), fg="#94a3b8", bg="#111a2e").pack(anchor="w")
         self.hours_buttons = {}
@@ -178,7 +172,6 @@ class SifmaLiteTouchApp(tk.Tk):
         for i in range(5):
             grid_h.columnconfigure(i, weight=1)
 
-        # Rango de Fotos por Sesión
         tk.Label(left_col, text="CANTIDAD DE FOTOS POR SESION", font=("Segoe UI", 8, "bold"), fg="#94a3b8", bg="#111a2e").pack(anchor="w", pady=(6, 2))
         photos_chips = tk.Frame(left_col, bg="#111a2e")
         photos_chips.pack(fill=tk.X)
@@ -186,7 +179,6 @@ class SifmaLiteTouchApp(tk.Tk):
             btn = tk.Button(photos_chips, text=f"{cnt}", font=("Segoe UI", 9, "bold"), bg="#0f172a", fg="#f8fafc", relief="flat", width=3, pady=4, command=lambda val=cnt: self.set_photos_count(val))
             btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1)
 
-        # Espaciado entre Fotos
         tk.Label(left_col, text="ESPACIADO ENTRE TOMAS", font=("Segoe UI", 8, "bold"), fg="#94a3b8", bg="#111a2e").pack(anchor="w", pady=(6, 2))
         spacing_chips = tk.Frame(left_col, bg="#111a2e")
         spacing_chips.pack(fill=tk.X)
@@ -194,11 +186,9 @@ class SifmaLiteTouchApp(tk.Tk):
             btn = tk.Button(spacing_chips, text=lbl, font=("Segoe UI", 8, "bold"), bg="#0f172a", fg="#f8fafc", relief="flat", pady=4, command=lambda val=sec: self.set_spacing(val))
             btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1)
 
-        # Columna Derecha: Acciones, Canastilla, Calibración y Estado
         right_col = tk.Frame(main_box, bg="#111a2e", padx=10, pady=10, highlightbackground="#1e2d4d", highlightthickness=1)
         right_col.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(4, 0))
 
-        # Botón Gigante de Disparo Inmediato
         btn_fire = tk.Button(right_col, text="DISPARAR CAPTURA AHORA", font=("Segoe UI", 11, "bold"), bg="#059669", fg="#ffffff", activebackground="#047857", activeforeground="#ffffff", relief="flat", pady=12, command=self.trigger_now)
         btn_fire.pack(fill=tk.X, pady=(0, 8))
 
@@ -237,7 +227,6 @@ class SifmaLiteTouchApp(tk.Tk):
         self.status_text_box = tk.Label(right_col, text="Iniciando...", font=("Courier", 8), fg="#cbd5e1", bg="#0a0f18", justify="left", anchor="w", padx=8, pady=6, relief="ridge")
         self.status_text_box.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
 
-        # Control del Servicio Demonio
         daemon_ctrl_box = tk.Frame(right_col, bg="#111a2e")
         daemon_ctrl_box.pack(fill=tk.X)
         tk.Button(daemon_ctrl_box, text="Iniciar Demonio", font=("Segoe UI", 8, "bold"), bg="#064e3b", fg="#fff", relief="flat", pady=5, command=lambda: self.control_daemon("start")).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1)
@@ -259,7 +248,6 @@ class SifmaLiteTouchApp(tk.Tk):
         m = self.cfg.get("interval_minutes", 60)
         self.lbl_interval_val.configure(text=f"{m} min ({(m/60):.1f}h)")
 
-        # Horas programadas
         sched = self.cfg.get("scheduled_times", ["07:05", "12:05", "17:05"])
         for h, btn in self.hours_buttons.items():
             active = h in sched
@@ -270,7 +258,6 @@ class SifmaLiteTouchApp(tk.Tk):
         for pid, btn in self.plant_buttons.items():
             btn.configure(bg="#10b981" if pid == current_pid else "#0f172a", fg="#000" if pid == current_pid else "#fff")
 
-        # Boot
         boot_on = self.cfg.get("capture_on_boot", True)
         self.btn_boot_on.configure(bg="#10b981" if boot_on else "#0f172a", fg="#000" if boot_on else "#fff")
         self.btn_boot_off.configure(bg="#10b981" if not boot_on else "#0f172a", fg="#000" if not boot_on else "#fff")
@@ -397,10 +384,8 @@ class SifmaLiteTouchApp(tk.Tk):
                 pass
 
     def refresh_timer(self):
-        # 1. Reloj
         self.lbl_clock.configure(text=datetime.now().strftime("%H:%M:%S"))
 
-        # 2. Estado de Demonio y Almacenamiento
         try:
             target_dir = OfflineStorageService._find_target_storage_directory_once()
             is_usb = "SIFMA_OFFLINE_STORAGE" not in target_dir

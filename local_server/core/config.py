@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 from dataclasses import dataclass
 try:
@@ -21,7 +25,6 @@ except ImportError:
             pass
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Cargar .env desde local_server o desde la raiz del proyecto
 env_file = os.path.join(BASE_DIR, ".env")
 if os.path.exists(env_file):
     load_dotenv(env_file)

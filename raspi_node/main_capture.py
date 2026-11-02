@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import sys
 import time
@@ -6,7 +10,6 @@ import argparse
 import signal
 from datetime import datetime, timedelta
 
-# Asegurar importaciones relativas desde la carpeta raspi_node
 NODE_DIR = os.path.dirname(os.path.abspath(__file__))
 if NODE_DIR not in sys.path:
     sys.path.insert(0, NODE_DIR)
@@ -131,7 +134,6 @@ def execute_capture_sequence(
 
     save_daemon_status(status_text=f"Capturando fotos del lote: {period}...")
 
-    # 1. Crear carpeta del lote en la USB
     print("1. Verificando unidad de almacenamiento USB...")
     batch_dir = OfflineStorageService.create_batch_directory(period=period, wait_for_usb=True)
     print(f"   Carpeta de destino: {batch_dir}")
@@ -140,7 +142,6 @@ def execute_capture_sequence(
     lateral_success = 0
     photos_metadata_list = []
 
-    # 2. Bucle de capturas
     for photo_idx in range(1, photos_count + 1):
         if photo_idx > 1 and photo_interval_sec > 0:
             print(f"\n[INTERVALO] Esperando {photo_interval_sec}s antes de la toma #{photo_idx}...")
@@ -151,7 +152,6 @@ def execute_capture_sequence(
         print(f"\n---> [TOMA #{photo_idx}/{photos_count}] Hora exacta: {exact_photo_time.strftime('%H:%M:%S')}")
         save_daemon_status(status_text=f"Disparando foto #{photo_idx}/{photos_count} ({exact_photo_time.strftime('%H:%M:%S')})...")
 
-        # Captura Cenital
         cenital_path = os.path.join(batch_dir, f"cenital_{photo_idx}.png")
         cen_ok = CameraCaptureService.capture_photo(cenital_path, camera_index=cenital_cam)
         if cen_ok:
@@ -160,7 +160,6 @@ def execute_capture_sequence(
         
         time.sleep(1.0)
 
-        # Captura Lateral
         lateral_path = os.path.join(batch_dir, f"lateral_{photo_idx}.png")
         lat_ok = CameraCaptureService.capture_photo(lateral_path, camera_index=lateral_cam)
         if lat_ok:
@@ -236,7 +235,6 @@ def run_continuous_daemon():
     print(f"Fotos por sesion: {cfg.get('photos_per_session', 3)} tomas")
     print("=======================================================\n")
 
-    # Cooldown inicial al encender la Raspberry Pi
     if boot_delay > 0:
         print(f"[ARRANQUE] Esperando retardo inicial de {boot_delay}s para estabilizacion de hardware...")
         save_daemon_status(status_text=f"Iniciando: esperando retardo de {boot_delay}s...")
@@ -338,7 +336,6 @@ if __name__ == "__main__":
     elif args.daemon:
         run_continuous_daemon()
     else:
-        # Ejecución única
         cfg = load_node_config()
         b_delay = args.boot_delay if args.boot_delay is not None else cfg.get("boot_delay_sec", 10)
         if b_delay > 0:

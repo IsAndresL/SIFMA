@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import os
 import sys
 import time
@@ -7,7 +11,6 @@ import shutil
 import tkinter as tk
 from tkinter import messagebox
 
-# Asegurar importación de librerías de imagen
 try:
     import cv2
     import numpy as np
@@ -63,7 +66,6 @@ class CameraCalibrationApp(tk.Tk):
         self.after(500, self.diagnose_cameras)
 
     def setup_ui(self):
-        # 1. Header
         header = tk.Frame(self, bg="#111a2e", padx=12, pady=8, highlightbackground="#1e2d4d", highlightthickness=1)
         header.pack(fill=tk.X, padx=8, pady=(8, 4))
 
@@ -311,7 +313,6 @@ class CameraCalibrationApp(tk.Tk):
                 time.sleep(0.05)
                 continue
 
-            # Formato de canales
             if len(raw_frame.shape) == 3 and raw_frame.shape[2] == 4:
                 raw_frame = raw_frame[:, :, :3]
 

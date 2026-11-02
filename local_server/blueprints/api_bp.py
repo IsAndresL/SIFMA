@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 """
 Fachada de enrutamiento API para compatibilidad modular.
 Delegación a los controladores de la capa presentation.api.
@@ -10,7 +14,6 @@ from presentation.api import (
     session_api_bp
 )
 
-# Exportar para compatibilidad
 api_bp = batch_api_bp
 
 __all__ = ["api_bp", "api_blueprints", "telemetry_api_bp", "batch_api_bp", "conclusion_api_bp", "session_api_bp"]

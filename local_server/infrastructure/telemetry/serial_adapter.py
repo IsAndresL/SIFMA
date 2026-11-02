@@ -1,3 +1,7 @@
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
+# Año: 2026.
+
 import sys
 import glob
 import time
@@ -40,7 +44,6 @@ class SerialTelemetryAdapter:
             except Exception as e:
                 logger.warning(f"Error listando puertos seriales: {e}")
 
-        # Únicamente devolver puertos reales de hardware
         ports = sorted(list(set(detected)))
         if ports:
             return ["USB_ANTENNA_AUTO"] + ports
@@ -60,7 +63,6 @@ class SerialTelemetryAdapter:
                 return self.port
             return None
 
-        # Modo AUTO: tomar el primer puerto COM real disponible
         return real_ports[0]
 
     def _connect(self) -> bool:
@@ -72,7 +74,6 @@ class SerialTelemetryAdapter:
         if not target_port:
             return False
 
-        # Si ya está conectado al puerto destino
         if self.serial_conn and self.serial_conn.is_open and self.active_port == target_port:
             return True
 
@@ -88,7 +89,6 @@ class SerialTelemetryAdapter:
                 stopbits=serial.STOPBITS_ONE
             )
             self.active_port = target_port
-            # Limpiar búfer inicial
             self.serial_conn.reset_input_buffer()
             logger.info(f"[SIFMA] Conectado exitosamente a antena XBee en {target_port} @ {self.baudrate} baud.")
             return True
