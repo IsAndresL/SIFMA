@@ -106,3 +106,4 @@ En `local_server/requirements.txt` se encontraban listadas dependencias pesadas 
 | `python-dotenv` | Lectura segura de variables de entorno `.env`. | **Conservar (`==1.2.4`)** |
 
 También se actualizó `local_server/core/dependencies.py` para remover las comprobaciones de librerías innecesarias (`plantcv`, `matplotlib`, `pandas`, `scipy`, `requests`).
+
