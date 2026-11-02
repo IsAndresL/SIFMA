@@ -3,7 +3,7 @@
 **Versión:** 1.0.0  
 **Año de desarrollo:** 2026  
 **Autores (desarrolladores del código):** Andrés Felipe Luna Camargo y Cristian David Peña Martínez  
-**Titular de derechos patrimoniales:** `[POR DEFINIR]` (pendiente de formalización con la Universidad del Magdalena)  
+ 
 
 ---
 
