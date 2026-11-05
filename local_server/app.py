@@ -27,7 +27,7 @@ def create_app():
     app = Flask(
         __name__, 
         static_folder=config.STATIC_DIR, 
-        template_folder=os.path.join(SERVER_DIR, "templates")
+        template_folder=config.TEMPLATE_DIR
     )
     
     app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
@@ -60,6 +60,14 @@ def create_app():
             'sifma_sin_texto.svg',
             mimetype='image/svg+xml'
         )
+
+    @app.route('/static/data/<path:filename>')
+    def serve_user_data_files(filename):
+        """
+        Sirve imágenes capturadas, procesadas, avatares y archivos de telemetría desde DATA_DIR
+        (%APPDATA%\\SIFMA\\data en modo escritorio), manteniendo intactas las rutas del frontend.
+        """
+        return send_from_directory(config.DATA_DIR, filename)
     
     # Inicializar tablas, esquemas y Super Usuario por defecto
     init_db_data(app)

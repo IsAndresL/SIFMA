@@ -2,6 +2,7 @@
 # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
 # Año: 2026.
 
+import os
 from infrastructure.database.connection import db
 from core.security import SecurityService
 from core.logger import logger
@@ -106,12 +107,17 @@ def init_db_data(app):
             admin_user.username = admin_username
             admin_user.full_name = app_cfg.ADMIN_FULLNAME
             admin_user.email = admin_email
-            admin_user.password_hash = SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD)
+            # Solo actualizar el hash si se solicita explícitamente o si aún no hay inicios de sesión previos,
+            # evitando sobrescribir contraseñas personalizadas por el usuario en su base de datos local.
+            has_logged_in = AuditLog.query.filter_by(action="LOGIN").first() is not None
+            force_reset = os.getenv("SIFMA_FORCE_RESET_ADMIN", "0") == "1"
+            if app_cfg.ADMIN_DEFAULT_PASSWORD and (not has_logged_in or force_reset or not admin_user.password_hash):
+                admin_user.password_hash = SecurityService.hash_password(app_cfg.ADMIN_DEFAULT_PASSWORD)
             admin_user.role = "admin"
             admin_user.is_active = True
             admin_user.set_permissions_dict({})
             db.session.commit()
-            logger.info(f"Super Usuario único '{admin_username}' sincronizado exitosamente desde .env.")
+            logger.info(f"Super Usuario único '{admin_username}' verificado exitosamente.")
         else:
             conflict_filter = (User.username == admin_username)
             if admin_email:

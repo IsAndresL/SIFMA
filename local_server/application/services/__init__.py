@@ -10,6 +10,7 @@ from .conclusion_service import ConclusionApplicationService
 from .user_service import UserService
 from .weather_service import WeatherService
 from .audit_service import AuditService
+from .update_service import UpdateService
 
 __all__ = [
     "SystemService",
@@ -19,5 +20,6 @@ __all__ = [
     "ConclusionApplicationService",
     "UserService",
     "WeatherService",
-    "AuditService"
+    "AuditService",
+    "UpdateService"
 ]

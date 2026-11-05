@@ -122,10 +122,8 @@ class UserService:
         if ext not in ['jpg', 'jpeg', 'png', 'webp', 'gif']:
             raise ValueError("Formato no soportado. Usa imágenes JPG, PNG o WebP.")
 
-        if not static_folder:
-            static_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static')
-        
-        avatars_dir = os.path.join(static_folder, 'uploads', 'avatars')
+        from core.config import config as app_cfg
+        avatars_dir = os.path.join(app_cfg.UPLOAD_DIR, 'avatars')
         os.makedirs(avatars_dir, exist_ok=True)
 
         if user.avatar_path:
@@ -139,7 +137,7 @@ class UserService:
             with open(full_dest, 'wb') as f:
                 f.write(file_obj.read())
 
-        relative_path = f"static/uploads/avatars/{filename}"
+        relative_path = f"static/data/uploads/avatars/{filename}"
         user.avatar_path = relative_path
         self.user_repo.save(user)
         return user.avatar_url
@@ -158,12 +156,17 @@ class UserService:
     def _delete_avatar_file_on_disk(self, avatar_path: str, static_folder: Optional[str] = None):
         """Elimina de forma segura el archivo del disco."""
         import os
+        from core.config import config as app_cfg
         try:
-            if not static_folder:
-                static_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static')
-            
-            clean_rel = avatar_path.lstrip('/').replace('static/', '', 1)
-            full_path = os.path.join(static_folder, clean_rel)
+            clean_rel = avatar_path.lstrip('/')
+            if clean_rel.startswith('static/data/'):
+                sub_rel = clean_rel.replace('static/data/', '', 1)
+                full_path = os.path.join(app_cfg.DATA_DIR, sub_rel)
+            else:
+                if not static_folder:
+                    static_folder = app_cfg.STATIC_DIR
+                sub_rel = clean_rel.replace('static/', '', 1)
+                full_path = os.path.join(static_folder, sub_rel)
             if os.path.exists(full_path):
                 os.remove(full_path)
         except Exception:

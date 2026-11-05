@@ -46,6 +46,10 @@ def install_package(package_name: str) -> bool:
 
 def ensure_dependencies():
     """Verifica e instala automáticamente las librerías necesarias del servidor SIFMA."""
+    # Si la aplicación se ejecuta congelada dentro del ejecutable (.exe), todas las librerías ya están incluidas
+    if getattr(sys, "frozen", False):
+        return
+
     missing = []
     for module_name, pip_name in SERVER_REQUIRED_PACKAGES:
         try:

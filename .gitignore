@@ -33,3 +33,9 @@ __pycache__/
 # Logs
 *.log
 local_server/*.log
+
+# Compilados y artefactos de empaquetado de escritorio (PyInstaller)
+local_server/build/
+local_server/dist/
+build/
+dist/

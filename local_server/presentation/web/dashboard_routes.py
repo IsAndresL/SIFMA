@@ -14,7 +14,8 @@ from application.services import (
     ConclusionApplicationService,
     UserService,
     WeatherService,
-    AuditService
+    AuditService,
+    UpdateService
 )
 from infrastructure.database.repositories import (
     SensorRepository, 
@@ -641,9 +642,9 @@ def system_info():
     selected_profile = system_service.get_profile_for_plant(active_plant_id)
 
     system_metadata = {
-        "version": "1.1",
-        "release_name": "SIFMA PhenoCore",
-        "release_date": "Septiembre 2026",
+        "version": app_settings.APP_VERSION,
+        "release_name": "SIFMA PhenoCore Desktop",
+        "release_date": "Noviembre 2026",
         "author": "Ing. Andrés Luna & Cristian",
         "lead_developer": "Ing. Andrés Luna",
         "co_developer": "Cristian",
@@ -653,15 +654,17 @@ def system_info():
         "license": "Licencia Cerrada Exclusiva (Torre SIFMA)",
         "python_version": "3.10+",
         "opencv_version": "4.8+",
-        "architecture": "Clean Architecture / Hexagonal"
+        "architecture": "Clean Architecture / Hexagonal (Nativo PyWebView)"
     }
+    protected_data = UpdateService.get_protected_data_summary()
 
     return render_template('about.html',
                            config=config,
                            profiles=profiles,
                            selected_profile=selected_profile,
                            active_plant_id=active_plant_id,
-                           system_meta=system_metadata)
+                           system_meta=system_metadata,
+                           protected_data=protected_data)
 
 @dashboard_bp.route('/audit-logs')
 @dashboard_bp.route('/logs')
