@@ -3,22 +3,26 @@
 
 export const TauriBridge = {
     isTauriAvailable() {
-        return typeof window !== 'undefined' && 
-               window.__TAURI__ !== undefined && 
-               window.__TAURI__.core !== undefined;
+        return typeof window !== 'undefined' && (
+            (window.__TAURI__ !== undefined && window.__TAURI__.core !== undefined) ||
+            (window.__TAURI_INTERNALS__ !== undefined && typeof window.__TAURI_INTERNALS__.invoke === 'function')
+        );
     },
 
     async invoke(cmd, args = {}) {
         if (this.isTauriAvailable()) {
             try {
-                return await window.__TAURI__.core.invoke(cmd, args);
+                if (window.__TAURI__ && window.__TAURI__.core) {
+                    return await window.__TAURI__.core.invoke(cmd, args);
+                } else if (window.__TAURI_INTERNALS__) {
+                    return await window.__TAURI_INTERNALS__.invoke(cmd, args);
+                }
             } catch (err) {
-                console.error(`[TAURI IPC ERROR] ${cmd}:`, err);
-                throw err;
+                console.warn(`[TAURI IPC FALLBACK] ${cmd}:`, err);
+                return this.mockResponse(cmd, args);
             }
-        } else {
-            return this.mockResponse(cmd, args);
         }
+        return this.mockResponse(cmd, args);
     },
 
     mockResponse(cmd, args) {

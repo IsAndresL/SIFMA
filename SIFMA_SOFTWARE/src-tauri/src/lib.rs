@@ -38,6 +38,7 @@ pub fn run() {
             commands::get_scientific_dossier,
             commands::get_crop_profiles,
             commands::get_audit_logs,
+            commands::get_users_list,
         ])
         .run(tauri::generate_context!())
         .expect("Error al ejecutar la aplicación SIFMA Desktop");
