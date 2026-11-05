@@ -1,0 +1,24 @@
+# Rust build artifacts
+src-tauri/target/
+**/target/
+
+# Python cache and environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+env/
+venv/
+.venv/
+
+# Desktop local databases (keep sifma.db in root untouched)
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

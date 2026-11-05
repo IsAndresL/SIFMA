@@ -1,0 +1,79 @@
+<!-- SIFMA — Módulo Dashboard (Estructura Semántica Pura) -->
+<div class="dashboard-grid">
+    <!-- FILA 1: TARJETAS KPI RESUMEN -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-label">Área Foliar Cenital</span>
+            <span class="material-icons-round kpi-icon">eco</span>
+        </div>
+        <div class="kpi-value" id="kpi-area">-- cm²</div>
+        <div class="kpi-meta">Último fenotipado válido</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-label">Altura Apical</span>
+            <span class="material-icons-round kpi-icon">height</span>
+        </div>
+        <div class="kpi-value" id="kpi-height">-- cm</div>
+        <div class="kpi-meta">Eje ortogonal lateral</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-label">Calibre de Tallo</span>
+            <span class="material-icons-round kpi-icon">straighten</span>
+        </div>
+        <div class="kpi-value" id="kpi-stem">-- mm</div>
+        <div class="kpi-meta">Gradiente basal Sobel</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-label">Índice Clorofílico</span>
+            <span class="material-icons-round kpi-icon">health_and_safety</span>
+        </div>
+        <div class="kpi-value" id="kpi-health">-- %</div>
+        <div class="kpi-meta">Salud y vigor fisiológico</div>
+    </div>
+
+    <!-- FILA 2: CONTENEDORES DE GRÁFICAS -->
+    <div class="chart-card chart-wide">
+        <div class="chart-header">
+            <h3>Perfil Microclimático de la Jornada (Temperatura y Radiación)</h3>
+            <span class="font-mono text-muted">Series temporales nativas</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-microclimate"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card chart-narrow">
+        <div class="chart-header">
+            <h3>Estado Fisicoquímico</h3>
+            <span class="font-mono text-muted">Nutrición y pH</span>
+        </div>
+        <div class="chem-status-list">
+            <div class="chem-item">
+                <span>pH de Solución:</span>
+                <strong id="val-ph" class="font-mono">--</strong>
+            </div>
+            <div class="chem-item">
+                <span>Electroconductividad:</span>
+                <strong id="val-ec" class="font-mono">-- µS/cm</strong>
+            </div>
+            <div class="chem-item">
+                <span>Oxígeno Disuelto:</span>
+                <strong id="val-do" class="font-mono">-- mg/L</strong>
+            </div>
+            <div class="chem-item">
+                <span>Turbidez:</span>
+                <strong id="val-turb" class="font-mono">-- NTU</strong>
+            </div>
+            <div class="chem-item">
+                <span>Bomba de Recirculación:</span>
+                <span class="status-badge badge-active" id="val-pump">ACTIVA</span>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+<div class="audit-module">
+    <!-- BARRA SUPERIOR DE AUDITORÍA -->
+    <section class="audit-header-card">
+        <div>
+            <h3 class="audit-title">Bitácora de Auditoría Forense y Seguridad</h3>
+            <p class="audit-sub">Registro inmutable de transacciones del sistema con sellado criptográfico</p>
+        </div>
+        <div class="audit-header-actions">
+            <span class="badge badge-emerald">
+                <span class="material-icons-round" style="font-size: 13px; margin-right: 4px;">verified</span>
+                Integridad SHA-256 Verificada
+            </span>
+            <button id="btn-refresh-logs" class="btn btn-secondary">
+                <span class="material-icons-round">refresh</span>
+                <span>Refrescar</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- TABLA DE LOGS -->
+    <section class="audit-table-card">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Marca de Tiempo</th>
+                        <th>Usuario</th>
+                        <th>Tipo de Evento</th>
+                        <th>Origen / IP</th>
+                        <th>Recurso Afectado</th>
+                        <th>Estado</th>
+                        <th>Hash Criptográfico (SHA-256)</th>
+                    </tr>
+                </thead>
+                <tbody id="audit-tbody">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

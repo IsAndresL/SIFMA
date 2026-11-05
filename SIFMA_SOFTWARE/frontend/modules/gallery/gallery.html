@@ -1,0 +1,69 @@
+<div class="gallery-module">
+    <!-- FILTROS DE GALERÍA -->
+    <section class="gallery-filter-card">
+        <div class="filter-controls">
+            <div class="form-group">
+                <label for="filter-plant">Filtrar por Planta</label>
+                <select id="filter-plant" class="form-select">
+                    <option value="all">Todas las Plantas (1 - 12)</option>
+                    <option value="1">Planta #1</option>
+                    <option value="2">Planta #2</option>
+                    <option value="3">Planta #3</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filter-sort">Ordenar por</label>
+                <select id="filter-sort" class="form-select">
+                    <option value="date_desc">Fecha (Más recientes primero)</option>
+                    <option value="date_asc">Fecha (Más antiguas primero)</option>
+                    <option value="area_desc">Mayor Área Foliar</option>
+                </select>
+            </div>
+        </div>
+        <div class="gallery-stats">
+            <span class="gallery-counter">Mostrando <strong id="gallery-count">6</strong> capturas fenotípicas</span>
+        </div>
+    </section>
+
+    <!-- GRID DE CAPTURAS FENOTÍPICAS -->
+    <section class="gallery-grid" id="gallery-items-container">
+        <!-- Renderizado dinámico de tarjetas fotográficas -->
+    </section>
+
+    <!-- MODAL LIGHTBOX PARA INSPECCIÓN DETALLADA -->
+    <div class="modal-backdrop" id="gallery-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h4 class="modal-title" id="modal-plant-title">Detalle de Captura Fenotípica</h4>
+                    <p class="modal-subtitle" id="modal-date-sub">2026-11-04 14:30 — Nivel 1</p>
+                </div>
+                <button class="modal-close-btn" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-preview-box">
+                    <img id="modal-preview-img" src="core/assets/sifma_sin_texto.svg" alt="Preview">
+                </div>
+                <div class="modal-metrics-sidebar">
+                    <h5 class="metrics-subheading">Biometría Registrada</h5>
+                    <div class="modal-bio-row">
+                        <span>Área Foliar:</span>
+                        <strong id="modal-bio-area" class="font-mono text-emerald">61.8 cm²</strong>
+                    </div>
+                    <div class="modal-bio-row">
+                        <span>Altura:</span>
+                        <strong id="modal-bio-height" class="font-mono text-amber">18.5 cm</strong>
+                    </div>
+                    <div class="modal-bio-row">
+                        <span>Tallo:</span>
+                        <strong id="modal-bio-stem" class="font-mono text-sky">4.8 mm</strong>
+                    </div>
+                    <div class="modal-bio-row">
+                        <span>Índice Fitosanitario:</span>
+                        <strong id="modal-bio-health" class="font-mono text-emerald">82.8%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

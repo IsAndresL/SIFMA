@@ -1,0 +1,51 @@
+<!-- SIFMA — Módulo Diagnóstico del Sistema (HTML Puro) -->
+<div class="system-container">
+    <div class="system-card">
+        <div class="card-header">
+            <h3>Arquitectura y Entorno de Ejecución</h3>
+            <span class="badge-status">Operativo</span>
+        </div>
+        
+        <table class="diag-table">
+            <tbody>
+                <tr>
+                    <td class="col-label">Arquitectura del Software:</td>
+                    <td><strong>SIFMA Desktop Híbrido (Tauri 2.0 + Python Engine)</strong></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Compilador de Núcleo:</td>
+                    <td id="diag-rust" class="font-mono">Rust 1.99.1 (LLVM nativo)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Motor de Persistencia:</td>
+                    <td class="font-mono">SQLite 3 (Modo WAL con transacciones ACID)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Subsistema de Visión e IA:</td>
+                    <td id="diag-python">Python 3.10+ (Subproceso Sidecar IPC)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Plataforma Host:</td>
+                    <td id="diag-os" class="font-mono">Microsoft Windows x86_64</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Contenedor Gráfico:</td>
+                    <td class="font-mono">Microsoft Edge WebView2 (Aceleración de Hardware)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="system-card">
+        <div class="card-header">
+            <h3>Protocolo de Comunicación de Hardware</h3>
+        </div>
+        <div class="serial-diag">
+            <p>El puerto serie opera mediante un hilo asíncrono no bloqueante en Rust (`serialport-rs`), desacoplado del renderizado de la interfaz.</p>
+            <div class="trama-preview">
+                <span class="trama-label">Formato de Trama Válido:</span>
+                <code>$pH,EC,Turb,DO,T_agua,T_ext,HR,Motor#</code>
+            </div>
+        </div>
+    </div>
+</div>

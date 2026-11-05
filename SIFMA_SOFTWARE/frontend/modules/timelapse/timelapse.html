@@ -1,0 +1,84 @@
+<div class="timelapse-module">
+    <!-- BARRA SUPERIOR DE CONTROL -->
+    <section class="timelapse-header-card">
+        <div class="header-left">
+            <h3 class="timelapse-title">Evolución Fenotípica y Time-Lapse Temporal</h3>
+            <p class="timelapse-sub">Seguimiento morfológico continuo a lo largo del ciclo vegetativo</p>
+        </div>
+        <div class="header-right">
+            <select id="timelapse-plant-select" class="form-select">
+                <option value="1">Planta #1 (Cebollín de Rama)</option>
+                <option value="2">Planta #2</option>
+                <option value="3">Planta #3</option>
+            </select>
+        </div>
+    </section>
+
+    <!-- REPRODUCTOR TIME-LAPSE Y PANEL DE EVOLUCIÓN -->
+    <div class="player-grid">
+        <!-- ÁREA DEL REPRODUCTOR -->
+        <section class="player-card">
+            <div class="screen-container">
+                <canvas id="timelapseCanvas" width="600" height="380"></canvas>
+                <div class="screen-overlay-info">
+                    <span id="player-day-badge">Día 1 / 12</span>
+                    <span id="player-date-badge" class="font-mono">2026-10-20</span>
+                </div>
+            </div>
+
+            <!-- CONTROLES DE REPRODUCCIÓN -->
+            <div class="player-controls">
+                <div class="buttons-row">
+                    <button id="btn-play-pause" class="btn btn-primary">
+                        <span class="material-icons-round" id="play-icon">play_arrow</span>
+                        <span id="play-text">Reproducir</span>
+                    </button>
+                    <button id="btn-reset-timeline" class="btn btn-secondary">
+                        <span class="material-icons-round">replay</span>
+                    </button>
+                    <div class="speed-selector">
+                        <button class="speed-btn active" data-speed="500">1x</button>
+                        <button class="speed-btn" data-speed="250">2x</button>
+                        <button class="speed-btn" data-speed="100">5x</button>
+                    </div>
+                </div>
+
+                <div class="scrubber-row">
+                    <input type="range" id="timeline-slider" min="0" max="11" value="0" class="time-range">
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL DE DINÁMICA DE CRECIMIENTO -->
+        <section class="growth-panel">
+            <div class="panel-card">
+                <h4 class="card-title">Cinética de Crecimiento en el Día</h4>
+                <div class="growth-metric-list">
+                    <div class="g-item">
+                        <span class="g-label">Área Foliar Registrada</span>
+                        <span class="g-val text-emerald" id="time-foliar-area">24.0 cm²</span>
+                    </div>
+                    <div class="g-item">
+                        <span class="g-label">Altura del Tallo</span>
+                        <span class="g-val text-amber" id="time-height">8.0 cm</span>
+                    </div>
+                    <div class="g-item">
+                        <span class="g-label">Tasa de Expansión (ΔA/Δt)</span>
+                        <span class="g-val text-indigo" id="time-rate">+1.42 cm²/día</span>
+                    </div>
+                    <div class="g-item">
+                        <span class="g-label">Fase Fenológica</span>
+                        <span class="badge badge-emerald" id="time-stage">Vegetativo Activo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="growth-chart-card">
+                <h4 class="card-title">Curva Sigmoidea de Crecimiento</h4>
+                <div class="timelapse-chart-box">
+                    <canvas id="timelapseGrowthChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

@@ -1,0 +1,177 @@
+/* SIFMA — Estilos Modulares: Time-Lapse */
+
+.timelapse-module {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.timelapse-header-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timelapse-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.timelapse-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.player-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+}
+
+@media (max-width: 1024px) {
+    .player-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.player-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.screen-container {
+    background: #090d16;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 380px;
+}
+
+#timelapseCanvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.screen-overlay-info {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: flex;
+    gap: 8px;
+}
+
+#player-day-badge, #player-date-badge {
+    background: rgba(15, 23, 42, 0.85);
+    color: #e2e8f0;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.player-controls {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.buttons-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.speed-selector {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-base);
+    padding: 3px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.speed-btn {
+    background: none;
+    border: none;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.speed-btn.active {
+    background: var(--bg-surface);
+    color: var(--text-main);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.scrubber-row {
+    display: flex;
+    align-items: center;
+}
+
+.time-range {
+    width: 100%;
+    accent-color: var(--accent-emerald);
+    cursor: pointer;
+}
+
+.growth-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.panel-card, .growth-chart-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.growth-metric-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.g-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 12px;
+}
+
+.g-label {
+    color: var(--text-secondary);
+}
+
+.g-val {
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.timelapse-chart-box {
+    height: 180px;
+    margin-top: 10px;
+    position: relative;
+}

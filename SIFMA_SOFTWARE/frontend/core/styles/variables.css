@@ -1,0 +1,46 @@
+/* SIFMA — Paleta de Colores y Variables Institucionales */
+:root {
+    /* Fondos y Superficies */
+    --bg-base: #f1f5f9;
+    --bg-surface: #ffffff;
+    --bg-sidebar: #0f172a;
+    --bg-sidebar-hover: #1e293b;
+    --bg-sidebar-active: #334155;
+    --bg-muted: #f8fafc;
+    --bg-input: #ffffff;
+
+    /* Textos */
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-dim: #94a3b8;
+    --text-sidebar: #f8fafc;
+    --text-sidebar-dim: #94a3b8;
+
+    /* Acentos y Marca */
+    --accent-emerald: #059669;
+    --accent-emerald-hover: #047857;
+    --accent-emerald-subtle: #d1fae5;
+    --accent-primary: #0f172a;
+    --accent-blue: #0284c7;
+    --accent-amber: #d97706;
+    --accent-rose: #e11d48;
+
+    /* Bordes y Líneas */
+    --border-subtle: #e2e8f0;
+    --border-color: #cbd5e1;
+    --border-dark: #334155;
+
+    /* Sombras y Elevación */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+
+    /* Radios */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+
+    /* Transiciones */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+}

@@ -1,0 +1,126 @@
+<div class="telemetry-module">
+    <!-- BARRA SUPERIOR DE ESTADO SERIAL -->
+    <section class="serial-status-card">
+        <div class="serial-info">
+            <span class="status-indicator online"></span>
+            <div>
+                <span class="serial-title">Enlace de Telemetría Serial Microcontrolador</span>
+                <span class="serial-sub" id="serial-status-text">Conectado a COM3 @ 115200 baud — Frecuencia: 1 Hz</span>
+            </div>
+        </div>
+        <div class="serial-controls">
+            <select id="serial-port-select" class="form-select">
+                <option value="COM3">COM3 (SIFMA Node / Arduino Mega)</option>
+                <option value="COM1">COM1 (Estándar)</option>
+            </select>
+            <button id="btn-toggle-serial" class="btn btn-secondary">Reconectar</button>
+        </div>
+    </section>
+
+    <!-- CARDS DE MÉTRICAS EN TIEMPO REAL -->
+    <section class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-name">Temp. Solución Nutritiva</span>
+                <span class="material-icons-round text-emerald">water_drop</span>
+            </div>
+            <div class="metric-value-row">
+                <span class="metric-value" id="val-water-temp">--</span>
+                <span class="metric-unit">°C</span>
+            </div>
+            <div class="metric-footer">
+                <span class="badge badge-emerald">Rango Óptimo: 20-25 °C</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-name">Temperatura Ambiente</span>
+                <span class="material-icons-round text-amber">thermostat</span>
+            </div>
+            <div class="metric-value-row">
+                <span class="metric-value" id="val-air-temp">--</span>
+                <span class="metric-unit">°C</span>
+            </div>
+            <div class="metric-footer">
+                <span class="badge badge-amber">Rango Óptimo: 22-28 °C</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-name">Humedad Relativa</span>
+                <span class="material-icons-round text-sky">cloud</span>
+            </div>
+            <div class="metric-value-row">
+                <span class="metric-value" id="val-humidity">--</span>
+                <span class="metric-unit">%</span>
+            </div>
+            <div class="metric-footer">
+                <span class="badge badge-sky">Rango: 60-75 %</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-name">Potencial Hidrógeno (pH)</span>
+                <span class="material-icons-round text-indigo">science</span>
+            </div>
+            <div class="metric-value-row">
+                <span class="metric-value" id="val-ph">--</span>
+                <span class="metric-unit">pH</span>
+            </div>
+            <div class="metric-footer">
+                <span class="badge badge-indigo">Objetivo: 6.0 - 6.5</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-name">Conductividad Eléctrica</span>
+                <span class="material-icons-round text-rose">bolt</span>
+            </div>
+            <div class="metric-value-row">
+                <span class="metric-value" id="val-ec">--</span>
+                <span class="metric-unit">µS/cm</span>
+            </div>
+            <div class="metric-footer">
+                <span class="badge badge-rose">Nutrición: 1000 - 1500</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-name">Oxígeno Disuelto / Nivel</span>
+                <span class="material-icons-round text-teal">opacity</span>
+            </div>
+            <div class="metric-value-row">
+                <span class="metric-value" id="val-do">--</span>
+                <span class="metric-unit">mg/L</span>
+            </div>
+            <div class="metric-footer">
+                <span class="badge badge-teal" id="val-tank-level">Tanque: 88.5% | Bomba Activa</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- GRÁFICO TEMPORAL DE TELEMETRÍA -->
+    <section class="telemetry-chart-section">
+        <div class="chart-header">
+            <div>
+                <h3 class="chart-title">Serie Temporal de Telemetría Microclimática</h3>
+                <p class="chart-subtitle">Historial continuo de variables hidropónicas de la torre</p>
+            </div>
+            <div class="chart-actions">
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-filter active" data-metric="all">Todas</button>
+                    <button class="btn btn-sm btn-filter" data-metric="temp">Temperaturas</button>
+                    <button class="btn btn-sm btn-filter" data-metric="ph_ec">pH & EC</button>
+                </div>
+            </div>
+        </div>
+        <div class="chart-canvas-container">
+            <canvas id="telemetryHistoryChart"></canvas>
+        </div>
+    </section>
+</div>

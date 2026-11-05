@@ -1,0 +1,113 @@
+<div class="cross-analysis-module">
+    <!-- CONTROLES DE CRUCE -->
+    <section class="controls-card">
+        <div class="controls-header">
+            <div>
+                <h3 class="controls-title">Configuración de Regresión y Cruce Bivariable</h3>
+                <p class="controls-sub">Seleccione las variables microclimáticas y fenotípicas para evaluar interdependencia estadística</p>
+            </div>
+            <button id="btn-recalc" class="btn btn-primary">
+                <span class="material-icons-round">analytics</span>
+                <span>Calcular Regresión</span>
+            </button>
+        </div>
+        <div class="selectors-row">
+            <div class="form-group">
+                <label for="select-var-x">Variable Independiente (X)</label>
+                <select id="select-var-x" class="form-select">
+                    <option value="water_temp" selected>Temperatura Solución Nutritiva (°C)</option>
+                    <option value="air_temp">Temperatura Ambiente (°C)</option>
+                    <option value="humidity">Humedad Relativa (%)</option>
+                    <option value="ec">Conductividad Eléctrica (µS/cm)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="select-var-y">Variable Dependiente (Y)</label>
+                <select id="select-var-y" class="form-select">
+                    <option value="foliar_area" selected>Área Foliar Total (cm²)</option>
+                    <option value="plant_height">Altura de la Planta (cm)</option>
+                    <option value="stem_diameter">Diámetro del Tallo (mm)</option>
+                    <option value="health_index">Índice Fitosanitario (%)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="select-crop-cycle">Lote / Ciclo Agronómico</label>
+                <select id="select-crop-cycle" class="form-select">
+                    <option value="all">Torre Completa (12 Plantas - Ciclo 2026-A1)</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- RESULTADOS Y DISPERSIÓN -->
+    <div class="analysis-split-grid">
+        <!-- GRÁFICO DE DISPERSIÓN CON LÍNEA DE TENDENCIA -->
+        <section class="scatter-card">
+            <div class="card-header">
+                <h4 class="card-title">Dispersión y Ajuste Lineal (Ordinary Least Squares)</h4>
+                <div class="regression-badge-group">
+                    <span class="badge badge-emerald" id="badge-pearson-r">r = 0.842</span>
+                    <span class="badge badge-indigo" id="badge-r2">R² = 0.709</span>
+                </div>
+            </div>
+            <div class="chart-canvas-container">
+                <canvas id="crossScatterChart"></canvas>
+            </div>
+        </section>
+
+        <!-- PANEL DE MÉTRICAS ESTADÍSTICAS E INTERPRETACIÓN -->
+        <section class="stats-panel">
+            <div class="stats-card">
+                <h4 class="card-title">Métricas de Correlación Paramétrica</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Coeficiente Pearson (r)</span>
+                        <span class="stat-val text-emerald" id="stat-r">0.842</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Coef. Determinación (R²)</span>
+                        <span class="stat-val text-indigo" id="stat-r2">0.709</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Pendiente (m)</span>
+                        <span class="stat-val" id="stat-slope">+1.84 cm²/°C</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Intercepto (b)</span>
+                        <span class="stat-val" id="stat-intercept">12.1 cm²</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Significancia (p-value)</span>
+                        <span class="stat-val text-teal" id="stat-p">< 0.001</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Muestras Evaluadas (N)</span>
+                        <span class="stat-val" id="stat-n">25 capturas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="interpretation-card">
+                <div class="interp-header">
+                    <span class="material-icons-round text-emerald">psychology</span>
+                    <span class="interp-title">Conclusión Fisiológica Automatizada</span>
+                </div>
+                <p class="interp-body" id="interp-text">
+                    Correlación fuertemente positiva estadísticamente significativa (p < 0.001). 
+                    Un incremento térmico controlado dentro de la ventana óptima (22°C - 26°C) 
+                    estimula la tasa de expansión foliar por mayor absorción hídrica y cinética enzimática.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- MATRIZ DE CORRELACIÓN GENERAL DE PEARSON -->
+    <section class="matrix-section">
+        <h4 class="card-title">Matriz Completa de Correlación Intervariable (Pearson r)</h4>
+        <div class="matrix-table-wrapper">
+            <table class="matrix-table" id="correlation-matrix-table">
+                <!-- Generado dinámicamente -->
+            </table>
+        </div>
+    </section>
+</div>

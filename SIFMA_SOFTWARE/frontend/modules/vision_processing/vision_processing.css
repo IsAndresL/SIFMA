@@ -1,0 +1,186 @@
+/* SIFMA — Estilos Modulares: Procesamiento de Visión */
+
+.vision-module {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vision-header-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vision-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.vision-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vision-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vision-workspace-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+}
+
+@media (max-width: 1024px) {
+    .vision-workspace-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.preview-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-tabs {
+    display: flex;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    color: var(--accent-emerald);
+    border-bottom-color: var(--accent-emerald);
+    background: var(--bg-surface);
+    font-weight: 600;
+}
+
+.preview-viewport {
+    position: relative;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #090d16;
+    min-height: 400px;
+}
+
+.canvas-wrapper {
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#visionPreviewCanvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.stage-badge-overlay {
+    position: absolute;
+    bottom: 12px;
+    left: 16px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #e2e8f0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.biometrics-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.biometrics-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.biometrics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.bio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.bio-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.bio-val-group {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.bio-val {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.bio-unit {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.export-actions-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.history-table-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+}

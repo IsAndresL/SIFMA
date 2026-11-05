@@ -1,0 +1,43 @@
+<!-- SIFMA — Módulo Gestión de Usuarios y Roles (HTML Puro) -->
+<div class="user-container">
+    <div class="user-card">
+        <div class="card-header">
+            <h3>Directorio de Usuarios y Privilegios RBAC</h3>
+            <button class="btn-primary" id="btn-add-user">
+                <span class="material-icons-round">person_add</span>
+                <span>Nuevo Usuario</span>
+            </button>
+        </div>
+
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Nombre de Usuario</th>
+                    <th>Nombre Completo</th>
+                    <th>Rol en el Sistema</th>
+                    <th>Estado</th>
+                    <th>Última Conexión</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+                <tr>
+                    <td><strong>admin</strong></td>
+                    <td>Administrador del Sistema SIFMA</td>
+                    <td><span class="role-badge role-admin">Administrador</span></td>
+                    <td><span class="status-active">Activo</span></td>
+                    <td class="font-mono">Hoy 23:45</td>
+                    <td><em>Principal</em></td>
+                </tr>
+                <tr>
+                    <td><strong>investigador1</strong></td>
+                    <td>Ing. Agrónomo Investigador</td>
+                    <td><span class="role-badge role-research">Investigador</span></td>
+                    <td><span class="status-active">Activo</span></td>
+                    <td class="font-mono">Ayer 18:20</td>
+                    <td><button class="btn-sm">Editar</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

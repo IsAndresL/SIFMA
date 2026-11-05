@@ -1,0 +1,143 @@
+<div class="dossier-module">
+    <!-- BARRA SUPERIOR DE ACCIONES DEL DOSSIER -->
+    <section class="dossier-toolbar">
+        <div>
+            <h3 class="toolbar-title">Dossier Científico y Fenotípico Consolidado</h3>
+            <p class="toolbar-sub">Informe técnico para validación agronómica y depósito ante la DNDA</p>
+        </div>
+        <div class="toolbar-actions">
+            <button id="btn-export-csv" class="btn btn-secondary">
+                <span class="material-icons-round">file_download</span>
+                <span>Descargar CSV</span>
+            </button>
+            <button id="btn-print-pdf" class="btn btn-primary">
+                <span class="material-icons-round">print</span>
+                <span>Generar Informe Oficial</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- HOJA FORMAL DEL DOSSIER TÉCNICO -->
+    <article class="dossier-sheet" id="dossier-printable-area">
+        <!-- ENCABEZADO INSTITUCIONAL -->
+        <header class="sheet-header">
+            <div class="sheet-brand">
+                <img src="core/assets/sifma_sin_texto.svg" class="sheet-logo" alt="SIFMA">
+                <div>
+                    <h2 class="sheet-title">SIFMA — SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AGRÍCOLA</h2>
+                    <p class="sheet-sub">INFORME TÉCNICO DE CICLO FENOTÍPICO EN TORRE HIDROPÓNICA VERTICAL</p>
+                </div>
+            </div>
+            <div class="sheet-metadata">
+                <div class="meta-row"><strong>CÓDIGO:</strong> <span class="font-mono">SIFMA-DOC-ARQ-2026</span></div>
+                <div class="meta-row"><strong>VERSIÓN:</strong> <span>1.0.0 (Oficial)</span></div>
+                <div class="meta-row"><strong>FECHA:</strong> <span>5 de noviembre de 2026</span></div>
+                <div class="meta-row"><strong>TRÁMITE:</strong> <span>Depósito DNDA Colombia</span></div>
+            </div>
+        </header>
+
+        <!-- RESUMEN EJECUTIVO DEL CICLO -->
+        <section class="sheet-section">
+            <h4 class="section-title">1. Resumen de Ejecución y Parámetros del Ensayo</h4>
+            <div class="summary-meta-grid">
+                <div class="summary-item">
+                    <span class="s-label">Especie Botánica</span>
+                    <strong class="s-val" id="dossier-species">Allium fistulosum (Cebollín de Rama)</strong>
+                </div>
+                <div class="summary-item">
+                    <span class="s-label">Código de Ciclo</span>
+                    <strong class="s-val font-mono" id="dossier-cycle">CICLO-2026-A1</strong>
+                </div>
+                <div class="summary-item">
+                    <span class="s-label">Torre / Población</span>
+                    <strong class="s-val">Torre #1 (12 Unidades Fisiológicas)</strong>
+                </div>
+                <div class="summary-item">
+                    <span class="s-label">Duración del Monitoreo</span>
+                    <strong class="s-val">28 Días Calendario</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- TABLA DE INDICADORES AGRO-PRODUCTIVOS -->
+        <section class="sheet-section">
+            <h4 class="section-title">2. Métricas Estadísticas de Crecimiento y Eficiencia</h4>
+            <table class="dossier-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro Evaluado</th>
+                        <th>Media Experimental (x̄)</th>
+                        <th>Desviación Estándar (σ)</th>
+                        <th>Rango Óptimo Agronómico</th>
+                        <th>Evaluación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tasa de Crecimiento Foliar</td>
+                        <td class="font-mono">1.42 cm²/día</td>
+                        <td class="font-mono">± 0.18</td>
+                        <td>1.20 - 1.60 cm²/día</td>
+                        <td><span class="badge badge-emerald">Óptimo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Temperatura Solución Nutritiva</td>
+                        <td class="font-mono">24.2 °C</td>
+                        <td class="font-mono">± 0.65</td>
+                        <td>20.0 - 25.0 °C</td>
+                        <td><span class="badge badge-emerald">Controlado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Potencial de Hidrógeno (pH)</td>
+                        <td class="font-mono">6.24</td>
+                        <td class="font-mono">± 0.14</td>
+                        <td>6.00 - 6.50</td>
+                        <td><span class="badge badge-emerald">Estable</span></td>
+                    </tr>
+                    <tr>
+                        <td>Conductividad Eléctrica (EC)</td>
+                        <td class="font-mono">1245 µS/cm</td>
+                        <td class="font-mono">± 42</td>
+                        <td>1000 - 1500 µS/cm</td>
+                        <td><span class="badge badge-emerald">Equilibrado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Eficiencia Hídrica Estimada (WUE)</td>
+                        <td class="font-mono">96.4%</td>
+                        <td class="font-mono">± 1.2</td>
+                        <td>> 90.0%</td>
+                        <td><span class="badge badge-emerald">Sobresaliente</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- CONCLUSIÓN AGRO-FISIOLÓGICA -->
+        <section class="sheet-section">
+            <h4 class="section-title">3. Hallazgos y Conclusiones Fisiológicas Automatizadas</h4>
+            <div class="sheet-paragraph-box">
+                <p>
+                    El análisis de regresión paramétrica bivariable confirmó una correlación positiva 
+                    significativa (<strong>r = 0.842, p < 0.001</strong>) entre la temperatura controlada 
+                    de la solución nutritiva y la tasa de expansión foliar durante el estadio vegetativo acelerado.
+                    El sistema hidropónico vertical cerrado garantizó una recirculación con una pérdida de solución
+                    menor al 3.6%, demostrando la viabilidad tecnológica del modelo modular.
+                </p>
+            </div>
+        </section>
+
+        <!-- FIRMA Y VALIDACIÓN TÉCNICA -->
+        <footer class="sheet-footer-sign">
+            <div class="sign-block">
+                <div class="sign-line"></div>
+                <span class="sign-name">Ing. Agrónomo Encargado</span>
+                <span class="sign-role">Validación Científica del Cultivo</span>
+            </div>
+            <div class="sign-block">
+                <div class="sign-line"></div>
+                <span class="sign-name">Auditor de Sistemas SIFMA</span>
+                <span class="sign-role">Verificación Criptográfica de Registros</span>
+            </div>
+        </footer>
+    </article>
+</div>

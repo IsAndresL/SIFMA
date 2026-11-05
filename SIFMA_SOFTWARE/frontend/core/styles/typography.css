@@ -1,0 +1,32 @@
+/* SIFMA — Tipografía Institucional Oficial */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+
+body {
+    font-family: 'Literata', Georgia, serif;
+    color: var(--text-main);
+    background-color: var(--bg-base);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+h1, h2, h3 {
+    font-family: 'Philosopher', serif;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+h4, h5, h6, button, input, select, .ui-label, .sidebar-nav {
+    font-family: 'Inter', sans-serif;
+}
+
+code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+}
+
+.material-icons-round {
+    font-size: 18px;
+    vertical-align: middle;
+}

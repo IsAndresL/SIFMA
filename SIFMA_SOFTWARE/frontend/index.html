@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola</title>
+
+    <!-- Estilos Core Globales -->
+    <link rel="stylesheet" href="core/styles/reset.css">
+    <link rel="stylesheet" href="core/styles/variables.css">
+    <link rel="stylesheet" href="core/styles/typography.css">
+    <link rel="stylesheet" href="core/styles/layout.css">
+    
+    <!-- Librería Chart.js Local -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- BARRA LATERAL NATIVA -->
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <img src="core/assets/sifma_sin_texto.svg" class="sidebar-logo" alt="Logo SIFMA">
+                <div>
+                    <div class="sidebar-brand-title">SIFMA</div>
+                    <div class="sidebar-brand-sub">Escritorio v2.0</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav-list">
+                <li class="sidebar-nav-section-title">Análisis y Monitoreo</li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn active" data-module="dashboard">
+                        <span class="material-icons-round">dashboard</span>
+                        <span>Resumen Diario</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="telemetry_sensors">
+                        <span class="material-icons-round">sensors</span>
+                        <span>Sensores de Microclima</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="cross_analysis">
+                        <span class="material-icons-round">insights</span>
+                        <span>Cruce Multivariable</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="scientific_dossier">
+                        <span class="material-icons-round">description</span>
+                        <span>Dossier y Reportes</span>
+                    </button>
+                </li>
+
+                <li class="sidebar-nav-section-title">Fenotipado Foliar</li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="vision_processing">
+                        <span class="material-icons-round">center_focus_strong</span>
+                        <span>Procesamiento de Lotes</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="gallery">
+                        <span class="material-icons-round">photo_library</span>
+                        <span>Galería Histórica</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="timelapse">
+                        <span class="material-icons-round">slow_motion_video</span>
+                        <span>Time-Lapse Evolutivo</span>
+                    </button>
+                </li>
+
+                <li class="sidebar-nav-section-title">Sistema y Control</li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="crop_config">
+                        <span class="material-icons-round">eco</span>
+                        <span>Perfiles Agronómicos</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="audit_logs">
+                        <span class="material-icons-round">security</span>
+                        <span>Auditoría y Seguridad</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="user_management">
+                        <span class="material-icons-round">manage_accounts</span>
+                        <span>Usuarios y Roles</span>
+                    </button>
+                </li>
+                <li class="sidebar-nav-item">
+                    <button class="sidebar-nav-btn" data-module="system_info">
+                        <span class="material-icons-round">info</span>
+                        <span>Diagnóstico del Sistema</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <span>Motor: Rust / Python</span>
+                <span class="material-icons-round" style="font-size: 14px; color: var(--accent-emerald);">check_circle</span>
+            </div>
+        </aside>
+
+        <!-- CONTENEDOR PRINCIPAL -->
+        <main class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <span class="topbar-title" id="page-title">Resumen Ejecutivo de la Jornada</span>
+                </div>
+                <div class="topbar-right">
+                    <span class="font-mono" style="font-size: 11px; color: var(--text-muted);" id="live-clock">--:--:--</span>
+                    <span style="font-size: 11.5px; font-weight: 600; color: var(--accent-emerald);">Torre Hidropónica #1</span>
+                </div>
+            </header>
+
+            <section class="app-viewport" id="app-viewport">
+                <!-- Vistas inyectadas dinámicamente aquí -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Script de Inicialización -->
+    <script type="module">
+        import { NavigationRouter } from './core/scripts/navigation.js';
+
+        const router = new NavigationRouter('app-viewport');
+        window.sifmaRouter = router;
+
+        document.querySelectorAll('.sidebar-nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = btn.dataset.module;
+                if (target) {
+                    router.loadModule(target);
+                }
+            });
+        });
+
+        // Reloj en vivo
+        setInterval(() => {
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                const now = new Date();
+                clockEl.textContent = now.toLocaleTimeString('es-CO');
+            }
+        }, 1000);
+
+        // Cargar vista inicial
+        router.loadModule('dashboard');
+    </script>
+</body>
+</html>

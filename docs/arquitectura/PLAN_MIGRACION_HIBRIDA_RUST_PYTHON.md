@@ -244,3 +244,4 @@ SIFMA/
 - Criterios de Aceptación:
   - Instalador ejecutable autónomo sin requerir instalación manual de Python en el sistema anfitrión.
   - Memoria RAM en reposo $\le 65$ MB; tiempo de inicio $\le 300$ ms.
+

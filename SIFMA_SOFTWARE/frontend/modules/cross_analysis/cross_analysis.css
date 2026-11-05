@@ -1,0 +1,183 @@
+/* SIFMA — Estilos Modulares: Cruce Multivariable */
+
+.cross-analysis-module {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.controls-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.controls-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.controls-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.selectors-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.analysis-split-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+}
+
+@media (max-width: 1024px) {
+    .analysis-split-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.scatter-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.regression-badge-group {
+    display: flex;
+    gap: 8px;
+}
+
+.chart-canvas-container {
+    height: 320px;
+    position: relative;
+    width: 100%;
+}
+
+.stats-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stats-card, .interpretation-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.stat-val {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.interpretation-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.interp-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.interp-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.interp-body {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.matrix-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+
+.matrix-table-wrapper {
+    overflow-x: auto;
+    margin-top: 14px;
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: center;
+}
+
+.matrix-table th, .matrix-table td {
+    padding: 10px 8px;
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+}
+
+.matrix-table th {
+    background: var(--bg-base);
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.cell-pos-high { background: rgba(16, 185, 129, 0.2); color: #065f46; font-weight: 700; }
+.cell-pos-med { background: rgba(16, 185, 129, 0.08); color: #047857; }
+.cell-neg-high { background: rgba(244, 63, 94, 0.2); color: #9f1239; font-weight: 700; }
+.cell-neg-med { background: rgba(244, 63, 94, 0.08); color: #be123c; }
+.cell-neutral { background: var(--bg-surface); color: var(--text-muted); }

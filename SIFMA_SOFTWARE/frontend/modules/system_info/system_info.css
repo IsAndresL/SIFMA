@@ -1,0 +1,63 @@
+/* SIFMA — Estilos de Información del Sistema */
+.system-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 900px;
+}
+
+.system-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+}
+
+.diag-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.diag-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.col-label {
+    width: 240px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.serial-diag p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.trama-preview {
+    background-color: var(--bg-muted);
+    border: 1px solid var(--border-color);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.trama-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-main);
+}

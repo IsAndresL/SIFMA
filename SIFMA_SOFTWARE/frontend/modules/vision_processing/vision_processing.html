@@ -1,0 +1,122 @@
+<div class="vision-module">
+    <!-- BARRA SUPERIOR DE ACCIONES -->
+    <section class="vision-header-card">
+        <div class="vision-title-box">
+            <h3 class="vision-title">Motor de Fenotipado Foliar y Visión por Computador</h3>
+            <p class="vision-sub">Pipeline desacoplado en Python Sidecar (OpenCV / NumPy / PyTorch)</p>
+        </div>
+        <div class="vision-actions">
+            <select id="select-plant-target" class="form-select">
+                <option value="1">Planta #1 (Cebollín - Nivel 1)</option>
+                <option value="2">Planta #2 (Cebollín - Nivel 2)</option>
+                <option value="3">Planta #3 (Cebollín - Nivel 3)</option>
+            </select>
+            <button id="btn-run-vision" class="btn btn-primary">
+                <span class="material-icons-round">play_arrow</span>
+                <span>Procesar en Sidecar</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- ÁREA DE INSPECCIÓN VISUAL Y PIPELINE -->
+    <div class="vision-workspace-grid">
+        <!-- VISUALIZADOR MULTI-ETAPA -->
+        <section class="preview-card">
+            <div class="preview-tabs">
+                <button class="tab-btn active" data-step="rgb">1. Imagen RGB Original</button>
+                <button class="tab-btn" data-step="exg">2. Filtro ExG (2G - R - B)</button>
+                <button class="tab-btn" data-step="otsu">3. Binarización Otsu</button>
+                <button class="tab-btn" data-step="contour">4. Contornos & Fenotipado</button>
+            </div>
+            <div class="preview-viewport">
+                <div class="canvas-wrapper">
+                    <!-- Canvas interactivo con renderizado de imagen y overlays -->
+                    <canvas id="visionPreviewCanvas" width="640" height="480"></canvas>
+                </div>
+                <div class="stage-badge-overlay" id="stage-badge">Etapa: RGB Original</div>
+            </div>
+        </section>
+
+        <!-- PANEL DE MÉTRICAS BIOMÉTRICAS DETECTADAS -->
+        <section class="biometrics-panel">
+            <div class="biometrics-card">
+                <h4 class="card-title">Biometría Foliar Extraída</h4>
+                <div class="biometrics-list">
+                    <div class="bio-item">
+                        <span class="bio-label">Área Foliar Proyectada</span>
+                        <div class="bio-val-group">
+                            <span class="bio-val text-emerald" id="bio-foliar-area">61.8</span>
+                            <span class="bio-unit">cm²</span>
+                        </div>
+                    </div>
+                    <div class="bio-item">
+                        <span class="bio-label">Altura Vegetativa</span>
+                        <div class="bio-val-group">
+                            <span class="bio-val text-amber" id="bio-plant-height">18.5</span>
+                            <span class="bio-unit">cm</span>
+                        </div>
+                    </div>
+                    <div class="bio-item">
+                        <span class="bio-label">Diámetro Basal del Tallo</span>
+                        <div class="bio-val-group">
+                            <span class="bio-val text-sky" id="bio-stem-diameter">4.8</span>
+                            <span class="bio-unit">mm</span>
+                        </div>
+                    </div>
+                    <div class="bio-item">
+                        <span class="bio-label">Cobertura Verde (ExG > 0)</span>
+                        <div class="bio-val-group">
+                            <span class="bio-val" id="bio-coverage">38.4</span>
+                            <span class="bio-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="bio-item">
+                        <span class="bio-label">Índice Fitosanitario Salud</span>
+                        <div class="bio-val-group">
+                            <span class="bio-val text-emerald" id="bio-health">82.8</span>
+                            <span class="bio-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="bio-item">
+                        <span class="bio-label">Tiempo Cómputo Sidecar</span>
+                        <div class="bio-val-group">
+                            <span class="bio-val font-mono" id="bio-latency">184</span>
+                            <span class="bio-unit">ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="export-actions-card">
+                <button id="btn-save-db" class="btn btn-secondary w-full">
+                    <span class="material-icons-round">save</span>
+                    <span>Guardar en Base de Datos</span>
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- SESIONES HISTÓRICAS RECIENTES -->
+    <section class="history-table-card">
+        <h4 class="card-title">Registro de Sesiones de Fenotipado Recientes</h4>
+        <div class="table-container">
+            <table class="data-table" id="table-vision-sessions">
+                <thead>
+                    <tr>
+                        <th>ID Sesión</th>
+                        <th>Planta</th>
+                        <th>Fecha / Hora</th>
+                        <th>Área (cm²)</th>
+                        <th>Altura (cm)</th>
+                        <th>Tallo (mm)</th>
+                        <th>Salud (%)</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="vision-sessions-tbody">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
