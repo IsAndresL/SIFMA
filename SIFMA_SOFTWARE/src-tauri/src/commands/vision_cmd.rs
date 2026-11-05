@@ -63,7 +63,7 @@ pub fn list_capture_sessions(plant_id: Option<i32>) -> Vec<CaptureSessionItemDTO
 }
 
 #[tauri::command]
-pub fn trigger_vision_processing(image_path: String, crop_id: i32) -> VisionProcessResultDTO {
+pub fn trigger_vision_processing(_image_path: String, _crop_id: i32) -> VisionProcessResultDTO {
     VisionProcessResultDTO {
         status: "success".into(),
         session_id: 102,
@@ -78,7 +78,7 @@ pub fn trigger_vision_processing(image_path: String, crop_id: i32) -> VisionProc
 }
 
 #[tauri::command]
-pub fn get_timelapse_frames(plant_id: Option<i32>) -> Vec<TimelapseFrameDTO> {
+pub fn get_timelapse_frames(_plant_id: Option<i32>) -> Vec<TimelapseFrameDTO> {
     let mut frames = Vec::new();
     for i in 1..=12 {
         frames.push(TimelapseFrameDTO {

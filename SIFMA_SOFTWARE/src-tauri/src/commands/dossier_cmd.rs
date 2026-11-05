@@ -17,7 +17,7 @@ pub struct ScientificDossierDTO {
 }
 
 #[tauri::command]
-pub fn get_scientific_dossier(plant_id: Option<i32>) -> ScientificDossierDTO {
+pub fn get_scientific_dossier(_plant_id: Option<i32>) -> ScientificDossierDTO {
     ScientificDossierDTO {
         title: "Dossier Científico y Fenotípico de Torre Hidropónica SIFMA".into(),
         cycle_code: "CICLO-2026-A1".into(),

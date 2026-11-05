@@ -28,3 +28,14 @@ impl DbConnection {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_open_in_memory_and_file() {
+        let conn = DbConnection::open_in_memory().unwrap();
+        assert!(conn.is_autocommit());
+    }
+}
+
