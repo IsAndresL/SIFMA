@@ -170,9 +170,8 @@ class InstallerBridge:
 
     def finish_installer(self, launch_now: bool = True):
         clean_env = get_clean_subprocess_env()
-        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | getattr(
-            subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200
-        )
+        new_group_flag = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+        no_win_flag = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
 
         if _INSTALL_STATE.get("mode") == "install" and launch_now:
             exe_path = _INSTALL_STATE.get("installed_exe") or os.path.join(
@@ -182,18 +181,14 @@ class InstallerBridge:
             if os.path.exists(exe_path):
                 try:
                     subprocess.Popen(
-                        [
-                            "cmd.exe",
-                            "/c",
-                            f'timeout /t 1 /nobreak >nul & start "" /D "{install_dir}" "{exe_path}"',
-                        ],
-                        cwd=tempfile.gettempdir(),
+                        [exe_path],
+                        cwd=install_dir,
                         env=clean_env,
                         close_fds=True,
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                        creationflags=creation_flags,
+                        creationflags=new_group_flag,
                     )
                 except Exception:
                     pass
@@ -203,16 +198,27 @@ class InstallerBridge:
             if _INSTALL_STATE.get("mode") == "uninstall":
                 inst_d = _INSTALL_STATE.get("install_dir")
                 if inst_d and os.path.exists(inst_d):
-                    subprocess.Popen(
-                        ["cmd.exe", "/c", f'timeout /t 2 /nobreak >nul & rmdir /s /q "{inst_d}"'],
-                        cwd=tempfile.gettempdir(),
-                        env=clean_env,
-                        close_fds=True,
-                        stdin=subprocess.DEVNULL,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        creationflags=creation_flags,
-                    )
+                    try:
+                        cleanup_bat = os.path.join(tempfile.gettempdir(), "sifma_uninstall_clean.bat")
+                        with open(cleanup_bat, "w", encoding="utf-8") as bf:
+                            bf.write(
+                                "@echo off\r\n"
+                                "timeout /t 2 /nobreak >nul\r\n"
+                                f'rmdir /s /q "{inst_d}" >nul 2>&1\r\n'
+                                'del "%~f0"\r\n'
+                            )
+                        subprocess.Popen(
+                            ["cmd.exe", "/c", cleanup_bat],
+                            cwd=tempfile.gettempdir(),
+                            env=clean_env,
+                            close_fds=True,
+                            stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            creationflags=no_win_flag | new_group_flag,
+                        )
+                    except Exception:
+                        pass
             try:
                 import webview
 
