@@ -103,18 +103,19 @@ class UpdateService:
             published_at = data.get("published_at") or ""
             html_url = data.get("html_url") or f"https://github.com/{repo}/releases"
 
-            # Buscar el archivo ejecutable (.exe) dentro de los assets del Release
+            # Buscar el archivo ejecutable directo (priorizando SIFMA_Desktop.exe sobre el instalador)
             download_url = None
             asset_name = None
             asset_size_mb = None
-            for asset in data.get("assets", []):
-                name = asset.get("name", "")
-                if name.lower().endswith(".exe"):
-                    download_url = asset.get("browser_download_url")
-                    asset_name = name
-                    if asset.get("size"):
-                        asset_size_mb = round(asset["size"] / (1024 * 1024), 2)
-                    break
+            assets_list = data.get("assets", [])
+            exe_assets = [a for a in assets_list if (a.get("name") or "").lower().endswith(".exe")]
+            exe_assets.sort(key=lambda a: 0 if "desktop" in (a.get("name") or "").lower() else 1)
+            if exe_assets:
+                chosen = exe_assets[0]
+                download_url = chosen.get("browser_download_url")
+                asset_name = chosen.get("name")
+                if chosen.get("size"):
+                    asset_size_mb = round(chosen["size"] / (1024 * 1024), 2)
 
             has_update = cls._parse_version(latest_tag) > cls._parse_version(current_version)
 

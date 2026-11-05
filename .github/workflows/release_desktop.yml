@@ -1,0 +1,86 @@
+name: Compilar y Publicar Actualizacion SIFMA Desktop (.exe)
+
+on:
+  push:
+    branches:
+      - version-escritorio-pywebview
+      - preparacion-registro
+      - main
+    paths:
+      - "local_server/**"
+      - ".github/workflows/release_desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Compilar Ejecutable e Instalador Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar codigo fuente del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python 3.12 (Windows x64)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "local_server/requirements.txt"
+
+      - name: Extraer version oficial (APP_VERSION) desde config.py
+        id: extract_version
+        shell: pwsh
+        run: |
+          $content = Get-Content "local_server/core/config.py" -Raw
+          if ($content -match 'APP_VERSION:\s*str\s*=\s*"([^"]+)"') {
+              $ver = $matches[1]
+          } else {
+              $ver = "1.2.0"
+          }
+          $tag = "v$ver"
+          $commitMsg = (git log -1 --pretty=%B).Trim()
+          Write-Output "version=$ver" >> $env:GITHUB_OUTPUT
+          Write-Output "tag=$tag" >> $env:GITHUB_OUTPUT
+          Write-Host "Version detectada: $ver (Tag: $tag)"
+
+      - name: Instalar dependencias de SIFMA y PyInstaller
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r local_server/requirements.txt
+
+      - name: Compilar aplicacion nativa con Splash Screen (SIFMA_Desktop.exe)
+        shell: pwsh
+        working-directory: local_server
+        run: |
+          pyinstaller --noconfirm --clean sifma_desktop.spec
+
+      - name: Compilar asistente visual de instalacion (SIFMA_Instalador_Setup.exe)
+        shell: pwsh
+        working-directory: local_server
+        run: |
+          pyinstaller --noconfirm --clean sifma_installer.spec
+
+      - name: Publicar Release Oficial en GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.extract_version.outputs.tag }}
+          name: "SIFMA Desktop ${{ steps.extract_version.outputs.tag }}"
+          body: |
+            ### Actualización Automática de SIFMA Desktop (${{ steps.extract_version.outputs.tag }})
+            Paquete compilado automáticamente tras el último commit en el repositorio oficial.
+
+            - **`SIFMA_Instalador_Setup.exe`**: Asistente visual de instalación con barra de progreso y creación de accesos directos para equipos nuevos.
+            - **`SIFMA_Desktop.exe`**: Binario directo utilizado por el actualizador interno automático de SIFMA (preserva intacta la base de datos `sifma.db` y las fotografías en `%APPDATA%\SIFMA`).
+          draft: false
+          prerelease: false
+          make_latest: "true"
+          files: |
+            local_server/dist/SIFMA_Desktop.exe
+            local_server/dist/SIFMA_Instalador_Setup.exe
+
