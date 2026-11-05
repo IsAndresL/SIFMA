@@ -230,8 +230,23 @@ def login():
                 action_display="Fallo de Autenticación"
             )
             error = "Usuario o contraseña incorrectos, o cuenta inactiva."
+
+    # En la primera ejecución absoluta en un PC nuevo (0 inicios de sesión registrados),
+    # mostrar al operador las credenciales locales autogeneradas en %APPDATA%\SIFMA\.env
+    first_boot_info = None
+    try:
+        from domain.models.audit_log import AuditLog
+        has_any_login = AuditLog.query.filter_by(action="LOGIN").first() is not None
+        if not has_any_login and app_settings.ADMIN_DEFAULT_PASSWORD:
+            first_boot_info = {
+                "username": app_settings.ADMIN_USERNAME,
+                "password": app_settings.ADMIN_DEFAULT_PASSWORD,
+                "env_path": app_settings.ENV_FILE_PATH,
+            }
+    except Exception:
+        pass
             
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error, first_boot_info=first_boot_info)
 
 @dashboard_bp.route('/logout')
 def logout():
