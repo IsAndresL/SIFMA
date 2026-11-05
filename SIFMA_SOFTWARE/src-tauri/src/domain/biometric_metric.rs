@@ -13,3 +13,4 @@ pub struct BiometricMetric {
     pub fruits_count: i32,
     pub measurement_time: String,
 }
+

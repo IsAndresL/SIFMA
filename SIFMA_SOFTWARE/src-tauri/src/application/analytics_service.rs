@@ -110,3 +110,4 @@ mod tests {
         assert_eq!(stats.median, 14.0);
     }
 }
+

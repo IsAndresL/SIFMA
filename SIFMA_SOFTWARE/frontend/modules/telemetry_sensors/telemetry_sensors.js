@@ -1,19 +1,21 @@
 // SIFMA — Controlador Modular: Telemetría de Sensores
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
-let telemetryChartInstance = null;
-let telemetryInterval = null;
+let telemetryChart = null;
+let pollTimer = null;
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Monitoreo de Telemetría Microclimática en Tiempo Real';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Análisis y Telemetría Detallada de Sensores';
+    if (subheading) subheading.textContent = 'Monitoreo ambiental en vivo, recepción inalámbrica XBee y registro continuo';
 
     await updateLiveTelemetry();
-    await renderTelemetryChart('all');
+    await renderHistoryChart('all');
     setupEventListeners();
 
-    if (telemetryInterval) clearInterval(telemetryInterval);
-    telemetryInterval = setInterval(updateLiveTelemetry, 3000);
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(updateLiveTelemetry, 3000);
 }
 
 async function updateLiveTelemetry() {
@@ -21,44 +23,57 @@ async function updateLiveTelemetry() {
         const data = await TauriBridge.invoke('get_live_telemetry');
         if (!data) return;
 
-        setText('val-water-temp', data.water_temp);
-        setText('val-air-temp', data.air_temp);
-        setText('val-humidity', data.humidity);
-        setText('val-ph', data.ph);
-        setText('val-ec', data.ec);
-        setText('val-do', data.dissolved_oxygen);
-
-        const tankEl = document.getElementById('val-tank-level');
-        if (tankEl) {
-            tankEl.textContent = `Tanque: ${data.tank_level_pct}% | Bomba: ${data.pump_active ? 'Activa' : 'Inactiva'}`;
-        }
+        setText('kpi-ph-val', data.ph.toFixed(2));
+        setText('kpi-ec-val', data.ec);
+        setText('kpi-turb-val', data.turbidity.toFixed(2));
+        setText('kpi-do-val', data.dissolved_oxygen.toFixed(2));
+        setText('kpi-wtemp-val', data.water_temp.toFixed(2));
+        setText('kpi-tank-val', data.tank_level_pct.toFixed(1));
+        setText('kpi-atemp-val', data.air_temp.toFixed(1));
+        setText('kpi-ahum-val', `${data.humidity.toFixed(1)}%`);
     } catch (err) {
-        console.error('[TELEMETRY] Error al obtener telemetría:', err);
+        console.error('[TELEMETRY SENSORS ERROR]', err);
     }
 }
 
-async function renderTelemetryChart(filter) {
+async function renderHistoryChart(filter) {
     const ctx = document.getElementById('telemetryHistoryChart');
     if (!ctx) return;
 
     try {
-        const history = await TauriBridge.invoke('get_sensor_history', { hours: 24 });
-        if (!history || !history.length) return;
+        const history = await TauriBridge.invoke('get_sensor_history', { hours: 24 }) || [];
+        if (!history.length) return;
+
+        if (telemetryChart) telemetryChart.destroy();
 
         const labels = history.map(h => h.timestamp);
-
-        if (telemetryChartInstance) {
-            telemetryChartInstance.destroy();
-        }
-
         const datasets = [];
 
-        if (filter === 'all' || filter === 'temp') {
+        if (filter === 'all' || filter === 'water') {
+            datasets.push({
+                label: 'pH Solución (x10)',
+                data: history.map(h => (h.ph * 10).toFixed(1)),
+                borderColor: '#ec4899',
+                borderWidth: 2,
+                tension: 0.35,
+                pointRadius: 2
+            });
+            datasets.push({
+                label: 'EC (µS/cm)',
+                data: history.map(h => h.ec),
+                borderColor: '#8b5cf6',
+                borderWidth: 2,
+                tension: 0.35,
+                pointRadius: 2
+            });
+        }
+
+        if (filter === 'all' || filter === 'temps') {
             datasets.push({
                 label: 'Temp. Solución (°C)',
                 data: history.map(h => h.water_temp),
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: '#059669',
+                backgroundColor: 'rgba(5, 150, 105, 0.08)',
                 borderWidth: 2,
                 tension: 0.35,
                 pointRadius: 2
@@ -66,34 +81,14 @@ async function renderTelemetryChart(filter) {
             datasets.push({
                 label: 'Temp. Ambiente (°C)',
                 data: history.map(h => h.air_temp),
-                borderColor: '#f59e0b',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderColor: '#2563eb',
                 borderWidth: 2,
                 tension: 0.35,
                 pointRadius: 2
             });
         }
 
-        if (filter === 'all' || filter === 'ph_ec') {
-            datasets.push({
-                label: 'pH Solución (x10)',
-                data: history.map(h => (h.ph * 10).toFixed(1)),
-                borderColor: '#6366f1',
-                borderWidth: 2,
-                tension: 0.35,
-                pointRadius: 2
-            });
-            datasets.push({
-                label: 'Humedad (%)',
-                data: history.map(h => h.humidity),
-                borderColor: '#0284c7',
-                borderWidth: 2,
-                tension: 0.35,
-                pointRadius: 2
-            });
-        }
-
-        telemetryChartInstance = new Chart(ctx, {
+        telemetryChart = new Chart(ctx, {
             type: 'line',
             data: { labels, datasets },
             options: {
@@ -102,7 +97,7 @@ async function renderTelemetryChart(filter) {
                 plugins: {
                     legend: {
                         position: 'top',
-                        labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+                        labels: { boxWidth: 12, font: { family: 'Literata', size: 11 } }
                     }
                 },
                 scales: {
@@ -123,31 +118,36 @@ async function renderTelemetryChart(filter) {
 }
 
 function setupEventListeners() {
-    document.querySelectorAll('.btn-filter').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            renderTelemetryChart(e.target.dataset.metric);
-        });
-    });
-
-    const toggleBtn = document.getElementById('btn-toggle-serial');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', async () => {
-            const port = document.getElementById('serial-port-select')?.value || 'COM3';
-            toggleBtn.disabled = true;
-            toggleBtn.textContent = 'Conectando...';
+    const reconnectBtn = document.getElementById('btn-reconnect-serial');
+    if (reconnectBtn) {
+        reconnectBtn.addEventListener('click', async () => {
+            const port = document.getElementById('antenna-port-select')?.value || 'COM3';
+            reconnectBtn.disabled = true;
+            reconnectBtn.textContent = 'Conectando...';
             try {
                 await TauriBridge.invoke('connect_serial_port', { port, baud_rate: 115200 });
-                document.getElementById('serial-status-text').textContent = `Conectado a ${port} @ 115200 baud — OK`;
-            } catch (err) {
-                console.error('Error serial:', err);
+                setText('antenna-live-status-text', `Transmitiendo en Vivo (${port})`);
             } finally {
-                toggleBtn.disabled = false;
-                toggleBtn.textContent = 'Reconectar';
+                reconnectBtn.disabled = false;
+                reconnectBtn.innerHTML = '<span class="material-icons-round" style="font-size: 14px;">refresh</span><span>Reconectar</span>';
             }
         });
     }
+
+    const btnAll = document.getElementById('btn-chart-all');
+    const btnWater = document.getElementById('btn-chart-water');
+    const btnTemps = document.getElementById('btn-chart-temps');
+
+    [btnAll, btnWater, btnTemps].forEach(btn => {
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            [btnAll, btnWater, btnTemps].forEach(b => b?.classList.remove('active'));
+            btn.classList.add('active');
+            if (btn === btnAll) renderHistoryChart('all');
+            else if (btn === btnWater) renderHistoryChart('water');
+            else if (btn === btnTemps) renderHistoryChart('temps');
+        });
+    });
 }
 
 function setText(id, val) {

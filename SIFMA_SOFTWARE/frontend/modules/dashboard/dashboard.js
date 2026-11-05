@@ -1,89 +1,184 @@
-// SIFMA — Controlador del Módulo Dashboard
+// SIFMA — Controlador Modular: Dashboard Analítico
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
-let chartInstance = null;
+let chartThermal = null;
+let chartGrowth = null;
+let chartHumidity = null;
+let chartPumping = null;
 
 export async function initModule() {
-    console.log('[DASHBOARD] Inicializando componente reactivo...');
-    
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Dashboard Analítico';
+    if (subheading) subheading.textContent = 'Resumen general de la jornada: 2026-11-05';
+
+    await loadDashboardSummary();
+    renderAllCharts();
+}
+
+async function loadDashboardSummary() {
     try {
-        const data = await TauriBridge.invoke('get_dashboard_summary', { plant_id: 1 });
-        updateKpiValues(data);
-        renderMicroclimateChart();
+        const plantId = Number(document.getElementById('header-plant-selector')?.value || 1);
+        const data = await TauriBridge.invoke('get_dashboard_summary', { plant_id: plantId });
+        if (!data) return;
+
+        setText('dash-foliar-area', data.foliar_area.toFixed(2));
+        setText('dash-temp', data.water_temp.toFixed(2));
+        setText('dash-humidity', data.humidity.toFixed(2));
+        setText('dash-health', data.health_index.toFixed(2));
+        setText('dash-height', `${data.plant_height.toFixed(1)} cm`);
     } catch (err) {
-        console.error('[DASHBOARD ERROR] Fallo al cargar datos de telemetría:', err);
+        console.error('[DASHBOARD ERROR]', err);
     }
 }
 
-function updateKpiValues(data) {
-    if (!data) return;
-    
-    document.getElementById('kpi-area').textContent = `${data.foliar_area ?? 61.8} cm²`;
-    document.getElementById('kpi-height').textContent = `${data.plant_height ?? 18.5} cm`;
-    document.getElementById('kpi-stem').textContent = `${data.stem_diameter ?? 4.8} mm`;
-    document.getElementById('kpi-health').textContent = `${data.health_index ?? 82.8} %`;
-
-    document.getElementById('val-ph').textContent = (data.ph ?? 6.2).toFixed(1);
-    document.getElementById('val-ec').textContent = `${(data.ec ?? 1250).toFixed(0)} µS/cm`;
-    document.getElementById('val-do').textContent = `${(data.dissolved_oxygen ?? 7.4).toFixed(1)} mg/L`;
-    document.getElementById('val-turb').textContent = `${(data.turbidity ?? 2.1).toFixed(1)} NTU`;
-}
-
-function renderMicroclimateChart() {
-    const canvas = document.getElementById('chart-microclimate');
-    if (!canvas) return;
-
-    if (chartInstance) {
-        chartInstance.destroy();
-        chartInstance = null;
+function renderAllCharts() {
+    // 1. Curva Térmica Diaria (thermalCurveChart)
+    const ctxThermal = document.getElementById('thermalCurveChart');
+    if (ctxThermal) {
+        if (chartThermal) chartThermal.destroy();
+        chartThermal = new Chart(ctxThermal, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
+                datasets: [
+                    {
+                        label: 'Temp. Solución (°C)',
+                        data: [23.1, 22.8, 22.4, 23.9, 25.8, 26.4, 25.1, 24.0],
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'Temp. Ambiente (°C)',
+                        data: [24.5, 23.9, 23.2, 26.5, 29.8, 30.2, 27.5, 25.8],
+                        borderColor: '#2563eb',
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.35,
+                        pointRadius: 2
+                    }
+                ]
+            },
+            options: getChartOptions('Temperatura (°C)')
+        });
     }
 
-    const hours = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'];
-    const tempData = [23.1, 24.5, 27.2, 29.8, 30.1, 28.4, 25.6];
-    const solarData = [800, 4200, 18500, 38000, 36500, 14200, 1200];
+    // 2. Dinámica de Crecimiento Foliar (growthCurveChart)
+    const ctxGrowth = document.getElementById('growthCurveChart');
+    if (ctxGrowth) {
+        if (chartGrowth) chartGrowth.destroy();
+        chartGrowth = new Chart(ctxGrowth, {
+            type: 'bar',
+            data: {
+                labels: ['Día 1', 'Día 4', 'Día 8', 'Día 12', 'Día 16', 'Día 20', 'Día 24', 'Día 28'],
+                datasets: [{
+                    label: 'Área Foliar (cm²)',
+                    data: [24.0, 28.5, 34.2, 41.0, 48.6, 54.2, 59.8, 61.8],
+                    backgroundColor: 'rgba(5, 150, 105, 0.75)',
+                    borderRadius: 4
+                }]
+            },
+            options: getChartOptions('Área (cm²)')
+        });
+    }
 
-    chartInstance = new Chart(canvas, {
-        type: 'line',
-        data: {
-            labels: hours,
-            datasets: [
-                {
-                    label: 'Temperatura Aire (°C)',
-                    data: tempData,
-                    borderColor: '#e11d48',
-                    backgroundColor: 'rgba(225, 29, 72, 0.08)',
-                    yAxisID: 'yTemp',
-                    tension: 0.35,
-                    fill: true
-                },
-                {
-                    label: 'Radiación Solar (lux)',
-                    data: solarData,
-                    borderColor: '#d97706',
-                    backgroundColor: 'transparent',
-                    borderDash: [5, 5],
-                    yAxisID: 'ySolar',
-                    tension: 0.35
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            scales: {
-                yTemp: {
-                    type: 'linear',
-                    position: 'left',
-                    title: { display: true, text: 'Temperatura (°C)' }
-                },
-                ySolar: {
-                    type: 'linear',
-                    position: 'right',
-                    grid: { drawOnChartArea: false },
-                    title: { display: true, text: 'Radiación (lux)' }
+    // 3. Humedad y Radiación Solar (humidityChart)
+    const ctxHum = document.getElementById('humidityChart');
+    if (ctxHum) {
+        if (chartHumidity) chartHumidity.destroy();
+        chartHumidity = new Chart(ctxHum, {
+            type: 'line',
+            data: {
+                labels: ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
+                datasets: [
+                    {
+                        label: 'Humedad Relativa (%)',
+                        data: [78, 72, 65, 58, 62, 68, 74],
+                        borderColor: '#0284c7',
+                        yAxisID: 'y',
+                        tension: 0.35
+                    },
+                    {
+                        label: 'Radiación (x1000 lux)',
+                        data: [5, 12, 22, 28, 25, 14, 4],
+                        borderColor: '#d97706',
+                        yAxisID: 'y1',
+                        borderDash: [3, 3],
+                        tension: 0.35
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { family: 'Literata', size: 11 } } } },
+                scales: {
+                    x: { grid: { color: 'rgba(0,0,0,0.04)' } },
+                    y: { type: 'linear', position: 'left', grid: { color: 'rgba(0,0,0,0.04)' } },
+                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } }
                 }
             }
+        });
+    }
+
+    // 4. Eficiencia de Bombeo y Balance Nutricional (pumpingChart)
+    const ctxPump = document.getElementById('pumpingChart');
+    if (ctxPump) {
+        if (chartPumping) chartPumping.destroy();
+        chartPumping = new Chart(ctxPump, {
+            type: 'line',
+            data: {
+                labels: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'],
+                datasets: [
+                    {
+                        label: 'EC (µS/cm)',
+                        data: [1230, 1240, 1255, 1245, 1260, 1250, 1248, 1250],
+                        borderColor: '#7c3aed',
+                        tension: 0.3,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'pH (x200)',
+                        data: [1240, 1242, 1244, 1240, 1246, 1244, 1245, 1244],
+                        borderColor: '#0d9488',
+                        tension: 0.3,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: getChartOptions('Parámetros Nutritivos')
+        });
+    }
+}
+
+function getChartOptions(yTitle) {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: { boxWidth: 10, font: { family: 'Literata', size: 11 } }
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+                title: { display: true, text: yTitle, font: { size: 10 } },
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { family: 'JetBrains Mono', size: 10 } }
+            }
         }
-    });
+    };
+}
+
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.textContent = val;
 }

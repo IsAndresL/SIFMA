@@ -24,3 +24,4 @@ class MorphologicalFilter:
             return []
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         return [c for c in contours if cv2.contourArea(c) >= min_area_px]
+

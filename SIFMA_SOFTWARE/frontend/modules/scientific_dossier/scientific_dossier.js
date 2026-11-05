@@ -2,8 +2,10 @@
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Generación de Dossier Técnico y Científico';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Dossier Científico & Generador de Reportes';
+    if (subheading) subheading.textContent = 'Informe técnico formal para validación agronómica y depósito ante la DNDA';
 
     await loadDossierData();
     setupEventListeners();
@@ -60,3 +62,4 @@ function setupEventListeners() {
         });
     }
 }
+

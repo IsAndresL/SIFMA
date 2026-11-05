@@ -4,8 +4,10 @@ import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 let profiles = [];
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Configuración de Perfiles y Umbrales del Cultivo';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Parámetros de Cultivo y Calibración';
+    if (subheading) subheading.textContent = 'Asignación de especies por Canastilla y ajuste de algoritmos de visión artificial';
 
     await loadProfiles();
     setupEventListeners();
@@ -91,3 +93,4 @@ function setText(id, val) {
     const el = document.getElementById(id);
     if (el && val !== undefined) el.textContent = val;
 }
+

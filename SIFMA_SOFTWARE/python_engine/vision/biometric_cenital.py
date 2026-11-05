@@ -43,3 +43,4 @@ class CenitalBiometrics:
             "health_index_pct": round(health_pct, 2),
             "compacity_index": round(compacity, 3)
         }
+

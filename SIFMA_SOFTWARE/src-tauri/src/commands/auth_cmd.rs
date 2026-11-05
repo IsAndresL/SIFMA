@@ -27,3 +27,4 @@ pub fn login_user(username: String, _password_hash: String) -> AuthResponse {
         }
     }
 }
+

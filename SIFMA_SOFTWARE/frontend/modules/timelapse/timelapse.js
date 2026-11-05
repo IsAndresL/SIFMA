@@ -9,8 +9,10 @@ let playSpeed = 500;
 let growthChart = null;
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Time-Lapse y Cinética Evolutiva del Cultivo';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Time-Lapse & Evolución Biológica';
+    if (subheading) subheading.textContent = 'Visor cronológico y reproducción secuencial de desarrollo vegetativo para Canastilla #1';
 
     await loadFrames();
     setupEventListeners();
@@ -33,26 +35,17 @@ function updateFrame(index) {
     currentIndex = index;
     const current = frames[currentIndex];
 
-    // Actualizar sliders y etiquetas
     const slider = document.getElementById('timeline-slider');
     if (slider) slider.value = currentIndex;
 
-    const dayBadge = document.getElementById('player-day-badge');
-    if (dayBadge) dayBadge.textContent = `Día ${current.day} / ${frames.length}`;
+    setText('player-frame-counter', `Fotograma ${currentIndex + 1} / ${frames.length}`);
+    setText('hud-date-text', current.date);
+    setText('hud-period-text', `Día ${current.day} / ${frames.length}`);
+    setText('time-foliar-area', `${current.foliar_area.toFixed(2)} cm²`);
+    setText('time-height', `${current.plant_height.toFixed(2)} cm`);
 
-    const dateBadge = document.getElementById('player-date-badge');
-    if (dateBadge) dateBadge.textContent = current.date;
-
-    const areaEl = document.getElementById('time-foliar-area');
-    if (areaEl) areaEl.textContent = `${current.foliar_area} cm²`;
-
-    const heightEl = document.getElementById('time-height');
-    if (heightEl) heightEl.textContent = `${current.plant_height} cm`;
-
-    // Renderizar canvas interactivo con morfología proporcional al día
     drawFrameCanvas(currentIndex);
 
-    // Actualizar punto activo en el gráfico
     if (growthChart) {
         growthChart.setActiveElements([{ datasetIndex: 0, index: currentIndex }]);
         growthChart.update();
@@ -68,34 +61,32 @@ function drawFrameCanvas(index) {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Fondo oscuro de cámara de fenotipado
+    // Fondo
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, w, h);
 
-    // Base del tubo hidropónico
+    // Tubo PVC
     ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(w / 2 - 40, h - 100, 80, 100);
+    ctx.fillRect(w / 2 - 35, h - 90, 70, 90);
 
-    // Crecimiento progresivo de cebollín
-    const progress = (index + 1) / frames.length; // 0.08 a 1.0
-    const stemHeight = 60 + progress * 160;
+    // Crecimiento progresivo
+    const progress = (index + 1) / frames.length;
+    const stemHeight = 50 + progress * 170;
 
     ctx.strokeStyle = '#15803d';
     ctx.lineWidth = 4 + progress * 4;
     ctx.beginPath();
-    ctx.moveTo(w / 2, h - 100);
-    ctx.lineTo(w / 2, h - 100 - stemHeight);
+    ctx.moveTo(w / 2, h - 90);
+    ctx.lineTo(w / 2, h - 90 - stemHeight);
     ctx.stroke();
 
-    // Hojas que brotan y se ensanchan
-    ctx.fillStyle = '#22c55e';
-    const leafSpread = 40 + progress * 90;
-
-    drawBlade(ctx, w / 2, h - 100 - stemHeight * 0.7, -40, leafSpread * 0.9);
-    drawBlade(ctx, w / 2, h - 100 - stemHeight * 0.8, 35, leafSpread * 0.85);
+    // Hojas
+    const leafSpread = 35 + progress * 95;
+    drawBlade(ctx, w / 2, h - 90 - stemHeight * 0.7, -40, leafSpread * 0.9);
+    drawBlade(ctx, w / 2, h - 90 - stemHeight * 0.8, 35, leafSpread * 0.85);
     if (progress > 0.3) {
-        drawBlade(ctx, w / 2, h - 100 - stemHeight * 0.9, -20, leafSpread * 0.95);
-        drawBlade(ctx, w / 2, h - 100 - stemHeight, 15, leafSpread);
+        drawBlade(ctx, w / 2, h - 90 - stemHeight * 0.9, -20, leafSpread * 0.95);
+        drawBlade(ctx, w / 2, h - 90 - stemHeight, 15, leafSpread);
     }
 }
 
@@ -125,8 +116,8 @@ function initGrowthChart() {
             datasets: [{
                 label: 'Área (cm²)',
                 data: frames.map(f => f.foliar_area),
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: '#059669',
+                backgroundColor: 'rgba(5, 150, 105, 0.1)',
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3,
@@ -149,12 +140,12 @@ function togglePlay() {
     if (isPlaying) {
         clearInterval(playInterval);
         isPlaying = false;
-        document.getElementById('play-icon').textContent = 'play_arrow';
-        document.getElementById('play-text').textContent = 'Reproducir';
+        setText('play-icon', 'play_arrow');
+        setText('play-text', 'Reproducir');
     } else {
         isPlaying = true;
-        document.getElementById('play-icon').textContent = 'pause';
-        document.getElementById('play-text').textContent = 'Pausar';
+        setText('play-icon', 'pause');
+        setText('play-text', 'Pausar');
         playInterval = setInterval(() => {
             let next = currentIndex + 1;
             if (next >= frames.length) next = 0;
@@ -184,12 +175,17 @@ function setupEventListeners() {
     document.querySelectorAll('.speed-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            playSpeed = Number(e.target.dataset.speed);
+            btn.classList.add('active');
+            playSpeed = Number(btn.dataset.speed);
             if (isPlaying) {
                 togglePlay();
                 togglePlay();
             }
         });
     });
+}
+
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.textContent = val;
 }

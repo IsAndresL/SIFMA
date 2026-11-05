@@ -91,3 +91,4 @@ pub fn get_timelapse_frames(plant_id: Option<i32>) -> Vec<TimelapseFrameDTO> {
     }
     frames
 }
+

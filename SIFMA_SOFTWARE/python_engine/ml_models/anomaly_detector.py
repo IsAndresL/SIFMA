@@ -45,3 +45,4 @@ class PhytosanitaryAnomalyDetector(BaseMLModel):
             "version": "1.0.0",
             "type": "Unsupervised-Color-Spatial-Clustering"
         }
+

@@ -1,67 +1,80 @@
+<!-- SIFMA — Vista Modular: Galería de Capturas y Comparador Digital (Copia fiel de local_server) -->
 <div class="gallery-module">
-    <!-- FILTROS DE GALERÍA -->
-    <section class="gallery-filter-card">
-        <div class="filter-controls">
-            <div class="form-group">
-                <label for="filter-plant">Filtrar por Planta</label>
-                <select id="filter-plant" class="form-select">
-                    <option value="all">Todas las Plantas (1 - 12)</option>
-                    <option value="1">Planta #1</option>
-                    <option value="2">Planta #2</option>
-                    <option value="3">Planta #3</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="filter-sort">Ordenar por</label>
-                <select id="filter-sort" class="form-select">
-                    <option value="date_desc">Fecha (Más recientes primero)</option>
-                    <option value="date_asc">Fecha (Más antiguas primero)</option>
-                    <option value="area_desc">Mayor Área Foliar</option>
-                </select>
+    <!-- FILTROS DE PERÍODO Y LISTA DE MUESTREOS -->
+    <div class="widget-card" style="margin-bottom: 20px;">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Filtros por Período de Muestreo (Canastilla #1 - Cebollín de Rama)</h3>
+                <p>Selecciona el turno de captura para explorar los lotes fotográficos</p>
             </div>
         </div>
-        <div class="gallery-stats">
-            <span class="gallery-counter">Mostrando <strong id="gallery-count">6</strong> capturas fenotípicas</span>
+
+        <div class="filter-group" style="margin-bottom: 16px;">
+            <button class="filter-pill active" data-period="todos">
+                <span class="material-icons-round">apps</span>
+                <span>Todos los Períodos</span>
+            </button>
+            <button class="filter-pill" data-period="mañana">
+                <span class="material-icons-round">light_mode</span>
+                <span>Mañana (07:00)</span>
+            </button>
+            <button class="filter-pill" data-period="mediodía">
+                <span class="material-icons-round">wb_sunny</span>
+                <span>Mediodía (12:00)</span>
+            </button>
+            <button class="filter-pill" data-period="tarde">
+                <span class="material-icons-round">nights_stay</span>
+                <span>Tarde (17:00)</span>
+            </button>
         </div>
-    </section>
 
-    <!-- GRID DE CAPTURAS FENOTÍPICAS -->
-    <section class="gallery-grid" id="gallery-items-container">
-        <!-- Renderizado dinámico de tarjetas fotográficas -->
-    </section>
-
-    <!-- MODAL LIGHTBOX PARA INSPECCIÓN DETALLADA -->
-    <div class="modal-backdrop" id="gallery-modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h4 class="modal-title" id="modal-plant-title">Detalle de Captura Fenotípica</h4>
-                    <p class="modal-subtitle" id="modal-date-sub">2026-11-04 14:30 — Nivel 1</p>
-                </div>
-                <button class="modal-close-btn" id="modal-close">&times;</button>
+        <div style="border-top: 1px solid var(--border-light); padding-top: 14px;">
+            <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 12px; color: var(--text-heading);">
+                Muestreos Registrados para esta Canastilla:
+            </h4>
+            
+            <div id="captures-scroll-row" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px;">
+                <!-- Dinámico -->
             </div>
-            <div class="modal-body">
-                <div class="modal-preview-box">
-                    <img id="modal-preview-img" src="core/assets/sifma_sin_texto.svg" alt="Preview">
+        </div>
+    </div>
+
+    <!-- COMPARADOR VISUAL DETALLADO DE LA SESIÓN SELECCIONADA -->
+    <div class="widget-card" id="gallery-selected-comparator">
+        <div class="widget-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge badge-success" id="gal-period-badge">MEDIODÍA</span>
+                <h3 id="gal-session-title">Comparador de Fenotipado — Captura del 04/11/2026 a las 14:30</h3>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-goto-cross">
+                    <span class="material-icons-round">sync_alt</span>
+                    <span>Cruzar con Telemetría</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- VISTAS COMPARATIVAS CENITAL Y LATERAL -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <!-- CENITAL -->
+            <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="font-size: 13px;">Vista Cenital (Área Foliar)</strong>
+                    <span class="badge badge-success" id="gal-cenital-area">61.80 cm²</span>
                 </div>
-                <div class="modal-metrics-sidebar">
-                    <h5 class="metrics-subheading">Biometría Registrada</h5>
-                    <div class="modal-bio-row">
-                        <span>Área Foliar:</span>
-                        <strong id="modal-bio-area" class="font-mono text-emerald">61.8 cm²</strong>
-                    </div>
-                    <div class="modal-bio-row">
-                        <span>Altura:</span>
-                        <strong id="modal-bio-height" class="font-mono text-amber">18.5 cm</strong>
-                    </div>
-                    <div class="modal-bio-row">
-                        <span>Tallo:</span>
-                        <strong id="modal-bio-stem" class="font-mono text-sky">4.8 mm</strong>
-                    </div>
-                    <div class="modal-bio-row">
-                        <span>Índice Fitosanitario:</span>
-                        <strong id="modal-bio-health" class="font-mono text-emerald">82.8%</strong>
-                    </div>
+                <div style="background: #090d16; border-radius: 6px; height: 260px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <img src="core/assets/cenital_1.png" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+            </div>
+
+            <!-- LATERAL -->
+            <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="font-size: 13px;">Vista Lateral (Altura & Diámetro)</strong>
+                    <span class="badge badge-primary" id="gal-lateral-height">H = 18.5 cm</span>
+                </div>
+                <div style="background: #090d16; border-radius: 6px; height: 260px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <img src="core/assets/sifma_sin_texto.svg" style="max-height: 180px; opacity: 0.85;">
                 </div>
             </div>
         </div>

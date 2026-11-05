@@ -14,3 +14,4 @@ pub struct CaptureSession {
     pub processed_lateral_path: Option<String>,
     pub notes: Option<String>,
 }
+

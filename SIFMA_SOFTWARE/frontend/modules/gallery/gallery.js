@@ -1,111 +1,69 @@
-// SIFMA — Controlador Modular: Galería Histórica
+// SIFMA — Controlador Modular: Galería de Capturas
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
-let allSessions = [];
+let sessions = [];
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Galería Histórica de Fenotipado y Capturas';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Comparador de Procesamiento Digital';
+    if (subheading) subheading.textContent = 'Inspección visual antes/después y segmentación para Canastilla #1';
 
-    await loadGalleryItems();
+    await loadGallerySessions();
     setupEventListeners();
 }
 
-async function loadGalleryItems() {
+async function loadGallerySessions() {
     try {
-        const data = await TauriBridge.invoke('list_capture_sessions');
-        allSessions = data || [];
-        renderGallery(allSessions);
+        sessions = await TauriBridge.invoke('list_capture_sessions') || [];
+        const container = document.getElementById('captures-scroll-row');
+        if (!container || !sessions.length) return;
+
+        let html = '';
+        sessions.forEach((s, idx) => {
+            html += `
+                <div class="capture-thumb-card ${idx === 0 ? 'selected' : ''}" data-id="${s.id}" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; cursor: pointer; min-width: 170px; box-shadow: var(--shadow-sm); transition: var(--transition-fast);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-radius: 8px; overflow: hidden; height: 75px; background: #090d16; margin-bottom: 8px; border: 1px solid #1e293b;">
+                        <img src="core/assets/cenital_1.png" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="core/assets/sifma_sin_texto.svg" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <span style="font-size: 11.5px; font-weight: 700; color: var(--text-heading);">${s.timestamp}</span>
+                        <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">MEDIODÍA</span>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        container.querySelectorAll('.capture-thumb-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const sid = Number(card.dataset.id);
+                const s = sessions.find(item => item.id === sid);
+                if (s) selectSession(s);
+            });
+        });
     } catch (err) {
         console.error('[GALLERY ERROR]', err);
     }
 }
 
-function renderGallery(sessions) {
-    const container = document.getElementById('gallery-items-container');
-    const counter = document.getElementById('gallery-count');
-    if (!container) return;
-
-    if (counter) counter.textContent = sessions.length;
-
-    if (!sessions.length) {
-        container.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">No hay capturas registradas con los filtros actuales.</p>';
-        return;
-    }
-
-    let html = '';
-    sessions.forEach(s => {
-        html += `
-            <div class="gallery-card" data-id="${s.id}">
-                <div class="card-img-wrap">
-                    <img src="core/assets/sifma_sin_texto.svg" alt="Planta #${s.plant_id}">
-                    <span class="card-badge-plant">Planta #${s.plant_id}</span>
-                    <span class="card-badge-date">${s.timestamp}</span>
-                </div>
-                <div class="card-info">
-                    <div class="card-title-row">
-                        <span class="card-title-text">Sesión #${s.id}</span>
-                        <span class="badge badge-emerald">${s.health_index}% Salud</span>
-                    </div>
-                    <div class="card-bio-summary">
-                        <span>Área: <strong class="font-mono text-emerald">${s.foliar_area} cm²</strong></span>
-                        <span>Altura: <strong class="font-mono">${s.plant_height} cm</strong></span>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
-
-    // Click handler para abrir modal
-    container.querySelectorAll('.gallery-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const sid = Number(card.dataset.id);
-            const found = allSessions.find(item => item.id === sid);
-            if (found) openModal(found);
-        });
-    });
-}
-
-function openModal(session) {
-    const modal = document.getElementById('gallery-modal');
-    if (!modal) return;
-
-    document.getElementById('modal-plant-title').textContent = `Captura Fenotípica — Planta #${session.plant_id}`;
-    document.getElementById('modal-date-sub').textContent = `${session.timestamp} — Sesión ID: ${session.id}`;
-    document.getElementById('modal-bio-area').textContent = `${session.foliar_area} cm²`;
-    document.getElementById('modal-bio-height').textContent = `${session.plant_height} cm`;
-    document.getElementById('modal-bio-stem').textContent = `${session.stem_diameter} mm`;
-    document.getElementById('modal-bio-health').textContent = `${session.health_index}%`;
-
-    modal.style.display = 'flex';
-}
-
-function closeModal() {
-    const modal = document.getElementById('gallery-modal');
-    if (modal) modal.style.display = 'none';
+function selectSession(session) {
+    setText('gal-session-title', `Comparador de Fenotipado — Captura del ${session.timestamp}`);
+    setText('gal-cenital-area', `${session.foliar_area} cm²`);
+    setText('gal-lateral-height', `H = ${session.plant_height} cm`);
 }
 
 function setupEventListeners() {
-    const filterPlant = document.getElementById('filter-plant');
-    if (filterPlant) {
-        filterPlant.addEventListener('change', () => {
-            const pVal = filterPlant.value;
-            const filtered = (pVal === 'all') 
-                ? allSessions 
-                : allSessions.filter(s => s.plant_id === Number(pVal));
-            renderGallery(filtered);
+    const crossBtn = document.getElementById('btn-goto-cross');
+    if (crossBtn && window.sifmaRouter) {
+        crossBtn.addEventListener('click', () => {
+            window.sifmaRouter.loadModule('cross_analysis');
         });
     }
+}
 
-    const closeBtn = document.getElementById('modal-close');
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-
-    const modal = document.getElementById('gallery-modal');
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-    }
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.textContent = val;
 }

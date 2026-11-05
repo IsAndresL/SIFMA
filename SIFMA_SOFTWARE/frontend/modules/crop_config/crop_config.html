@@ -1,126 +1,119 @@
+<!-- SIFMA — Vista Modular: Parámetros de Cultivo y Calibración (Copia fiel de local_server) -->
 <div class="crop-config-module">
-    <!-- BARRA SUPERIOR -->
-    <section class="crop-header-card">
-        <div>
-            <h3 class="crop-title">Perfiles y Umbrales Agronómicos del Cultivo</h3>
-            <p class="crop-sub">Configuración de rangos fisiológicos óptimos y alertas de control</p>
+    <!-- CARD 1: ASIGNACIÓN DE ESPECIE BOTÁNICA POR CANASTILLA -->
+    <div class="widget-card" style="max-width: 960px; margin: 0 auto 20px auto;">
+        <div class="widget-header">
+            <div class="widget-header-title" style="display: flex; align-items: center; gap: 12px;">
+                <div class="kpi-icon-badge emerald" style="width: 38px; height: 38px;">
+                    <span class="material-icons-round" style="font-size: 22px;">view_in_ar</span>
+                </div>
+                <div>
+                    <h3>Asignación de Especies Vegetales por Canastilla / Torre</h3>
+                    <p>Configura qué cultivo está sembrado en cada una de las 4 canastillas del sistema</p>
+                </div>
+            </div>
+            <span class="badge badge-primary">Canastilla Activa: #1</span>
         </div>
-        <div>
-            <button id="btn-save-crop-profile" class="btn btn-primary">
-                <span class="material-icons-round">save</span>
-                <span>Guardar Parámetros</span>
-            </button>
+
+        <div style="background: var(--bg-card-subtle); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <!-- Canastilla 1 -->
+                <div style="background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 2px solid var(--accent-success);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">Canastilla #1</span>
+                        <span class="badge badge-success" style="font-size: 10.5px;">En Sesión</span>
+                    </div>
+                    <label style="font-size: 11.5px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">Especie Asignada:</label>
+                    <select class="form-input-control" style="font-size: 13px; font-weight: 600;">
+                        <option value="cebollin" selected>Cebollín (Allium fistulosum)</option>
+                        <option value="albahaca">Albahaca (Ocimum basilicum)</option>
+                        <option value="lechuga">Lechuga Romana (Lactuca sativa)</option>
+                    </select>
+                </div>
+
+                <!-- Canastilla 2 -->
+                <div style="background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">Canastilla #2</span>
+                    </div>
+                    <label style="font-size: 11.5px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">Especie Asignada:</label>
+                    <select class="form-input-control" style="font-size: 13px; font-weight: 600;">
+                        <option value="cebollin">Cebollín (Allium fistulosum)</option>
+                        <option value="albahaca" selected>Albahaca (Ocimum basilicum)</option>
+                        <option value="lechuga">Lechuga Romana (Lactuca sativa)</option>
+                    </select>
+                </div>
+
+                <!-- Canastilla 3 -->
+                <div style="background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">Canastilla #3</span>
+                    </div>
+                    <label style="font-size: 11.5px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">Especie Asignada:</label>
+                    <select class="form-input-control" style="font-size: 13px; font-weight: 600;">
+                        <option value="cebollin">Cebollín (Allium fistulosum)</option>
+                        <option value="albahaca">Albahaca (Ocimum basilicum)</option>
+                        <option value="lechuga" selected>Lechuga Romana (Lactuca sativa)</option>
+                    </select>
+                </div>
+
+                <!-- Canastilla 4 -->
+                <div style="background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">Canastilla #4</span>
+                    </div>
+                    <label style="font-size: 11.5px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">Especie Asignada:</label>
+                    <select class="form-input-control" style="font-size: 13px; font-weight: 600;">
+                        <option value="cebollin" selected>Cebollín (Allium fistulosum)</option>
+                        <option value="albahaca">Albahaca (Ocimum basilicum)</option>
+                        <option value="lechuga">Lechuga Romana (Lactuca sativa)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" id="btn-save-assignment">
+                    <span class="material-icons-round">save</span>
+                    <span>Guardar Asignación de Canastillas</span>
+                </button>
+            </div>
         </div>
-    </section>
-
-    <!-- FORMULARIO DE RANGOS AGRONÓMICOS -->
-    <div class="crop-settings-grid">
-        <!-- SELECCIÓN Y DATOS GENERALES -->
-        <section class="settings-card">
-            <h4 class="card-title">Especie Botánica Activa</h4>
-            <div class="form-group" style="margin-top: 14px;">
-                <label for="select-crop-profile">Seleccionar Perfil de Cultivo</label>
-                <select id="select-crop-profile" class="form-select">
-                    <!-- Dinámico -->
-                </select>
-            </div>
-
-            <div class="profile-info-box" style="margin-top: 16px;">
-                <div class="info-row">
-                    <span>Nombre Científico:</span>
-                    <strong id="crop-sci-name">Allium fistulosum</strong>
-                </div>
-                <div class="info-row">
-                    <span>Ciclo Fisiológico Estimado:</span>
-                    <strong id="crop-cycle-days">60 días</strong>
-                </div>
-                <div class="info-row">
-                    <span>Estado del Perfil:</span>
-                    <span class="badge badge-emerald" id="crop-status-badge">ACTIVO EN TORRE</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- UMBRALES TÉRMICOS Y NUTRICIONALES -->
-        <section class="settings-card">
-            <h4 class="card-title">Umbrales Térmicos de Solución Nutritiva</h4>
-            <div class="range-inputs-row">
-                <div class="form-group">
-                    <label>Temp. Mínima (°C)</label>
-                    <input type="number" id="inp-temp-min" class="form-input" value="18.0" step="0.5">
-                </div>
-                <div class="form-group">
-                    <label>Temp. Óptima (°C)</label>
-                    <input type="number" id="inp-temp-opt" class="form-input" value="24.0" step="0.5">
-                </div>
-                <div class="form-group">
-                    <label>Temp. Máxima (°C)</label>
-                    <input type="number" id="inp-temp-max" class="form-input" value="30.0" step="0.5">
-                </div>
-            </div>
-
-            <h4 class="card-title" style="margin-top: 20px;">Parámetros Fisicoquímicos</h4>
-            <div class="range-inputs-row">
-                <div class="form-group">
-                    <label>pH Mínimo</label>
-                    <input type="number" id="inp-ph-min" class="form-input" value="6.0" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>pH Máximo</label>
-                    <input type="number" id="inp-ph-max" class="form-input" value="6.8" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>EC Mínima (µS/cm)</label>
-                    <input type="number" id="inp-ec-min" class="form-input" value="1000" step="50">
-                </div>
-                <div class="form-group">
-                    <label>EC Máxima (µS/cm)</label>
-                    <input type="number" id="inp-ec-max" class="form-input" value="1500" step="50">
-                </div>
-            </div>
-        </section>
     </div>
 
-    <!-- ETAPAS FENOLÓGICAS -->
-    <section class="stages-card">
-        <h4 class="card-title">Cronograma y Fases del Ciclo Fenológico</h4>
-        <div class="stages-table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Fase Fenológica</th>
-                        <th>Ventana Temporal</th>
-                        <th>Crecimiento Esperado</th>
-                        <th>Requerimiento Nutricional</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>1. Germinación y Emergencia</strong></td>
-                        <td class="font-mono">Días 1 - 7</td>
-                        <td>Radícula y brote inicial</td>
-                        <td>Solución suave (EC 600 - 800)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>2. Plántula y Trasplante a Torre</strong></td>
-                        <td class="font-mono">Días 8 - 18</td>
-                        <td>Primeras hojas verdaderas</td>
-                        <td>EC 1000 - 1200, pH 6.0</td>
-                    </tr>
-                    <tr>
-                        <td><strong>3. Crecimiento Vegetativo Rápido</strong></td>
-                        <td class="font-mono">Días 19 - 45</td>
-                        <td>Expansión foliar máxima (1.4 cm²/d)</td>
-                        <td>EC 1200 - 1500, pH 6.2</td>
-                    </tr>
-                    <tr>
-                        <td><strong>4. Maduración y Cosecha</strong></td>
-                        <td class="font-mono">Días 46 - 60</td>
-                        <td>Tallo engrosado > 5 mm</td>
-                        <td>Lavado de raíces / EC reducida</td>
-                    </tr>
-                </tbody>
-            </table>
+    <!-- CARD 2: UMBRALES TÉRMICOS Y NUTRICIONALES -->
+    <div class="widget-card" style="max-width: 960px; margin: 0 auto 20px auto;">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Umbrales Fisiológicos y Fisicoquímicos (Cebollín de Rama)</h3>
+                <p>Rangos de confort para alertas tempranas y disparadores de bombas</p>
+            </div>
         </div>
-    </section>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div class="form-group">
+                <label>Temperatura Mínima (°C)</label>
+                <input type="number" class="form-input-control" value="18.0" step="0.5">
+            </div>
+            <div class="form-group">
+                <label>Temperatura Óptima (°C)</label>
+                <input type="number" class="form-input-control" value="24.0" step="0.5">
+            </div>
+            <div class="form-group">
+                <label>Temperatura Máxima (°C)</label>
+                <input type="number" class="form-input-control" value="30.0" step="0.5">
+            </div>
+            <div class="form-group">
+                <label>pH Rango (Mín / Máx)</label>
+                <input type="text" class="form-input-control" value="6.0 - 6.8">
+            </div>
+            <div class="form-group">
+                <label>EC Rango (µS/cm)</label>
+                <input type="text" class="form-input-control" value="1000 - 1500">
+            </div>
+            <div class="form-group">
+                <label>Calibración Ratio (px a cm)</label>
+                <input type="number" class="form-input-control" value="0.05" step="0.001">
+            </div>
+        </div>
+    </div>
 </div>

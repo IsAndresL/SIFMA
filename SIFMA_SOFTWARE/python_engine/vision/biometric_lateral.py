@@ -52,3 +52,4 @@ class LateralBiometrics:
             "y_apex": y_apex,
             "y_base": y_base
         }
+

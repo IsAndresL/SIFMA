@@ -7,3 +7,4 @@ impl SerialPortScanner {
         vec!["COM1".to_string(), "COM2".to_string(), "COM3".to_string(), "COM4".to_string()]
     }
 }
+

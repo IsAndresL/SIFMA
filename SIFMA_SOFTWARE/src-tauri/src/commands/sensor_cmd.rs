@@ -83,3 +83,4 @@ pub fn connect_serial_port(port: String, baud_rate: u32) -> SerialConnectResult 
         baud_rate,
     }
 }
+

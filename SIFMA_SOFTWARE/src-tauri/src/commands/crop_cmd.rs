@@ -47,3 +47,4 @@ pub fn get_crop_profiles() -> Vec<CropProfileDTO> {
         },
     ]
 }
+

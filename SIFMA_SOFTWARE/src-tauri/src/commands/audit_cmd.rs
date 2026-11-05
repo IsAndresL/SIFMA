@@ -38,3 +38,4 @@ pub fn get_audit_logs() -> Vec<AuditLogItemDTO> {
         },
     ]
 }
+

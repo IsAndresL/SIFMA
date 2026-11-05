@@ -39,3 +39,4 @@ pub fn get_dashboard_summary(plant_id: Option<i32>) -> DashboardSummary {
         pump_status: "ACTIVE".to_string(),
     }
 }
+

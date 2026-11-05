@@ -1,18 +1,20 @@
 // SIFMA — Controlador Modular: Procesamiento de Visión
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
-let currentStep = 'rgb';
+let currentStage = 'rgb';
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Procesamiento de Fenotipado y Extracción Biométrica';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Pipeline de Visión Artificial y Segmentación';
+    if (subheading) subheading.textContent = 'Procesamiento de capturas USB / archivos ZIP por fecha y canastilla hidropónica';
 
-    drawCanvasStage(currentStep);
-    await loadRecentSessions();
+    drawCanvasStage(currentStage);
+    await loadSessionsTable();
     setupEventListeners();
 }
 
-function drawCanvasStage(step) {
+function drawCanvasStage(stage) {
     const canvas = document.getElementById('visionPreviewCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -21,183 +23,177 @@ function drawCanvasStage(step) {
 
     ctx.clearRect(0, 0, w, h);
 
-    if (step === 'rgb') {
-        // Fondo simulado torre hidropónica
+    if (stage === 'rgb') {
+        // Fondo base
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(0, 0, w, h);
 
-        // Tubo de PVC blanco
-        ctx.fillStyle = '#f1f5f9';
-        ctx.fillRect(w / 2 - 40, h - 140, 80, 140);
+        // Tubo de cultivo PVC
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(w / 2 - 35, h - 110, 70, 110);
         ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(w / 2 - 40, h - 140, 80, 140);
+        ctx.strokeRect(w / 2 - 35, h - 110, 70, 110);
 
-        // Tallo y Hojas verdes de cebollín
+        // Tallo Cebollín
         ctx.strokeStyle = '#15803d';
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.moveTo(w / 2, h - 140);
-        ctx.lineTo(w / 2, h - 260);
+        ctx.moveTo(w / 2, h - 110);
+        ctx.lineTo(w / 2, h - 230);
         ctx.stroke();
 
-        // Hojas
-        ctx.fillStyle = '#22c55e';
-        drawLeaf(ctx, w / 2, h - 260, -45, 120);
-        drawLeaf(ctx, w / 2, h - 230, 45, 110);
-        drawLeaf(ctx, w / 2, h - 200, -35, 100);
-        drawLeaf(ctx, w / 2, h - 240, 10, 130);
+        // Hojas verdes
+        ctx.fillStyle = '#16a34a';
+        drawBlade(ctx, w / 2, h - 230, -45, 110);
+        drawBlade(ctx, w / 2, h - 200, 45, 100);
+        drawBlade(ctx, w / 2, h - 180, -30, 95);
+        drawBlade(ctx, w / 2, h - 220, 15, 120);
 
-    } else if (step === 'exg') {
-        // ExG Grayscale representation
-        ctx.fillStyle = '#0f172a';
+    } else if (stage === 'exg') {
+        ctx.fillStyle = '#0b0f19';
         ctx.fillRect(0, 0, w, h);
 
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.moveTo(w / 2, h - 140);
-        ctx.lineTo(w / 2, h - 260);
+        ctx.moveTo(w / 2, h - 110);
+        ctx.lineTo(w / 2, h - 230);
         ctx.stroke();
 
         ctx.fillStyle = '#e2e8f0';
-        drawLeaf(ctx, w / 2, h - 260, -45, 120);
-        drawLeaf(ctx, w / 2, h - 230, 45, 110);
-        drawLeaf(ctx, w / 2, h - 200, -35, 100);
-        drawLeaf(ctx, w / 2, h - 240, 10, 130);
+        drawBlade(ctx, w / 2, h - 230, -45, 110);
+        drawBlade(ctx, w / 2, h - 200, 45, 100);
+        drawBlade(ctx, w / 2, h - 180, -30, 95);
+        drawBlade(ctx, w / 2, h - 220, 15, 120);
 
-    } else if (step === 'otsu') {
-        // Pure binary mask (Otsu thresholding)
+    } else if (stage === 'otsu') {
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, w, h);
 
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.moveTo(w / 2, h - 140);
-        ctx.lineTo(w / 2, h - 260);
+        ctx.moveTo(w / 2, h - 110);
+        ctx.lineTo(w / 2, h - 230);
         ctx.stroke();
 
         ctx.fillStyle = '#ffffff';
-        drawLeaf(ctx, w / 2, h - 260, -45, 120);
-        drawLeaf(ctx, w / 2, h - 230, 45, 110);
-        drawLeaf(ctx, w / 2, h - 200, -35, 100);
-        drawLeaf(ctx, w / 2, h - 240, 10, 130);
+        drawBlade(ctx, w / 2, h - 230, -45, 110);
+        drawBlade(ctx, w / 2, h - 200, 45, 100);
+        drawBlade(ctx, w / 2, h - 180, -30, 95);
+        drawBlade(ctx, w / 2, h - 220, 15, 120);
 
-    } else if (step === 'contour') {
-        // Contornos verdes + Calibración métrica y caja envolvente
+    } else if (stage === 'contour') {
         drawCanvasStage('rgb');
 
-        // Bounding box foliar
-        ctx.strokeStyle = '#38bdf8';
+        // Bounding box
+        ctx.strokeStyle = '#0284c7';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
-        ctx.strokeRect(w / 2 - 80, h - 390, 170, 260);
+        ctx.strokeRect(w / 2 - 75, h - 340, 160, 230);
         ctx.setLineDash([]);
 
-        // Indicador de altura
-        ctx.strokeStyle = '#f59e0b';
+        // Calibre altura
+        ctx.strokeStyle = '#d97706';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(w / 2 - 95, h - 390);
-        ctx.lineTo(w / 2 - 95, h - 140);
+        ctx.moveTo(w / 2 - 90, h - 340);
+        ctx.lineTo(w / 2 - 90, h - 110);
         ctx.stroke();
 
-        // Texto de medición
-        ctx.fillStyle = '#f59e0b';
+        ctx.fillStyle = '#d97706';
         ctx.font = '11px JetBrains Mono';
-        ctx.fillText('H = 18.5 cm', w / 2 - 165, h - 260);
+        ctx.fillText('H = 18.5 cm', w / 2 - 155, h - 220);
 
-        // Indicador de diámetro basal
+        // Calibre tallo
         ctx.strokeStyle = '#ec4899';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(w / 2 - 15, h - 145);
-        ctx.lineTo(w / 2 + 15, h - 145);
+        ctx.moveTo(w / 2 - 15, h - 115);
+        ctx.lineTo(w / 2 + 15, h - 115);
         ctx.stroke();
+
         ctx.fillStyle = '#ec4899';
-        ctx.fillText('Ø = 4.8 mm', w / 2 + 25, h - 142);
+        ctx.fillText('Ø = 4.8 mm', w / 2 + 25, h - 112);
     }
 }
 
-function drawLeaf(ctx, startX, startY, angleDeg, length) {
+function drawBlade(ctx, startX, startY, angleDeg, length) {
     const rad = (angleDeg - 90) * (Math.PI / 180);
     const endX = startX + Math.cos(rad) * length;
     const endY = startY + Math.sin(rad) * length;
 
     ctx.beginPath();
     ctx.moveTo(startX, startY);
-    ctx.quadraticCurveTo(startX + (endX - startX) * 0.5 + 20, startY + (endY - startY) * 0.5, endX, endY);
-    ctx.quadraticCurveTo(startX + (endX - startX) * 0.5 - 20, startY + (endY - startY) * 0.5, startX, startY);
+    ctx.quadraticCurveTo(startX + (endX - startX) * 0.5 + 15, startY + (endY - startY) * 0.5, endX, endY);
+    ctx.quadraticCurveTo(startX + (endX - startX) * 0.5 - 15, startY + (endY - startY) * 0.5, startX, startY);
     ctx.fill();
 }
 
-async function loadRecentSessions() {
+async function loadSessionsTable() {
     try {
         const sessions = await TauriBridge.invoke('list_capture_sessions');
-        const tbody = document.getElementById('vision-sessions-tbody');
+        const tbody = document.getElementById('proc-sessions-tbody');
         if (!tbody || !sessions) return;
 
         let html = '';
         sessions.forEach(s => {
             html += `
                 <tr>
-                    <td class="font-mono">#${s.id}</td>
-                    <td>Planta #${s.plant_id}</td>
-                    <td class="font-mono">${s.timestamp}</td>
-                    <td class="font-mono">${s.foliar_area}</td>
-                    <td class="font-mono">${s.plant_height}</td>
-                    <td class="font-mono">${s.stem_diameter}</td>
-                    <td class="font-mono text-emerald">${s.health_index}%</td>
-                    <td><span class="badge badge-emerald">${s.status}</span></td>
+                    <td><code>#${s.id}</code></td>
+                    <td style="font-family: var(--font-mono); font-size: 12px;">${s.timestamp}</td>
+                    <td><strong style="color: var(--accent-success);">${s.foliar_area} cm²</strong></td>
+                    <td>${s.plant_height} cm</td>
+                    <td>${s.stem_diameter} mm</td>
+                    <td><span class="badge badge-success">${s.health_index}%</span></td>
+                    <td><span class="badge badge-primary">${s.status}</span></td>
                 </tr>
             `;
         });
         tbody.innerHTML = html;
     } catch (err) {
-        console.error('[SESSIONS ERROR]', err);
+        console.error('[LOAD SESSIONS ERROR]', err);
     }
 }
 
 function setupEventListeners() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.filter-btn[data-step]').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentStep = e.target.dataset.step;
-            const badge = document.getElementById('stage-badge');
-            if (badge) badge.textContent = `Etapa: ${e.target.textContent}`;
-            drawCanvasStage(currentStep);
+            document.querySelectorAll('.filter-btn[data-step]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentStage = btn.dataset.step;
+            setText('stage-badge-indicator', `Etapa: ${btn.textContent}`);
+            drawCanvasStage(currentStage);
         });
     });
 
-    const runBtn = document.getElementById('btn-run-vision');
-    if (runBtn) {
-        runBtn.addEventListener('click', async () => {
-            runBtn.disabled = true;
-            runBtn.textContent = 'Procesando en Python...';
+    const procBtn = document.getElementById('btn-process-sidecar');
+    if (procBtn) {
+        procBtn.addEventListener('click', async () => {
+            procBtn.disabled = true;
+            procBtn.innerHTML = '<span class="material-icons-round">autorenew</span><span>Invocando Sidecar...</span>';
             try {
                 const res = await TauriBridge.invoke('trigger_vision_processing', {
                     image_path: 'captures/plant_01.jpg',
                     crop_id: 1
                 });
                 if (res) {
-                    document.getElementById('bio-foliar-area').textContent = res.foliar_area;
-                    document.getElementById('bio-plant-height').textContent = res.plant_height;
-                    document.getElementById('bio-stem-diameter').textContent = res.stem_diameter;
-                    document.getElementById('bio-coverage').textContent = res.green_coverage_pct;
-                    document.getElementById('bio-health').textContent = res.health_index;
-                    document.getElementById('bio-latency').textContent = res.processing_time_ms;
-
-                    // Cambiar a vista de contornos
-                    document.querySelector('.tab-btn[data-step="contour"]')?.click();
+                    setText('p-area', `${res.foliar_area.toFixed(2)} cm²`);
+                    setText('p-height', `${res.plant_height.toFixed(2)} cm`);
+                    setText('p-stem', `${res.stem_diameter.toFixed(2)} mm`);
+                    setText('p-health', `${res.health_index.toFixed(2)} %`);
+                    setText('p-latency', `${res.processing_time_ms} ms`);
+                    document.querySelector('.filter-btn[data-step="contour"]')?.click();
                 }
-            } catch (err) {
-                console.error(err);
             } finally {
-                runBtn.disabled = false;
-                runBtn.textContent = 'Procesar en Sidecar';
+                procBtn.disabled = false;
+                procBtn.innerHTML = '<span class="material-icons-round">play_arrow</span><span>Ejecutar Pipeline Sidecar</span>';
             }
         });
     }
+}
+
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.textContent = val;
 }

@@ -32,3 +32,4 @@ pub fn get_scientific_dossier(plant_id: Option<i32>) -> ScientificDossierDTO {
         verified_by: "Administrador SIFMA / Agrónomo en Jefe".into(),
     }
 }
+

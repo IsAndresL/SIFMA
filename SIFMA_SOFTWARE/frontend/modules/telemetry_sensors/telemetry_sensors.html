@@ -1,126 +1,235 @@
-<div class="telemetry-module">
-    <!-- BARRA SUPERIOR DE ESTADO SERIAL -->
-    <section class="serial-status-card">
-        <div class="serial-info">
-            <span class="status-indicator online"></span>
-            <div>
-                <span class="serial-title">Enlace de Telemetría Serial Microcontrolador</span>
-                <span class="serial-sub" id="serial-status-text">Conectado a COM3 @ 115200 baud — Frecuencia: 1 Hz</span>
-            </div>
-        </div>
-        <div class="serial-controls">
-            <select id="serial-port-select" class="form-select">
-                <option value="COM3">COM3 (SIFMA Node / Arduino Mega)</option>
-                <option value="COM1">COM1 (Estándar)</option>
-            </select>
-            <button id="btn-toggle-serial" class="btn btn-secondary">Reconectar</button>
-        </div>
-    </section>
-
-    <!-- CARDS DE MÉTRICAS EN TIEMPO REAL -->
-    <section class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-header">
-                <span class="metric-name">Temp. Solución Nutritiva</span>
-                <span class="material-icons-round text-emerald">water_drop</span>
-            </div>
-            <div class="metric-value-row">
-                <span class="metric-value" id="val-water-temp">--</span>
-                <span class="metric-unit">°C</span>
-            </div>
-            <div class="metric-footer">
-                <span class="badge badge-emerald">Rango Óptimo: 20-25 °C</span>
-            </div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-header">
-                <span class="metric-name">Temperatura Ambiente</span>
-                <span class="material-icons-round text-amber">thermostat</span>
-            </div>
-            <div class="metric-value-row">
-                <span class="metric-value" id="val-air-temp">--</span>
-                <span class="metric-unit">°C</span>
-            </div>
-            <div class="metric-footer">
-                <span class="badge badge-amber">Rango Óptimo: 22-28 °C</span>
-            </div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-header">
-                <span class="metric-name">Humedad Relativa</span>
-                <span class="material-icons-round text-sky">cloud</span>
-            </div>
-            <div class="metric-value-row">
-                <span class="metric-value" id="val-humidity">--</span>
-                <span class="metric-unit">%</span>
-            </div>
-            <div class="metric-footer">
-                <span class="badge badge-sky">Rango: 60-75 %</span>
-            </div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-header">
-                <span class="metric-name">Potencial Hidrógeno (pH)</span>
-                <span class="material-icons-round text-indigo">science</span>
-            </div>
-            <div class="metric-value-row">
-                <span class="metric-value" id="val-ph">--</span>
-                <span class="metric-unit">pH</span>
-            </div>
-            <div class="metric-footer">
-                <span class="badge badge-indigo">Objetivo: 6.0 - 6.5</span>
-            </div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-header">
-                <span class="metric-name">Conductividad Eléctrica</span>
-                <span class="material-icons-round text-rose">bolt</span>
-            </div>
-            <div class="metric-value-row">
-                <span class="metric-value" id="val-ec">--</span>
-                <span class="metric-unit">µS/cm</span>
-            </div>
-            <div class="metric-footer">
-                <span class="badge badge-rose">Nutrición: 1000 - 1500</span>
-            </div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-header">
-                <span class="metric-name">Oxígeno Disuelto / Nivel</span>
-                <span class="material-icons-round text-teal">opacity</span>
-            </div>
-            <div class="metric-value-row">
-                <span class="metric-value" id="val-do">--</span>
-                <span class="metric-unit">mg/L</span>
-            </div>
-            <div class="metric-footer">
-                <span class="badge badge-teal" id="val-tank-level">Tanque: 88.5% | Bomba Activa</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- GRÁFICO TEMPORAL DE TELEMETRÍA -->
-    <section class="telemetry-chart-section">
-        <div class="chart-header">
-            <div>
-                <h3 class="chart-title">Serie Temporal de Telemetría Microclimática</h3>
-                <p class="chart-subtitle">Historial continuo de variables hidropónicas de la torre</p>
-            </div>
-            <div class="chart-actions">
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-filter active" data-metric="all">Todas</button>
-                    <button class="btn btn-sm btn-filter" data-metric="temp">Temperaturas</button>
-                    <button class="btn btn-sm btn-filter" data-metric="ph_ec">pH & EC</button>
+<!-- SIFMA — Vista Modular: Sensores de Microclima y Telemetría (Copia fiel de local_server) -->
+<div class="sensors-module">
+    <!-- SECCIÓN 1: PANEL DE CONTROL DE LA ANTENA USB Y CONEXIÓN SERIAL -->
+    <div class="widget-card" style="margin-bottom: 14px; padding: 12px 18px;">
+        <div class="widget-header" style="margin-bottom: 0; padding-bottom: 0;">
+            <div class="widget-header-title" style="display: flex; align-items: center; gap: 10px;">
+                <div class="kpi-icon-badge blue" style="width: 32px; height: 32px;">
+                    <span class="material-icons-round" style="font-size: 18px;">settings_input_antenna</span>
+                </div>
+                <div>
+                    <h3 style="font-size: 13.5px; margin-bottom: 2px;">Control de la Antena Receptora de Telemetría (XBee PRO S2B / USB)</h3>
+                    <p style="font-size: 11.5px; margin: 0;">Recepción inalámbrica RF e importación manual de registros CSV de la torre</p>
                 </div>
             </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge badge-success" id="antenna-live-status-text">Transmitiendo en Vivo</span>
+                <select id="antenna-port-select" class="form-input-control" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                    <option value="COM3" selected>COM3 (Arduino Mega / SIFMA Node)</option>
+                    <option value="COM1">COM1 (Estándar)</option>
+                </select>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-reconnect-serial">
+                    <span class="material-icons-round" style="font-size: 14px;">refresh</span>
+                    <span>Reconectar</span>
+                </button>
+            </div>
         </div>
-        <div class="chart-canvas-container">
+    </div>
+
+    <!-- SECCIÓN 2: KPI CARDS DE TELEMETRÍA (8 VARIABLES OFICIALES SIFMA) -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            Panel de Indicadores en Tiempo Real (8 Variables de Telemetría)
+        </div>
+        <div class="filter-group">
+            <button type="button" class="filter-btn active" id="btn-kpi-all">
+                <span>Todas (8)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-kpi-water">
+                <span>Solución / Agua (5)</span>
+            </button>
+            <button type="button" class="filter-btn" id="btn-kpi-ambient">
+                <span>Ambiente y Motor (3)</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="kpi-row-grid" id="kpi-container-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        
+        <!-- 1. pH Solución -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">1. pH Solución</span>
+                <div class="kpi-icon-badge" style="width: 28px; height: 28px; background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                    <span class="material-icons-round" style="font-size: 16px;">science</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-ph-val" style="font-size: 22px;">6.22</span>
+                <span class="kpi-unit">pH</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Mín: <strong>6.10</strong> | Máx: <strong>6.35</strong> | Prom: <strong>6.22</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Rango Óptimo</span>
+            </div>
+        </div>
+
+        <!-- 2. Conductividad Eléctrica (EC) -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">2. Conductividad Eléctrica</span>
+                <div class="kpi-icon-badge" style="width: 28px; height: 28px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                    <span class="material-icons-round" style="font-size: 16px;">bolt</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-ec-val" style="font-size: 22px;">1250</span>
+                <span class="kpi-unit">µS/cm</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Mín: <strong>1210</strong> | Máx: <strong>1280</strong> | Prom: <strong>1245</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Nutrientes Óptimos</span>
+            </div>
+        </div>
+
+        <!-- 3. Turbidez (NTU) -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">3. Turbidez</span>
+                <div class="kpi-icon-badge" style="width: 28px; height: 28px; background: rgba(249, 115, 22, 0.15); color: #f97316;">
+                    <span class="material-icons-round" style="font-size: 16px;">opacity</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-turb-val" style="font-size: 22px;">2.10</span>
+                <span class="kpi-unit">NTU</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Mín: <strong>1.80</strong> | Máx: <strong>2.40</strong> | Prom: <strong>2.05</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Solución Cristalina</span>
+            </div>
+        </div>
+
+        <!-- 4. Oxígeno Disuelto (mg/L) -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">4. Oxígeno Disuelto</span>
+                <div class="kpi-icon-badge" style="width: 28px; height: 28px; background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                    <span class="material-icons-round" style="font-size: 16px;">air</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-do-val" style="font-size: 22px;">7.40</span>
+                <span class="kpi-unit">mg/L</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Mín: <strong>7.10</strong> | Máx: <strong>7.80</strong> | Prom: <strong>7.45</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Oxigenación Óptima</span>
+            </div>
+        </div>
+
+        <!-- 5. Temperatura Solución -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">5. Temp. Solución</span>
+                <div class="kpi-icon-badge emerald" style="width: 28px; height: 28px;">
+                    <span class="material-icons-round" style="font-size: 16px;">water_drop</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-wtemp-val" style="font-size: 22px;">24.20</span>
+                <span class="kpi-unit">°C</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Mín: <strong>22.5</strong> | Máx: <strong>25.8</strong> | Prom: <strong>24.1</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Estable (20-25°C)</span>
+            </div>
+        </div>
+
+        <!-- 6. Nivel del Tanque -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">6. Nivel de Tanque</span>
+                <div class="kpi-icon-badge blue" style="width: 28px; height: 28px;">
+                    <span class="material-icons-round" style="font-size: 16px;">waves</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-tank-val" style="font-size: 22px;">88.5</span>
+                <span class="kpi-unit">%</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Capacidad: <strong>80 Litros</strong> | Volumen: <strong>70.8 L</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Volumen Seguro</span>
+            </div>
+        </div>
+
+        <!-- 7. Temperatura y Humedad Ambiente -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">7. Clima Ambiental</span>
+                <div class="kpi-icon-badge amber" style="width: 28px; height: 28px;">
+                    <span class="material-icons-round" style="font-size: 16px;">device_thermostat</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" id="kpi-atemp-val" style="font-size: 22px;">28.5</span>
+                <span class="kpi-unit">°C</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Humedad: <strong id="kpi-ahum-val">64.0%</strong> | DPV: <strong>0.92 kPa</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Microclima Ventilado</span>
+            </div>
+        </div>
+
+        <!-- 8. Corriente de Bomba y Flujo -->
+        <div class="kpi-card" style="padding: 12px 14px;">
+            <div class="kpi-card-header" style="margin-bottom: 4px;">
+                <span class="kpi-label" style="font-size: 11.5px;">8. Corriente Bombeo</span>
+                <div class="kpi-icon-badge cyan" style="width: 28px; height: 28px;">
+                    <span class="material-icons-round" style="font-size: 16px;">power</span>
+                </div>
+            </div>
+            <div class="kpi-value-row" style="margin-bottom: 3px;">
+                <span class="kpi-big-number" style="font-size: 22px;">0.84</span>
+                <span class="kpi-unit">A</span>
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">
+                Tensión: <strong>12V DC</strong> | Potencia: <strong>10.1 W</strong>
+            </div>
+            <div class="kpi-footer-badge positive" style="font-size: 10px; padding: 2px 6px;">
+                <span class="material-icons-round" style="font-size: 12px;">check_circle</span>
+                <span>Bomba Operativa</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 3: GRÁFICO HISTÓRICO MULTIEJE -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Serie Temporal Completa de Telemetría Microclimática</h3>
+                <p>Evolución sincronizada de los 8 parámetros de cultivo durante la jornada</p>
+            </div>
+            <div class="filter-group">
+                <button class="filter-btn active" id="btn-chart-all">Todas</button>
+                <button class="filter-btn" id="btn-chart-water">Solución (pH, EC, DO)</button>
+                <button class="filter-btn" id="btn-chart-temps">Temperaturas</button>
+            </div>
+        </div>
+        <div class="chart-stage-container" style="height: 320px; position: relative;">
             <canvas id="telemetryHistoryChart"></canvas>
         </div>
-    </section>
+    </div>
 </div>

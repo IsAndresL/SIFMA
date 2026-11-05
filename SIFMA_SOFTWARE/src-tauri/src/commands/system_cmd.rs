@@ -20,3 +20,4 @@ pub fn get_system_info() -> SystemInfoResponse {
         python_sidecar_status: "standby".to_string(),
     }
 }
+

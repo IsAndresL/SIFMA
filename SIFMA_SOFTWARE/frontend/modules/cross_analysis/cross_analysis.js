@@ -1,39 +1,82 @@
 // SIFMA — Controlador Modular: Cruce Multivariable
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
-let scatterChartInstance = null;
+let scatterChart = null;
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Análisis de Correlación Bivariable y Multivariada';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Cruce de Datos y Análisis Multivariable';
+    if (subheading) subheading.textContent = 'Sincronización cronológica, matriz de correlación de Pearson y laboratorio gráfico para Canastilla #1';
 
-    await loadCrossAnalysis();
-    await loadCorrelationMatrix();
-    setupEventListeners();
+    await loadHeatmapMatrix();
+    await loadRegressionData();
 }
 
-async function loadCrossAnalysis() {
+async function loadHeatmapMatrix() {
     try {
-        const varX = document.getElementById('select-var-x')?.value || 'water_temp';
-        const varY = document.getElementById('select-var-y')?.value || 'foliar_area';
+        const matrixData = await TauriBridge.invoke('get_correlation_matrix');
+        const table = document.getElementById('heatmap-correlation-table');
+        if (!table || !matrixData) return;
 
-        const data = await TauriBridge.invoke('get_cross_analysis_data', { var_x: varX, var_y: varY });
+        let html = '<thead><tr><th>Variable Ambiental \\ Fenotipo</th>';
+        matrixData.labels.forEach(l => { html += `<th>${l}</th>`; });
+        html += '</tr></thead><tbody>';
+
+        matrixData.matrix.forEach((row, rIdx) => {
+            html += `<tr><td style="font-weight: 700; background: #f8fafc;">${matrixData.labels[rIdx]}</td>`;
+            row.forEach((val) => {
+                let bg = 'rgba(255, 255, 255, 1)';
+                let color = 'var(--text-body)';
+                let fontW = '500';
+
+                if (val >= 0.7) {
+                    bg = 'rgba(5, 150, 105, 0.2)';
+                    color = '#047857';
+                    fontW = '700';
+                } else if (val >= 0.3) {
+                    bg = 'rgba(5, 150, 105, 0.08)';
+                    color = '#059669';
+                } else if (val <= -0.6) {
+                    bg = 'rgba(220, 38, 38, 0.18)';
+                    color = '#b91c1c';
+                    fontW = '700';
+                } else if (val <= -0.3) {
+                    bg = 'rgba(220, 38, 38, 0.08)';
+                    color = '#dc2626';
+                }
+
+                html += `
+                    <td style="background: ${bg}; color: ${color}; font-weight: ${fontW}; text-align: center; cursor: pointer;" title="r = ${val.toFixed(2)}">
+                        <span style="font-family: var(--font-mono); font-size: 12px;">${val > 0 ? '+' : ''}${val.toFixed(2)}</span>
+                    </td>
+                `;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+        table.innerHTML = html;
+    } catch (err) {
+        console.error('[HEATMAP ERROR]', err);
+    }
+}
+
+async function loadRegressionData() {
+    try {
+        const data = await TauriBridge.invoke('get_cross_analysis_data', { var_x: 'water_temp', var_y: 'foliar_area' });
         if (!data) return;
 
-        // Actualizar badges e indicadores
-        setText('badge-pearson-r', `r = ${data.pearson_r.toFixed(3)}`);
-        setText('badge-r2', `R² = ${data.r_squared.toFixed(3)}`);
-        setText('stat-r', data.pearson_r.toFixed(3));
-        setText('stat-r2', data.r_squared.toFixed(3));
-        setText('stat-slope', `+${data.slope.toFixed(2)} / unidad`);
-        setText('stat-intercept', `${data.intercept.toFixed(1)}`);
-        setText('stat-p', `< ${data.p_value}`);
-        setText('stat-n', `${data.points.length} puntos`);
-        setText('interp-text', data.interpretation);
+        setText('cross-badge-r', `r = +${data.pearson_r.toFixed(3)}`);
+        setText('cross-badge-r2', `R² = ${data.r_squared.toFixed(3)}`);
+        setText('c-stat-r', `+${data.pearson_r.toFixed(3)}`);
+        setText('c-stat-r2', data.r_squared.toFixed(3));
+        setText('c-stat-slope', `+${data.slope.toFixed(2)} cm²/°C`);
+        setText('c-stat-p', `< ${data.p_value}`);
+        setText('cross-interp-text', data.interpretation);
 
         renderScatterChart(data);
     } catch (err) {
-        console.error('[CROSS ANALYSIS ERROR]', err);
+        console.error('[REGRESSION ERROR]', err);
     }
 }
 
@@ -41,13 +84,9 @@ function renderScatterChart(data) {
     const ctx = document.getElementById('crossScatterChart');
     if (!ctx) return;
 
-    if (scatterChartInstance) {
-        scatterChartInstance.destroy();
-    }
+    if (scatterChart) scatterChart.destroy();
 
     const scatterPoints = data.points.map(p => ({ x: p.x, y: p.y }));
-
-    // Calcular línea de regresión de mínimos cuadrados
     const minX = Math.min(...data.points.map(p => p.x));
     const maxX = Math.max(...data.points.map(p => p.x));
     const linePoints = [
@@ -55,22 +94,22 @@ function renderScatterChart(data) {
         { x: maxX, y: maxX * data.slope + data.intercept }
     ];
 
-    scatterChartInstance = new Chart(ctx, {
+    scatterChart = new Chart(ctx, {
         type: 'scatter',
         data: {
             datasets: [
                 {
                     label: 'Observaciones Experimentales',
                     data: scatterPoints,
-                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(5, 150, 105, 0.75)',
+                    borderColor: '#059669',
                     pointRadius: 5
                 },
                 {
-                    label: 'Línea de Regresión OLS',
+                    label: 'Ajuste Lineal OLS',
                     data: linePoints,
                     type: 'line',
-                    borderColor: '#6366f1',
+                    borderColor: '#2563eb',
                     borderWidth: 2,
                     fill: false,
                     pointRadius: 0
@@ -81,16 +120,16 @@ function renderScatterChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } }
+                legend: { position: 'top', labels: { font: { family: 'Literata', size: 11 } } }
             },
             scales: {
                 x: {
-                    title: { display: true, text: 'Variable Independiente (X)', font: { size: 11 } },
+                    title: { display: true, text: 'Temperatura Solución Nutritiva (°C)', font: { size: 11 } },
                     grid: { color: 'rgba(0,0,0,0.04)' },
                     ticks: { font: { family: 'JetBrains Mono', size: 10 } }
                 },
                 y: {
-                    title: { display: true, text: 'Variable Dependiente (Y)', font: { size: 11 } },
+                    title: { display: true, text: 'Área Foliar (cm²)', font: { size: 11 } },
                     grid: { color: 'rgba(0,0,0,0.04)' },
                     ticks: { font: { family: 'JetBrains Mono', size: 10 } }
                 }
@@ -99,47 +138,7 @@ function renderScatterChart(data) {
     });
 }
 
-async function loadCorrelationMatrix() {
-    try {
-        const matrixData = await TauriBridge.invoke('get_correlation_matrix');
-        const table = document.getElementById('correlation-matrix-table');
-        if (!table || !matrixData) return;
-
-        let html = '<thead><tr><th>Variables</th>';
-        matrixData.labels.forEach(l => { html += `<th>${l}</th>`; });
-        html += '</tr></thead><tbody>';
-
-        matrixData.matrix.forEach((row, rIdx) => {
-            html += `<tr><th>${matrixData.labels[rIdx]}</th>`;
-            row.forEach((val) => {
-                let cls = 'cell-neutral';
-                if (val >= 0.7) cls = 'cell-pos-high';
-                else if (val >= 0.3) cls = 'cell-pos-med';
-                else if (val <= -0.6) cls = 'cell-neg-high';
-                else if (val <= -0.3) cls = 'cell-neg-med';
-
-                html += `<td class="${cls}">${val.toFixed(2)}</td>`;
-            });
-            html += '</tr>';
-        });
-        html += '</tbody>';
-        table.innerHTML = html;
-    } catch (err) {
-        console.error('[CORRELATION MATRIX ERROR]', err);
-    }
-}
-
-function setupEventListeners() {
-    const btn = document.getElementById('btn-recalc');
-    if (btn) btn.addEventListener('click', loadCrossAnalysis);
-
-    const selX = document.getElementById('select-var-x');
-    const selY = document.getElementById('select-var-y');
-    if (selX) selX.addEventListener('change', loadCrossAnalysis);
-    if (selY) selY.addEventListener('change', loadCrossAnalysis);
-}
-
 function setText(id, val) {
     const el = document.getElementById(id);
-    if (el) el.textContent = val;
+    if (el && val !== undefined) el.textContent = val;
 }

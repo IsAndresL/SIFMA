@@ -56,3 +56,4 @@ pub fn seed_initial_data(conn: &Connection) -> Result<()> {
 
     Ok(())
 }
+

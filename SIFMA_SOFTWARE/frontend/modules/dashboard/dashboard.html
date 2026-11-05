@@ -1,78 +1,301 @@
-<!-- SIFMA — Módulo Dashboard (Estructura Semántica Pura) -->
-<div class="dashboard-grid">
-    <!-- FILA 1: TARJETAS KPI RESUMEN -->
-    <div class="kpi-card">
-        <div class="kpi-header">
-            <span class="kpi-label">Área Foliar Cenital</span>
-            <span class="material-icons-round kpi-icon">eco</span>
-        </div>
-        <div class="kpi-value" id="kpi-area">-- cm²</div>
-        <div class="kpi-meta">Último fenotipado válido</div>
-    </div>
-
-    <div class="kpi-card">
-        <div class="kpi-header">
-            <span class="kpi-label">Altura Apical</span>
-            <span class="material-icons-round kpi-icon">height</span>
-        </div>
-        <div class="kpi-value" id="kpi-height">-- cm</div>
-        <div class="kpi-meta">Eje ortogonal lateral</div>
-    </div>
-
-    <div class="kpi-card">
-        <div class="kpi-header">
-            <span class="kpi-label">Calibre de Tallo</span>
-            <span class="material-icons-round kpi-icon">straighten</span>
-        </div>
-        <div class="kpi-value" id="kpi-stem">-- mm</div>
-        <div class="kpi-meta">Gradiente basal Sobel</div>
-    </div>
-
-    <div class="kpi-card">
-        <div class="kpi-header">
-            <span class="kpi-label">Índice Clorofílico</span>
-            <span class="material-icons-round kpi-icon">health_and_safety</span>
-        </div>
-        <div class="kpi-value" id="kpi-health">-- %</div>
-        <div class="kpi-meta">Salud y vigor fisiológico</div>
-    </div>
-
-    <!-- FILA 2: CONTENEDORES DE GRÁFICAS -->
-    <div class="chart-card chart-wide">
-        <div class="chart-header">
-            <h3>Perfil Microclimático de la Jornada (Temperatura y Radiación)</h3>
-            <span class="font-mono text-muted">Series temporales nativas</span>
-        </div>
-        <div class="chart-container">
-            <canvas id="chart-microclimate"></canvas>
-        </div>
-    </div>
-
-    <div class="chart-card chart-narrow">
-        <div class="chart-header">
-            <h3>Estado Fisicoquímico</h3>
-            <span class="font-mono text-muted">Nutrición y pH</span>
-        </div>
-        <div class="chem-status-list">
-            <div class="chem-item">
-                <span>pH de Solución:</span>
-                <strong id="val-ph" class="font-mono">--</strong>
+<!-- SIFMA — Vista Modular: Dashboard Analítico (Copia fiel de local_server) -->
+<div class="dashboard-split-layout">
+    <!-- COLUMNA LATERAL: 6 TARJETAS KPI RESUMEN -->
+    <div class="dashboard-kpi-column">
+        <!-- KPI 1: Área Foliar -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <div>
+                    <span class="kpi-label">Área Foliar</span>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio del Día (3 Períodos)</div>
+                </div>
+                <div class="kpi-icon-badge emerald">
+                    <span class="material-icons-round">spa</span>
+                </div>
             </div>
-            <div class="chem-item">
-                <span>Electroconductividad:</span>
-                <strong id="val-ec" class="font-mono">-- µS/cm</strong>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number" id="dash-foliar-area">61.80</span>
+                <span class="kpi-unit">cm²</span>
             </div>
-            <div class="chem-item">
-                <span>Oxígeno Disuelto:</span>
-                <strong id="val-do" class="font-mono">-- mg/L</strong>
+            <div class="kpi-footer-badge positive">
+                <span class="material-icons-round" style="font-size: 14px;">trending_up</span>
+                <span id="dash-foliar-diff">+ 2.40 cm² vs día ant.</span>
             </div>
-            <div class="chem-item">
-                <span>Turbidez:</span>
-                <strong id="val-turb" class="font-mono">-- NTU</strong>
+        </div>
+
+        <!-- KPI 2: Temperatura -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <div>
+                    <span class="kpi-label">Temperatura Media</span>
+                    <div style="font-size: 10px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio Diario (24h)</div>
+                </div>
+                <div class="kpi-icon-badge blue">
+                    <span class="material-icons-round">thermostat</span>
+                </div>
             </div>
-            <div class="chem-item">
-                <span>Bomba de Recirculación:</span>
-                <span class="status-badge badge-active" id="val-pump">ACTIVA</span>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number" id="dash-temp">24.20</span>
+                <span class="kpi-unit">°C</span>
+            </div>
+            <div class="kpi-footer-badge positive">
+                <span class="material-icons-round" style="font-size: 14px;">check_circle</span>
+                <span>Óptimo Agronómico</span>
+            </div>
+        </div>
+
+        <!-- KPI 3: Humedad Relativa -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <div>
+                    <span class="kpi-label">Humedad Relativa</span>
+                    <div style="font-size: 10px; font-weight: 700; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio Diario (24h)</div>
+                </div>
+                <div class="kpi-icon-badge cyan">
+                    <span class="material-icons-round">water_drop</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number" id="dash-humidity">64.00</span>
+                <span class="kpi-unit">% HR</span>
+            </div>
+            <div class="kpi-footer-badge positive">
+                <span class="material-icons-round" style="font-size: 14px;">info</span>
+                <span>Adecuado para Transpiración</span>
+            </div>
+        </div>
+
+        <!-- KPI 4: Radiación Solar UV -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <div>
+                    <span class="kpi-label">Radiación Solar</span>
+                    <div style="font-size: 10px; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio Diario</div>
+                </div>
+                <div class="kpi-icon-badge amber">
+                    <span class="material-icons-round">wb_sunny</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number" id="dash-lux">18400</span>
+                <span class="kpi-unit">lux</span>
+            </div>
+            <div class="kpi-footer-badge neutral">
+                <span class="material-icons-round" style="font-size: 14px;">light_mode</span>
+                <span>Fotoperiodo Estable</span>
+            </div>
+        </div>
+
+        <!-- KPI 5: Salud Vegetal -->
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <div>
+                    <span class="kpi-label">Salud y Vigor Foliar</span>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--accent-success); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">Promedio del Día</div>
+                </div>
+                <div class="kpi-icon-badge emerald">
+                    <span class="material-icons-round">health_and_safety</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number" id="dash-health">82.80</span>
+                <span class="kpi-unit">%</span>
+            </div>
+            <div class="kpi-footer-badge positive">
+                <span class="material-icons-round" style="font-size: 14px;">eco</span>
+                <span>Follaje Vigoroso y Verde</span>
+            </div>
+        </div>
+
+        <!-- KPI 6: Clima Exterior de la Zona -->
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-primary); position: relative;">
+            <div class="kpi-card-header">
+                <div style="display: flex; flex-direction: column;">
+                    <span class="kpi-label">Clima Exterior</span>
+                    <span style="font-size: 10.5px; font-weight: 700; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 0.3px;">
+                        Santa Marta, Magdalena
+                    </span>
+                </div>
+                <div class="kpi-icon-badge blue" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                    <span class="material-icons-round">cloud</span>
+                </div>
+            </div>
+            <div class="kpi-value-row">
+                <span class="kpi-big-number">28.5</span>
+                <span class="kpi-unit">°C</span>
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin: 2px 0 6px 0; display: flex; align-items: center; justify-content: space-between;">
+                <span>Parcialmente Nublado</span>
+                <span style="color: var(--text-muted); font-size: 10.5px;">Viento: 14 km/h</span>
+            </div>
+            <div class="kpi-footer-badge positive">
+                <span class="material-icons-round" style="font-size: 13px;">wifi</span>
+                <span>Sincronizado &bull; HR: 72%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA PRINCIPAL: 4 WIDGETS ANALÍTICOS Y GRÁFICAS -->
+    <div class="dashboard-charts-main">
+        <div class="analytics-grid-2x2">
+            <!-- WIDGET 1: Temperatura y Curva Térmica -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Temperatura y Clima de la Jornada</h3>
+                        <p>Comportamiento térmico con banda de amplitud diaria</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="filter-pill active">Jornada Diaria</span>
+                    </div>
+                </div>
+                
+                <div class="chart-stage-container" style="height: 220px; position: relative;">
+                    <canvas id="thermalCurveChart"></canvas>
+                </div>
+
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Máx. Diaria</span>
+                        <span class="stat-item-value">26.8 °C</span>
+                        <span class="stat-item-desc">Pico térmico</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Mín. Diaria</span>
+                        <span class="stat-item-value">22.1 °C</span>
+                        <span class="stat-item-desc">Mínimo nocturno</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Amplitud</span>
+                        <span class="stat-item-value">4.7 °C</span>
+                        <span class="stat-item-desc">Delta térmico</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Régimen</span>
+                        <span class="stat-item-value text-emerald">Estable</span>
+                        <span class="stat-item-desc">Evaluación</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WIDGET 2: Dinámica Foliar y Crecimiento -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Dinámica de Expansión Foliar y Crecimiento</h3>
+                        <p>Evolución del dosel vegetal a lo largo de las mediciones</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="filter-pill active">Área cm²</span>
+                    </div>
+                </div>
+                
+                <div class="chart-stage-container" style="height: 220px; position: relative;">
+                    <canvas id="growthCurveChart"></canvas>
+                </div>
+
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Tasa Expansión</span>
+                        <span class="stat-item-value">+1.42 cm²/d</span>
+                        <span class="stat-item-desc">Velocidad</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Altura Media</span>
+                        <span class="stat-item-value" id="dash-height">18.5 cm</span>
+                        <span class="stat-item-desc">Tallo basal</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Compacidad</span>
+                        <span class="stat-item-value">0.76</span>
+                        <span class="stat-item-desc">Índice 4πA/P²</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Fase</span>
+                        <span class="stat-item-value text-emerald">Vegetativo</span>
+                        <span class="stat-item-desc">Estadio</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WIDGET 3: Humedad y Radiación Sincronizada -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Comportamiento de Humedad y Radiación Solar</h3>
+                        <p>Correlación microclimática continua de la torre vertical</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="filter-pill active">Microclima</span>
+                    </div>
+                </div>
+                
+                <div class="chart-stage-container" style="height: 220px; position: relative;">
+                    <canvas id="humidityChart"></canvas>
+                </div>
+
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">HR Promedio</span>
+                        <span class="stat-item-value">64.0 %</span>
+                        <span class="stat-item-desc">Humedad aire</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Pico Solar</span>
+                        <span class="stat-item-value">24500 lux</span>
+                        <span class="stat-item-desc">Mediodía</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">DPV</span>
+                        <span class="stat-item-value">0.92 kPa</span>
+                        <span class="stat-item-desc">Déficit presión</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Transpiración</span>
+                        <span class="stat-item-value text-emerald">Óptima</span>
+                        <span class="stat-item-desc">Estado</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WIDGET 4: Eficiencia de Bombeo y Balance Nutricional -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <div class="widget-header-title">
+                        <h3>Eficiencia de Bombeo y Solución Nutritiva</h3>
+                        <p>Ciclos de riego por pulsos y conductividad eléctrica</p>
+                    </div>
+                    <div class="widget-actions-box">
+                        <span class="filter-pill active">Pulsos</span>
+                    </div>
+                </div>
+                
+                <div class="chart-stage-container" style="height: 220px; position: relative;">
+                    <canvas id="pumpingChart"></canvas>
+                </div>
+
+                <div class="widget-stats-row">
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Pulsos Activos</span>
+                        <span class="stat-item-value">48 ciclos</span>
+                        <span class="stat-item-desc">15 min c/u</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">EC Solución</span>
+                        <span class="stat-item-value">1250 µS/cm</span>
+                        <span class="stat-item-desc">Nutrientes</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">pH Solución</span>
+                        <span class="stat-item-value">6.22</span>
+                        <span class="stat-item-desc">Equilibrio</span>
+                    </div>
+                    <div class="widget-stats-item">
+                        <span class="stat-item-label">Bomba</span>
+                        <span class="stat-item-value text-emerald">Activa</span>
+                        <span class="stat-item-desc">Recirculación</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

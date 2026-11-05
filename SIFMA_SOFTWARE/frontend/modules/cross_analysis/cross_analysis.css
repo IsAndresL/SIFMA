@@ -181,3 +181,4 @@
 .cell-neg-high { background: rgba(244, 63, 94, 0.2); color: #9f1239; font-weight: 700; }
 .cell-neg-med { background: rgba(244, 63, 94, 0.08); color: #be123c; }
 .cell-neutral { background: var(--bg-surface); color: var(--text-muted); }
+

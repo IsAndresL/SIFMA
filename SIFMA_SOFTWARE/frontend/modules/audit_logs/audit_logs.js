@@ -2,8 +2,10 @@
 import { TauriBridge } from '../../core/scripts/tauri_bridge.js';
 
 export async function initModule() {
-    const pageTitle = document.getElementById('page-title');
-    if (pageTitle) pageTitle.textContent = 'Auditoría Forense y Sellado Criptográfico';
+    const heading = document.getElementById('page-heading');
+    const subheading = document.getElementById('page-subheading');
+    if (heading) heading.textContent = 'Registro de Actividad y Logs de Auditoría';
+    if (subheading) subheading.textContent = 'Trazabilidad cronológica de movimientos, modificaciones de cuentas, configuración y operaciones críticas';
 
     await loadAuditLogs();
     setupEventListeners();
@@ -12,32 +14,31 @@ export async function initModule() {
 async function loadAuditLogs() {
     try {
         const logs = await TauriBridge.invoke('get_audit_logs') || [];
-        const tbody = document.getElementById('audit-tbody');
+        const tbody = document.getElementById('audit-table-tbody');
         if (!tbody) return;
 
         let html = '';
         logs.forEach(l => {
             html += `
                 <tr>
-                    <td class="font-mono">#${l.id}</td>
-                    <td class="font-mono">${l.timestamp}</td>
+                    <td><code>#${l.id}</code></td>
+                    <td style="font-family: var(--font-mono); font-size: 11.5px;">${l.timestamp}</td>
                     <td><strong>${l.user}</strong></td>
-                    <td><span class="badge badge-sky">${l.event_type}</span></td>
-                    <td class="font-mono">${l.ip}</td>
+                    <td><span class="badge badge-primary">${l.event_type}</span></td>
+                    <td style="font-family: var(--font-mono); font-size: 11.5px;">${l.ip}</td>
                     <td><code>${l.resource}</code></td>
-                    <td><span class="badge badge-emerald">${l.status}</span></td>
-                    <td class="hash-cell" title="${l.hash}">${l.hash}</td>
+                    <td><span class="badge badge-success">${l.status}</span></td>
+                    <td style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${l.hash}">${l.hash}</td>
                 </tr>
             `;
         });
-
         tbody.innerHTML = html;
     } catch (err) {
-        console.error('[AUDIT ERROR]', err);
+        console.error('[AUDIT LOGS ERROR]', err);
     }
 }
 
 function setupEventListeners() {
-    const refreshBtn = document.getElementById('btn-refresh-logs');
-    if (refreshBtn) refreshBtn.addEventListener('click', loadAuditLogs);
+    const btn = document.getElementById('btn-refresh-audit');
+    if (btn) btn.addEventListener('click', loadAuditLogs);
 }

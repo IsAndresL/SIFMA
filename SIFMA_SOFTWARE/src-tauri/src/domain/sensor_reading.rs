@@ -27,3 +27,4 @@ impl SensorReading {
         self.electrical_conductivity >= 800.0 && self.electrical_conductivity <= 1800.0
     }
 }
+

@@ -42,3 +42,4 @@ class JsonRpcProtocol:
             }
         }
         return json.dumps(payload, ensure_ascii=False)
+

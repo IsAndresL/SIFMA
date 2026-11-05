@@ -1,113 +1,120 @@
+<!-- SIFMA — Vista Modular: Cruce de Datos y Análisis Multivariable (Copia fiel de local_server) -->
 <div class="cross-analysis-module">
-    <!-- CONTROLES DE CRUCE -->
-    <section class="controls-card">
-        <div class="controls-header">
-            <div>
-                <h3 class="controls-title">Configuración de Regresión y Cruce Bivariable</h3>
-                <p class="controls-sub">Seleccione las variables microclimáticas y fenotípicas para evaluar interdependencia estadística</p>
+    <!-- SECCIÓN 1: FILTROS GLOBALES -->
+    <div class="widget-card" style="margin-bottom: 20px;">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Filtros por Período de Muestreo y Jornada</h3>
+                <p>Segmenta el cruce de datos por jornada horaria o fecha de evaluación para Canastilla #1</p>
             </div>
-            <button id="btn-recalc" class="btn btn-primary">
-                <span class="material-icons-round">analytics</span>
-                <span>Calcular Regresión</span>
-            </button>
-        </div>
-        <div class="selectors-row">
-            <div class="form-group">
-                <label for="select-var-x">Variable Independiente (X)</label>
-                <select id="select-var-x" class="form-select">
-                    <option value="water_temp" selected>Temperatura Solución Nutritiva (°C)</option>
-                    <option value="air_temp">Temperatura Ambiente (°C)</option>
-                    <option value="humidity">Humedad Relativa (%)</option>
-                    <option value="ec">Conductividad Eléctrica (µS/cm)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="select-var-y">Variable Dependiente (Y)</label>
-                <select id="select-var-y" class="form-select">
-                    <option value="foliar_area" selected>Área Foliar Total (cm²)</option>
-                    <option value="plant_height">Altura de la Planta (cm)</option>
-                    <option value="stem_diameter">Diámetro del Tallo (mm)</option>
-                    <option value="health_index">Índice Fitosanitario (%)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="select-crop-cycle">Lote / Ciclo Agronómico</label>
-                <select id="select-crop-cycle" class="form-select">
-                    <option value="all">Torre Completa (12 Plantas - Ciclo 2026-A1)</option>
-                </select>
+            <div id="cross-table-count-badge" class="badge badge-primary">
+                25 sesiones sincronizadas
             </div>
         </div>
-    </section>
 
-    <!-- RESULTADOS Y DISPERSIÓN -->
-    <div class="analysis-split-grid">
-        <!-- GRÁFICO DE DISPERSIÓN CON LÍNEA DE TENDENCIA -->
-        <section class="scatter-card">
-            <div class="card-header">
-                <h4 class="card-title">Dispersión y Ajuste Lineal (Ordinary Least Squares)</h4>
-                <div class="regression-badge-group">
-                    <span class="badge badge-emerald" id="badge-pearson-r">r = 0.842</span>
-                    <span class="badge badge-indigo" id="badge-r2">R² = 0.709</span>
-                </div>
+        <!-- Filtro por Período del Día -->
+        <div style="margin-bottom: 14px;">
+            <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">
+                Franja Horaria / Período:
+            </label>
+            <div class="filter-group">
+                <button class="filter-pill active" data-period="todos">
+                    <span class="material-icons-round" style="font-size: 15px;">apps</span>
+                    <span>Todos los Períodos</span>
+                </button>
+                <button class="filter-pill" data-period="mañana">
+                    <span class="material-icons-round" style="font-size: 15px;">light_mode</span>
+                    <span>Mañana (07:00)</span>
+                </button>
+                <button class="filter-pill" data-period="mediodía">
+                    <span class="material-icons-round" style="font-size: 15px;">wb_sunny</span>
+                    <span>Mediodía (12:00)</span>
+                </button>
+                <button class="filter-pill" data-period="tarde">
+                    <span class="material-icons-round" style="font-size: 15px;">nights_stay</span>
+                    <span>Tarde (17:00)</span>
+                </button>
             </div>
-            <div class="chart-canvas-container">
-                <canvas id="crossScatterChart"></canvas>
-            </div>
-        </section>
-
-        <!-- PANEL DE MÉTRICAS ESTADÍSTICAS E INTERPRETACIÓN -->
-        <section class="stats-panel">
-            <div class="stats-card">
-                <h4 class="card-title">Métricas de Correlación Paramétrica</h4>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-label">Coeficiente Pearson (r)</span>
-                        <span class="stat-val text-emerald" id="stat-r">0.842</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Coef. Determinación (R²)</span>
-                        <span class="stat-val text-indigo" id="stat-r2">0.709</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Pendiente (m)</span>
-                        <span class="stat-val" id="stat-slope">+1.84 cm²/°C</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Intercepto (b)</span>
-                        <span class="stat-val" id="stat-intercept">12.1 cm²</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Significancia (p-value)</span>
-                        <span class="stat-val text-teal" id="stat-p">< 0.001</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Muestras Evaluadas (N)</span>
-                        <span class="stat-val" id="stat-n">25 capturas</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="interpretation-card">
-                <div class="interp-header">
-                    <span class="material-icons-round text-emerald">psychology</span>
-                    <span class="interp-title">Conclusión Fisiológica Automatizada</span>
-                </div>
-                <p class="interp-body" id="interp-text">
-                    Correlación fuertemente positiva estadísticamente significativa (p < 0.001). 
-                    Un incremento térmico controlado dentro de la ventana óptima (22°C - 26°C) 
-                    estimula la tasa de expansión foliar por mayor absorción hídrica y cinética enzimática.
-                </p>
-            </div>
-        </section>
+        </div>
     </div>
 
-    <!-- MATRIZ DE CORRELACIÓN GENERAL DE PEARSON -->
-    <section class="matrix-section">
-        <h4 class="card-title">Matriz Completa de Correlación Intervariable (Pearson r)</h4>
-        <div class="matrix-table-wrapper">
-            <table class="matrix-table" id="correlation-matrix-table">
+    <!-- SECCIÓN 2: MATRIZ DE CORRELACIÓN DE PEARSON (HEATMAP) -->
+    <div class="widget-card" style="margin-bottom: 20px;">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round" style="color: var(--accent-success); font-size: 24px;">grid_on</span>
+                    <div>
+                        <h3>Matriz de Correlación Multivariable (Heatmap de Pearson)</h3>
+                        <p>Coeficiente de correlación lineal (r) entre variables de sensores y métricas de fenotipado. Clic en cualquier par para graficar.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="badge badge-success" id="matrix-strongest-badge">
+                Par más significativo: Temp. Solución vs Área Foliar (r = +0.84)
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table" id="heatmap-correlation-table">
                 <!-- Generado dinámicamente -->
             </table>
         </div>
-    </section>
+    </div>
+
+    <!-- SECCIÓN 3: LABORATORIO GRÁFICO DE REGRESIÓN -->
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px;">
+        <div class="widget-card">
+            <div class="widget-header">
+                <div class="widget-header-title">
+                    <h3>Dispersión Bivariable y Regresión OLS</h3>
+                    <p>Ajuste lineal de mínimos cuadrados con intervalos de confianza</p>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <span class="badge badge-success" id="cross-badge-r">r = +0.842</span>
+                    <span class="badge badge-primary" id="cross-badge-r2">R² = 0.709</span>
+                </div>
+            </div>
+            <div class="chart-stage-container" style="height: 300px; position: relative;">
+                <canvas id="crossScatterChart"></canvas>
+            </div>
+        </div>
+
+        <!-- PANEL DE MÉTRICAS E INTERPRETACIÓN -->
+        <div class="widget-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div class="widget-header" style="margin-bottom: 12px;">
+                    <h3 style="font-size: 14.5px;">Estadísticos de la Relación</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Pearson (r)</div>
+                        <div style="font-size: 16px; font-weight: 700; color: var(--accent-success);" id="c-stat-r">+0.842</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">R² Ajustado</div>
+                        <div style="font-size: 16px; font-weight: 700; color: var(--accent-primary);" id="c-stat-r2">0.709</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Pendiente (m)</div>
+                        <div style="font-size: 14px; font-weight: 700;" id="c-stat-slope">+1.84 cm²/°C</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted);">p-valor</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0d9488;" id="c-stat-p">&lt; 0.001</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: rgba(5, 150, 105, 0.06); border: 1px solid rgba(5, 150, 105, 0.25); border-radius: var(--radius-sm); padding: 14px;">
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                    <span class="material-icons-round" style="color: var(--accent-success); font-size: 18px;">psychology</span>
+                    <strong style="font-size: 12.5px; color: var(--text-heading);">Conclusión Fisiológica</strong>
+                </div>
+                <p style="font-size: 12px; line-height: 1.5; color: var(--text-body); margin: 0;" id="cross-interp-text">
+                    Correlación positiva estadísticamente significativa (p &lt; 0.001). A mayor temperatura de solución dentro del rango de confort agronómico (20°C a 25°C), se estimula exponencialmente la tasa de expansión foliar por absorción radicular óptima.
+                </p>
+            </div>
+        </div>
+    </div>
 </div>

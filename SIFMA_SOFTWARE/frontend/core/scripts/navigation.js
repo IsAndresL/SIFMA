@@ -59,12 +59,13 @@ export class NavigationRouter {
     }
 
     updateActiveNavButton(moduleName) {
-        document.querySelectorAll('.sidebar-nav-btn').forEach(btn => {
-            if (btn.dataset.module === moduleName) {
-                btn.classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.dataset.module === moduleName) {
+                link.classList.add('active');
             } else {
-                btn.classList.remove('active');
+                link.classList.remove('active');
             }
         });
     }
 }
+

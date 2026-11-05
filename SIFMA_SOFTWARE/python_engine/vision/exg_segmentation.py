@@ -49,3 +49,4 @@ class ExgSegmenter:
                 combined = cv2.bitwise_and(exg_mask, hsv_mask)
 
         return combined
+

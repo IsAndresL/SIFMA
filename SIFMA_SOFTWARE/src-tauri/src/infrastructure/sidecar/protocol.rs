@@ -15,3 +15,4 @@ pub struct SidecarResponse {
     pub data: Option<serde_json::Value>,
     pub error: Option<String>,
 }
+

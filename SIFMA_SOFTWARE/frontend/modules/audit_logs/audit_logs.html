@@ -1,42 +1,79 @@
-<div class="audit-module">
-    <!-- BARRA SUPERIOR DE AUDITORÍA -->
-    <section class="audit-header-card">
-        <div>
-            <h3 class="audit-title">Bitácora de Auditoría Forense y Seguridad</h3>
-            <p class="audit-sub">Registro inmutable de transacciones del sistema con sellado criptográfico</p>
+<!-- SIFMA — Vista Modular: Registro de Actividad y Logs de Auditoría (Copia fiel de local_server) -->
+<div class="audit-module" style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- 1. TARJETAS KPI DE ACTIVIDAD -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+        <div class="widget-card" style="margin-bottom: 0; padding: 16px; display: flex; flex-direction: row; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(5, 150, 105, 0.1); color: var(--accent-success); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">receipt_long</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Movimientos</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;">1,248</div>
+            </div>
         </div>
-        <div class="audit-header-actions">
-            <span class="badge badge-emerald">
-                <span class="material-icons-round" style="font-size: 13px; margin-right: 4px;">verified</span>
-                Integridad SHA-256 Verificada
-            </span>
-            <button id="btn-refresh-logs" class="btn btn-secondary">
+
+        <div class="widget-card" style="margin-bottom: 0; padding: 16px; display: flex; flex-direction: row; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(2, 132, 199, 0.1); color: #0284c7; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">today</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Actividad Hoy</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;">36</div>
+            </div>
+        </div>
+
+        <div class="widget-card" style="margin-bottom: 0; padding: 16px; display: flex; flex-direction: row; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(220, 38, 38, 0.1); color: var(--accent-danger); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">warning_amber</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Acciones Críticas</div>
+                <div style="font-size: 22px; font-weight: 800; color: var(--text-heading); line-height: 1.2;">0</div>
+            </div>
+        </div>
+
+        <div class="widget-card" style="margin-bottom: 0; padding: 16px; display: flex; flex-direction: row; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(124, 58, 237, 0.1); color: #7c3aed; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round" style="font-size: 24px;">people</span>
+            </div>
+            <div>
+                <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Integridad SHA-256</div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--accent-success); line-height: 1.2;">100% Válida</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TABLA DE REGISTROS -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <h3>Bitácora Forense Inmutable del Sistema</h3>
+                <p>Auditoría de eventos, autenticación, captación de telemetría y cambios de perfil</p>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-refresh-audit">
                 <span class="material-icons-round">refresh</span>
-                <span>Refrescar</span>
+                <span>Actualizar Registros</span>
             </button>
         </div>
-    </section>
 
-    <!-- TABLA DE LOGS -->
-    <section class="audit-table-card">
-        <div class="table-container">
-            <table class="data-table">
+        <div class="table-responsive">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Marca de Tiempo</th>
                         <th>Usuario</th>
-                        <th>Tipo de Evento</th>
+                        <th>Evento</th>
                         <th>Origen / IP</th>
                         <th>Recurso Afectado</th>
                         <th>Estado</th>
-                        <th>Hash Criptográfico (SHA-256)</th>
+                        <th>Hash Criptográfico</th>
                     </tr>
                 </thead>
-                <tbody id="audit-tbody">
+                <tbody id="audit-table-tbody">
                     <!-- Dinámico -->
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
 </div>

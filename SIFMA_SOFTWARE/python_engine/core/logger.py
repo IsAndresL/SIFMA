@@ -22,3 +22,4 @@ class SidecarLogger:
     @staticmethod
     def error(message: str):
         SidecarLogger.log("ERROR", message)
+

@@ -10,3 +10,4 @@ pub use sensor_reading::SensorReading;
 pub use capture_session::CaptureSession;
 pub use biometric_metric::BiometricMetric;
 pub use user::{User, UserRole};
+

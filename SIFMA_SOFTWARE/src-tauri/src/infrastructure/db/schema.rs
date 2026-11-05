@@ -112,3 +112,4 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
 
     Ok(())
 }
+

@@ -23,3 +23,4 @@ class BaseMLModel(ABC):
     def get_metadata(self) -> Dict[str, Any]:
         """Retorna información del modelo: nombre, versión, arquitectura y clases soportadas."""
         pass
+

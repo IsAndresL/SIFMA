@@ -1,122 +1,119 @@
-<div class="vision-module">
-    <!-- BARRA SUPERIOR DE ACCIONES -->
-    <section class="vision-header-card">
-        <div class="vision-title-box">
-            <h3 class="vision-title">Motor de Fenotipado Foliar y Visión por Computador</h3>
-            <p class="vision-sub">Pipeline desacoplado en Python Sidecar (OpenCV / NumPy / PyTorch)</p>
-        </div>
-        <div class="vision-actions">
-            <select id="select-plant-target" class="form-select">
-                <option value="1">Planta #1 (Cebollín - Nivel 1)</option>
-                <option value="2">Planta #2 (Cebollín - Nivel 2)</option>
-                <option value="3">Planta #3 (Cebollín - Nivel 3)</option>
-            </select>
-            <button id="btn-run-vision" class="btn btn-primary">
-                <span class="material-icons-round">play_arrow</span>
-                <span>Procesar en Sidecar</span>
-            </button>
-        </div>
-    </section>
-
-    <!-- ÁREA DE INSPECCIÓN VISUAL Y PIPELINE -->
-    <div class="vision-workspace-grid">
-        <!-- VISUALIZADOR MULTI-ETAPA -->
-        <section class="preview-card">
-            <div class="preview-tabs">
-                <button class="tab-btn active" data-step="rgb">1. Imagen RGB Original</button>
-                <button class="tab-btn" data-step="exg">2. Filtro ExG (2G - R - B)</button>
-                <button class="tab-btn" data-step="otsu">3. Binarización Otsu</button>
-                <button class="tab-btn" data-step="contour">4. Contornos & Fenotipado</button>
-            </div>
-            <div class="preview-viewport">
-                <div class="canvas-wrapper">
-                    <!-- Canvas interactivo con renderizado de imagen y overlays -->
-                    <canvas id="visionPreviewCanvas" width="640" height="480"></canvas>
-                </div>
-                <div class="stage-badge-overlay" id="stage-badge">Etapa: RGB Original</div>
-            </div>
-        </section>
-
-        <!-- PANEL DE MÉTRICAS BIOMÉTRICAS DETECTADAS -->
-        <section class="biometrics-panel">
-            <div class="biometrics-card">
-                <h4 class="card-title">Biometría Foliar Extraída</h4>
-                <div class="biometrics-list">
-                    <div class="bio-item">
-                        <span class="bio-label">Área Foliar Proyectada</span>
-                        <div class="bio-val-group">
-                            <span class="bio-val text-emerald" id="bio-foliar-area">61.8</span>
-                            <span class="bio-unit">cm²</span>
-                        </div>
+<!-- SIFMA — Vista Modular: Pipeline de Visión Artificial y Segmentación (Copia fiel de local_server) -->
+<div class="processing-module">
+    <!-- GESTIÓN DE LOTES FOTOGRÁFICOS -->
+    <div class="widget-card" style="margin-bottom: 20px;">
+        <div class="widget-header">
+            <div class="widget-header-title">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="kpi-icon-badge emerald" style="width: 32px; height: 32px;">
+                        <span class="material-icons-round" style="font-size: 18px;">camera</span>
                     </div>
-                    <div class="bio-item">
-                        <span class="bio-label">Altura Vegetativa</span>
-                        <div class="bio-val-group">
-                            <span class="bio-val text-amber" id="bio-plant-height">18.5</span>
-                            <span class="bio-unit">cm</span>
-                        </div>
-                    </div>
-                    <div class="bio-item">
-                        <span class="bio-label">Diámetro Basal del Tallo</span>
-                        <div class="bio-val-group">
-                            <span class="bio-val text-sky" id="bio-stem-diameter">4.8</span>
-                            <span class="bio-unit">mm</span>
-                        </div>
-                    </div>
-                    <div class="bio-item">
-                        <span class="bio-label">Cobertura Verde (ExG > 0)</span>
-                        <div class="bio-val-group">
-                            <span class="bio-val" id="bio-coverage">38.4</span>
-                            <span class="bio-unit">%</span>
-                        </div>
-                    </div>
-                    <div class="bio-item">
-                        <span class="bio-label">Índice Fitosanitario Salud</span>
-                        <div class="bio-val-group">
-                            <span class="bio-val text-emerald" id="bio-health">82.8</span>
-                            <span class="bio-unit">%</span>
-                        </div>
-                    </div>
-                    <div class="bio-item">
-                        <span class="bio-label">Tiempo Cómputo Sidecar</span>
-                        <div class="bio-val-group">
-                            <span class="bio-val font-mono" id="bio-latency">184</span>
-                            <span class="bio-unit">ms</span>
-                        </div>
+                    <div>
+                        <h3>Gestión de Lotes y Fechas de Muestreo</h3>
+                        <p>Canastilla Activa: <strong>#1</strong> | Especie Asignada: <strong>Cebollín de Rama (Allium fistulosum)</strong></p>
                     </div>
                 </div>
             </div>
-
-            <div class="export-actions-card">
-                <button id="btn-save-db" class="btn btn-secondary w-full">
-                    <span class="material-icons-round">save</span>
-                    <span>Guardar en Base de Datos</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge badge-success">
+                    <span class="material-icons-round" style="font-size: 13px;">schedule</span>
+                    12 Muestreos Registrados
+                </span>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-process-sidecar">
+                    <span class="material-icons-round">play_arrow</span>
+                    <span>Ejecutar Pipeline Sidecar</span>
                 </button>
             </div>
-        </section>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button type="button" class="btn btn-primary btn-sm" id="tab-usb">
+                <span class="material-icons-round">usb</span>
+                <span>Importación Automática USB</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="tab-drag">
+                <span class="material-icons-round">cloud_upload</span>
+                <span>Subir Archivo .ZIP o Imágenes</span>
+            </button>
+        </div>
     </div>
 
-    <!-- SESIONES HISTÓRICAS RECIENTES -->
-    <section class="history-table-card">
-        <h4 class="card-title">Registro de Sesiones de Fenotipado Recientes</h4>
-        <div class="table-container">
-            <table class="data-table" id="table-vision-sessions">
+    <!-- PIPELINE MULTI-ETAPA INTERACTIVO -->
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; margin-bottom: 20px;">
+        <div class="widget-card">
+            <div class="widget-header">
+                <div class="filter-group">
+                    <button class="filter-btn active" data-step="rgb">1. RGB Original</button>
+                    <button class="filter-btn" data-step="exg">2. Filtro ExG (2G-R-B)</button>
+                    <button class="filter-btn" data-step="otsu">3. Máscara Otsu</button>
+                    <button class="filter-btn" data-step="contour">4. Contornos & Calibración</button>
+                </div>
+                <span class="badge badge-success" id="stage-badge-indicator">Etapa: RGB Original</span>
+            </div>
+            
+            <div style="background: #0f172a; border-radius: var(--radius-sm); display: flex; justify-content: center; align-items: center; min-height: 360px; padding: 16px;">
+                <canvas id="visionPreviewCanvas" width="600" height="400" style="max-width: 100%; border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.4);"></canvas>
+            </div>
+        </div>
+
+        <!-- PANEL DE MÉTRICAS BIOMÉTRICAS EXTRAÍDAS -->
+        <div class="widget-card">
+            <div class="widget-header">
+                <h3 style="font-size: 14.5px;">Biometría Cuantificada</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-light); padding-bottom: 6px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Área Foliar Total</span>
+                    <strong style="font-size: 18px; color: var(--accent-success); font-family: var(--font-mono);" id="p-area">61.80 cm²</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-light); padding-bottom: 6px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Altura Vegetativa</span>
+                    <strong style="font-size: 16px; color: #2563eb; font-family: var(--font-mono);" id="p-height">18.50 cm</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-light); padding-bottom: 6px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Diámetro Basal Tallo</span>
+                    <strong style="font-size: 16px; color: #d97706; font-family: var(--font-mono);" id="p-stem">4.80 mm</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-light); padding-bottom: 6px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Índice Salud / Vigor</span>
+                    <strong style="font-size: 16px; color: var(--accent-success); font-family: var(--font-mono);" id="p-health">82.80 %</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-light); padding-bottom: 6px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Tiempo Sidecar IPC</span>
+                    <span style="font-size: 13px; font-family: var(--font-mono); color: var(--text-dim);" id="p-latency">166.4 ms</span>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-outline btn-sm" style="margin-top: 20px; width: 100%;">
+                <span class="material-icons-round">save</span>
+                <span>Guardar en Base de Datos</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- REGISTRO DE SESIONES PROCESADAS -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <h3>Sesiones Históricas Procesadas Recientemente</h3>
+            <span class="badge badge-primary">Canastilla #1</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>ID Sesión</th>
-                        <th>Planta</th>
                         <th>Fecha / Hora</th>
-                        <th>Área (cm²)</th>
+                        <th>Área Foliar (cm²)</th>
                         <th>Altura (cm)</th>
-                        <th>Tallo (mm)</th>
-                        <th>Salud (%)</th>
+                        <th>Diámetro Tallo (mm)</th>
+                        <th>Vigor Salud (%)</th>
                         <th>Estado</th>
                     </tr>
                 </thead>
-                <tbody id="vision-sessions-tbody">
+                <tbody id="proc-sessions-tbody">
                     <!-- Dinámico -->
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
 </div>
