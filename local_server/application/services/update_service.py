@@ -134,9 +134,9 @@ class UpdateService:
                 "update_available": has_update,
                 "protection": protection_info,
                 "message": (
-                    f"Nueva versión disponible ({latest_tag}). Tus datos en {config.USER_DATA_DIR} están protegidos."
+                    f"Nueva versión disponible ({latest_tag})."
                     if has_update
-                    else f"SIFMA está actualizado en su última versión oficial (v{current_version})."
+                    else f"El sistema está actualizado (v{current_version})."
                 ),
             }
 

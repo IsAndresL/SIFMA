@@ -1,4 +1,4 @@
-# SIFMA — Instalador Oficial para Windows (SIFMA_Instalador_Setup.exe)
+# SIFMA — Instalador y Desinstalador Oficial para Windows (SIFMA_Instalador_Setup.exe)
 # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
 # Año: 2026.
 
@@ -24,15 +24,32 @@ def get_default_data_dir() -> str:
     return os.path.join(appdata, "SIFMA")
 
 
-# Estado global del instalador (fuera de js_api para evitar que PyWebView serialice objetos nativos y congele la ventana)
+def get_saved_paths():
+    install_dir = get_default_install_dir()
+    data_dir = get_default_data_dir()
+    paths_file = os.path.join(data_dir, "sifma_paths.json")
+    if os.path.exists(paths_file):
+        try:
+            with open(paths_file, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+            install_dir = saved.get("install_dir") or install_dir
+            data_dir = saved.get("user_data_dir") or data_dir
+        except Exception:
+            pass
+    return install_dir, data_dir
+
+
+_init_install, _init_data = get_saved_paths()
+
 _INSTALL_STATE = {
     "percent": 0,
-    "status": "Preparando instalación...",
+    "status": "Listo",
     "done": False,
     "error": "",
+    "mode": "install",
     "installed_exe": "",
-    "install_dir": get_default_install_dir(),
-    "data_dir": get_default_data_dir(),
+    "install_dir": _init_install,
+    "data_dir": _init_data,
 }
 
 
@@ -59,7 +76,6 @@ class InstallerBridge:
     """Puente ligero JS-Python sin atributos públicos complejos para evitar bloqueos de hilo en WinForms."""
 
     def select_folder(self, current_path: str = ""):
-        """Abre el selector nativo de carpetas de Windows."""
         import webview
 
         try:
@@ -80,6 +96,7 @@ class InstallerBridge:
         _INSTALL_STATE["status"] = "Creando carpetas..."
         _INSTALL_STATE["done"] = False
         _INSTALL_STATE["error"] = ""
+        _INSTALL_STATE["mode"] = "install"
         _INSTALL_STATE["install_dir"] = (install_dir or get_default_install_dir()).strip()
         _INSTALL_STATE["data_dir"] = (data_dir or get_default_data_dir()).strip()
 
@@ -95,26 +112,52 @@ class InstallerBridge:
         ).start()
         return {"started": True}
 
+    def start_uninstall(self, install_dir: str, data_dir: str, delete_all_data: bool = True):
+        _INSTALL_STATE["percent"] = 10
+        _INSTALL_STATE["status"] = "Cerrando procesos activos..."
+        _INSTALL_STATE["done"] = False
+        _INSTALL_STATE["error"] = ""
+        _INSTALL_STATE["mode"] = "uninstall"
+        _INSTALL_STATE["install_dir"] = (install_dir or get_default_install_dir()).strip()
+        _INSTALL_STATE["data_dir"] = (data_dir or get_default_data_dir()).strip()
+
+        threading.Thread(
+            target=_run_uninstall_worker,
+            args=(_INSTALL_STATE["install_dir"], _INSTALL_STATE["data_dir"], bool(delete_all_data)),
+            daemon=True,
+        ).start()
+        return {"started": True}
+
     def get_progress(self):
         return {
             "percent": _INSTALL_STATE["percent"],
             "status": _INSTALL_STATE["status"],
             "done": _INSTALL_STATE["done"],
             "error": _INSTALL_STATE["error"],
+            "mode": _INSTALL_STATE["mode"],
         }
 
     def finish_installer(self, launch_now: bool = True):
-        exe_path = _INSTALL_STATE.get("installed_exe") or os.path.join(
-            _INSTALL_STATE["install_dir"], "SIFMA_Desktop.exe"
-        )
-        if launch_now and os.path.exists(exe_path):
-            try:
-                subprocess.Popen([exe_path], cwd=_INSTALL_STATE["install_dir"])
-            except Exception:
-                pass
+        if _INSTALL_STATE.get("mode") == "install" and launch_now:
+            exe_path = _INSTALL_STATE.get("installed_exe") or os.path.join(
+                _INSTALL_STATE["install_dir"], "SIFMA_Desktop.exe"
+            )
+            if os.path.exists(exe_path):
+                try:
+                    subprocess.Popen([exe_path], cwd=_INSTALL_STATE["install_dir"])
+                except Exception:
+                    pass
 
         def _close():
             time.sleep(0.2)
+            if _INSTALL_STATE.get("mode") == "uninstall":
+                inst_d = _INSTALL_STATE.get("install_dir")
+                if inst_d and os.path.exists(inst_d):
+                    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+                    subprocess.Popen(
+                        ["cmd.exe", "/c", f'timeout /t 1 /nobreak >nul & rmdir /s /q "{inst_d}"'],
+                        creationflags=creation_flags,
+                    )
             os._exit(0)
 
         threading.Thread(target=_close, daemon=True).start()
@@ -128,28 +171,27 @@ def _run_install_worker(install_dir: str, data_dir: str, create_desktop: bool, c
         os.makedirs(os.path.join(data_dir, "data", "processed"), exist_ok=True)
         os.makedirs(os.path.join(data_dir, "data", "telemetry"), exist_ok=True)
 
-        # Guardar preferencia de ruta de datos en %APPDATA%\SIFMA\sifma_paths.json para que SIFMA_Desktop la use siempre
         default_appdata = get_default_data_dir()
         os.makedirs(default_appdata, exist_ok=True)
         with open(os.path.join(default_appdata, "sifma_paths.json"), "w", encoding="utf-8") as cfg_f:
             json.dump({"install_dir": install_dir, "user_data_dir": data_dir}, cfg_f, indent=2)
 
         _INSTALL_STATE["percent"] = 20
-        _INSTALL_STATE["status"] = "Copiando archivos del programa..."
+        _INSTALL_STATE["status"] = "Copiando programa..."
 
         bundled_exe = os.path.join(RESOURCE_DIR, "payload", "SIFMA_Desktop.exe")
         if not os.path.exists(bundled_exe):
             bundled_exe = os.path.join(RESOURCE_DIR, "dist", "SIFMA_Desktop.exe")
 
         if not os.path.exists(bundled_exe):
-            raise FileNotFoundError("No se encontró el paquete SIFMA_Desktop.exe.")
+            raise FileNotFoundError("No se encontró SIFMA_Desktop.exe.")
 
         installed_exe_path = os.path.join(install_dir, "SIFMA_Desktop.exe")
         _INSTALL_STATE["installed_exe"] = installed_exe_path
 
         total_size = os.path.getsize(bundled_exe)
         copied = 0
-        chunk_size = 1024 * 1024 * 4  # Bloques de 4 MB
+        chunk_size = 1024 * 1024 * 4
 
         with open(bundled_exe, "rb") as src, open(installed_exe_path, "wb") as dst:
             while True:
@@ -159,10 +201,10 @@ def _run_install_worker(install_dir: str, data_dir: str, create_desktop: bool, c
                 dst.write(buf)
                 copied += len(buf)
                 ratio = min(1.0, copied / max(1, total_size))
-                _INSTALL_STATE["percent"] = 20 + int(ratio * 60)
+                _INSTALL_STATE["percent"] = 20 + int(ratio * 55)
                 mb_done = round(copied / (1024 * 1024), 1)
                 mb_total = round(total_size / (1024 * 1024), 1)
-                _INSTALL_STATE["status"] = f"Instalando SIFMA ({mb_done} / {mb_total} MB)..."
+                _INSTALL_STATE["status"] = f"Instalando ({mb_done} / {mb_total} MB)..."
 
         bundled_ico = os.path.join(RESOURCE_DIR, "static", "img", "sifma_icon.ico")
         target_ico = os.path.join(install_dir, "sifma_icon.ico")
@@ -171,7 +213,15 @@ def _run_install_worker(install_dir: str, data_dir: str, create_desktop: bool, c
         else:
             target_ico = installed_exe_path
 
-        # Si hay un .env junto al instalador, importarlo
+        # Copiar el propio instalador/desinstalador como Desinstalar_SIFMA.exe dentro de la carpeta instalada
+        if getattr(sys, "frozen", False):
+            try:
+                uninst_target = os.path.join(install_dir, "Desinstalar_SIFMA.exe")
+                if os.path.abspath(sys.executable) != os.path.abspath(uninst_target):
+                    shutil.copy2(sys.executable, uninst_target)
+            except Exception:
+                pass
+
         installer_dir = os.path.dirname(
             os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
         )
@@ -181,22 +231,22 @@ def _run_install_worker(install_dir: str, data_dir: str, create_desktop: bool, c
             shutil.copy2(usb_env, user_env)
 
         if create_desktop:
-            _INSTALL_STATE["percent"] = 88
+            _INSTALL_STATE["percent"] = 85
             _INSTALL_STATE["status"] = "Creando acceso directo en el Escritorio..."
-            desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
-            if not os.path.exists(desktop_dir):
-                desktop_dir = os.path.join(os.path.expanduser("~"), "Escritorio")
-            if os.path.exists(desktop_dir):
-                create_windows_shortcut(
-                    os.path.join(desktop_dir, "SIFMA.lnk"),
-                    installed_exe_path,
-                    install_dir,
-                    target_ico,
-                )
+            for d_name in ("Desktop", "Escritorio"):
+                d_path = os.path.join(os.path.expanduser("~"), d_name)
+                if os.path.exists(d_path):
+                    create_windows_shortcut(
+                        os.path.join(d_path, "SIFMA.lnk"),
+                        installed_exe_path,
+                        install_dir,
+                        target_ico,
+                    )
+                    break
 
         if create_start_menu:
-            _INSTALL_STATE["percent"] = 95
-            _INSTALL_STATE["status"] = "Registrando en Menú Inicio..."
+            _INSTALL_STATE["percent"] = 94
+            _INSTALL_STATE["status"] = "Agregando al Menú Inicio..."
             start_menu_dir = os.path.join(
                 os.getenv("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs"
             )
@@ -216,6 +266,63 @@ def _run_install_worker(install_dir: str, data_dir: str, create_desktop: bool, c
         _INSTALL_STATE["status"] = "Error en la instalación"
 
 
+def _run_uninstall_worker(install_dir: str, data_dir: str, delete_all_data: bool):
+    try:
+        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SIFMA_Desktop.exe"],
+            creationflags=creation_flags,
+            capture_output=True,
+        )
+        time.sleep(0.6)
+
+        _INSTALL_STATE["percent"] = 30
+        _INSTALL_STATE["status"] = "Eliminando accesos directos..."
+
+        # Borrar accesos directos de Escritorio y Menú Inicio
+        shortcut_locations = [
+            os.path.join(os.path.expanduser("~"), "Desktop"),
+            os.path.join(os.path.expanduser("~"), "Escritorio"),
+            os.path.join(os.getenv("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs"),
+        ]
+        for folder in shortcut_locations:
+            if os.path.exists(folder):
+                for name in ("SIFMA.lnk", "SIFMA Desktop.lnk", "Desinstalar SIFMA.lnk"):
+                    lnk = os.path.join(folder, name)
+                    if os.path.exists(lnk):
+                        try:
+                            os.remove(lnk)
+                        except Exception:
+                            pass
+
+        _INSTALL_STATE["percent"] = 60
+        _INSTALL_STATE["status"] = "Eliminando archivos del programa..."
+
+        for folder_to_clean in {install_dir, get_default_install_dir()}:
+            if folder_to_clean and os.path.exists(folder_to_clean):
+                try:
+                    shutil.rmtree(folder_to_clean, ignore_errors=True)
+                except Exception:
+                    pass
+
+        if delete_all_data:
+            _INSTALL_STATE["percent"] = 85
+            _INSTALL_STATE["status"] = "Eliminando base de datos, fotos y configuraciones..."
+            for d_clean in {data_dir, get_default_data_dir()}:
+                if d_clean and os.path.exists(d_clean):
+                    try:
+                        shutil.rmtree(d_clean, ignore_errors=True)
+                    except Exception:
+                        pass
+
+        _INSTALL_STATE["percent"] = 100
+        _INSTALL_STATE["status"] = "Todo el sistema SIFMA fue eliminado del equipo"
+        _INSTALL_STATE["done"] = True
+    except Exception as e:
+        _INSTALL_STATE["error"] = str(e)
+        _INSTALL_STATE["status"] = "Error al desinstalar"
+
+
 def build_installer_html(install_dir: str, data_dir: str) -> str:
     svg_path = os.path.join(RESOURCE_DIR, "static", "img", "sifma_sin_texto.svg")
     logo_uri = ""
@@ -226,13 +333,13 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         except Exception:
             pass
 
-    logo_tag = f'<img src="{logo_uri}" style="width:46px;height:46px;" />' if logo_uri else "<strong>SIFMA</strong>"
+    logo_tag = f'<img src="{logo_uri}" style="width:44px;height:44px;" />' if logo_uri else "<strong>SIFMA</strong>"
 
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Instalar SIFMA</title>
+<title>SIFMA — Instalar o Desinstalar</title>
 <style>
     * {{ box-sizing: border-box; margin: 0; padding: 0; user-select: none; }}
     body {{
@@ -247,15 +354,15 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
     .header {{
         background: #064e3b;
         color: #ffffff;
-        padding: 16px 24px;
+        padding: 15px 24px;
         display: flex;
         align-items: center;
         gap: 14px;
         flex-shrink: 0;
     }}
     .logo-box {{
-        width: 52px;
-        height: 52px;
+        width: 50px;
+        height: 50px;
         border-radius: 12px;
         background: #ffffff;
         display: flex;
@@ -264,13 +371,8 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         flex-shrink: 0;
     }}
     .header h1 {{
-        font-size: 19px;
+        font-size: 18px;
         font-weight: 700;
-        margin-bottom: 2px;
-    }}
-    .header p {{
-        font-size: 12px;
-        color: #a7f3d0;
     }}
     .content {{
         flex: 1;
@@ -278,13 +380,12 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         display: flex;
         flex-direction: column;
         justify-content: center;
-        gap: 14px;
-        overflow-y: auto;
+        gap: 12px;
     }}
     .field-group {{
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 4px;
     }}
     .field-label {{
         font-size: 12px;
@@ -297,7 +398,7 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
     }}
     .path-input {{
         flex: 1;
-        padding: 8px 11px;
+        padding: 7px 10px;
         font-size: 12px;
         font-family: Consolas, monospace;
         color: #0f172a;
@@ -306,11 +407,8 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         border-radius: 6px;
         outline: none;
     }}
-    .path-input:focus {{
-        border-color: #059669;
-    }}
     .btn-browse {{
-        padding: 8px 12px;
+        padding: 7px 12px;
         font-size: 12px;
         font-weight: 600;
         background: #f1f5f9;
@@ -318,16 +416,13 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         border: 1px solid #cbd5e1;
         border-radius: 6px;
         cursor: pointer;
-        white-space: nowrap;
     }}
-    .btn-browse:hover {{
-        background: #e2e8f0;
-    }}
+    .btn-browse:hover {{ background: #e2e8f0; }}
     .options-row {{
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-top: 4px;
+        gap: 7px;
+        margin-top: 2px;
         padding-top: 10px;
         border-top: 1px solid #e2e8f0;
     }}
@@ -352,7 +447,7 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        padding: 24px 20px;
+        padding: 22px 20px;
     }}
     .bar-bg {{
         width: 100%;
@@ -368,48 +463,40 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         transition: width 0.2s ease;
     }}
     .footer {{
-        padding: 14px 24px;
+        padding: 13px 24px;
         background: #ffffff;
         border-top: 1px solid #e2e8f0;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: space-between;
         gap: 10px;
         flex-shrink: 0;
     }}
     .btn {{
-        padding: 8px 18px;
+        padding: 8px 16px;
         border-radius: 6px;
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 600;
         border: none;
         cursor: pointer;
     }}
-    .btn-primary {{
-        background: #059669;
-        color: #ffffff;
-    }}
+    .btn-primary {{ background: #059669; color: #ffffff; }}
     .btn-primary:hover {{ background: #047857; }}
-    .btn-secondary {{
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #cbd5e1;
-    }}
+    .btn-danger {{ background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }}
+    .btn-danger:hover {{ background: #fecaca; }}
+    .btn-secondary {{ background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }}
 </style>
 </head>
 <body>
     <div class="header">
         <div class="logo-box">{logo_tag}</div>
-        <div>
-            <h1>SIFMA Desktop</h1>
-            <p>Instalación en este equipo</p>
-        </div>
+        <h1>SIFMA Desktop</h1>
     </div>
 
     <div class="content">
         <div id="view-config" style="display:flex; flex-direction:column; gap:12px;">
             <div class="field-group">
-                <span class="field-label">Ubicación del programa:</span>
+                <span class="field-label">Carpeta del programa:</span>
                 <div class="path-picker">
                     <input type="text" id="inp-install-dir" class="path-input" value="{install_dir}" />
                     <button type="button" class="btn-browse" onclick="pickDir('inp-install-dir')">Examinar...</button>
@@ -417,7 +504,7 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
             </div>
 
             <div class="field-group">
-                <span class="field-label">Ubicación de base de datos y fotos:</span>
+                <span class="field-label">Carpeta de base de datos y fotos:</span>
                 <div class="path-picker">
                     <input type="text" id="inp-data-dir" class="path-input" value="{data_dir}" />
                     <button type="button" class="btn-browse" onclick="pickDir('inp-data-dir')">Examinar...</button>
@@ -427,7 +514,7 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
             <div class="options-row">
                 <label class="chk-item">
                     <input type="checkbox" id="chk-desktop" checked>
-                    <span>Crear acceso directo en el Escritorio</span>
+                    <span>Crear icono en el Escritorio</span>
                 </label>
                 <label class="chk-item">
                     <input type="checkbox" id="chk-startmenu" checked>
@@ -435,14 +522,14 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
                 </label>
                 <label class="chk-item">
                     <input type="checkbox" id="chk-launch" checked>
-                    <span>Iniciar SIFMA al finalizar</span>
+                    <span>Abrir al finalizar</span>
                 </label>
             </div>
         </div>
 
         <div id="view-progress" class="progress-view">
             <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
-                <span id="lbl-status">Instalando...</span>
+                <span id="lbl-status">Procesando...</span>
                 <span id="lbl-pct" style="color:#059669; font-family:Consolas,monospace;">0%</span>
             </div>
             <div class="bar-bg">
@@ -453,9 +540,12 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
     </div>
 
     <div class="footer">
-        <button type="button" id="btn-cancel" class="btn btn-secondary" onclick="closeSetup(false)">Cancelar</button>
-        <button type="button" id="btn-install" class="btn btn-primary" onclick="startInstall()">Instalar</button>
-        <button type="button" id="btn-finish" class="btn btn-primary" style="display:none;" onclick="closeSetup(true)">Finalizar</button>
+        <button type="button" id="btn-uninstall" class="btn btn-danger" onclick="startUninstall()">Desinstalar / Limpiar Todo</button>
+        <div style="display:flex; gap:8px; margin-left:auto;">
+            <button type="button" id="btn-cancel" class="btn btn-secondary" onclick="closeSetup(false)">Cancelar</button>
+            <button type="button" id="btn-install" class="btn btn-primary" onclick="startInstall()">Instalar</button>
+            <button type="button" id="btn-finish" class="btn btn-primary" style="display:none;" onclick="closeSetup(true)">Finalizar</button>
+        </div>
     </div>
 
     <script>
@@ -470,19 +560,19 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
             }}
         }}
 
-        async function startInstall() {{
-            var installDir = document.getElementById('inp-install-dir').value;
-            var dataDir = document.getElementById('inp-data-dir').value;
-            var desk = document.getElementById('chk-desktop').checked;
-            var menu = document.getElementById('chk-startmenu').checked;
-
+        function switchToProgressUI(isUninstall) {{
             document.getElementById('view-config').style.display = 'none';
             document.getElementById('view-progress').style.display = 'flex';
             document.getElementById('btn-install').style.display = 'none';
+            document.getElementById('btn-uninstall').style.display = 'none';
             document.getElementById('btn-cancel').disabled = true;
+            if (isUninstall) {{
+                document.getElementById('bar-fill').style.background = '#dc2626';
+                document.getElementById('lbl-pct').style.color = '#dc2626';
+            }}
+        }}
 
-            await window.pywebview.api.start_installation(installDir, dataDir, desk, menu);
-
+        function startPolling() {{
             pollTimer = setInterval(async function() {{
                 var st = await window.pywebview.api.get_progress();
                 if (!st) return;
@@ -504,6 +594,24 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
             }}, 150);
         }}
 
+        async function startInstall() {{
+            var installDir = document.getElementById('inp-install-dir').value;
+            var dataDir = document.getElementById('inp-data-dir').value;
+            var desk = document.getElementById('chk-desktop').checked;
+            var menu = document.getElementById('chk-startmenu').checked;
+            switchToProgressUI(false);
+            await window.pywebview.api.start_installation(installDir, dataDir, desk, menu);
+            startPolling();
+        }}
+
+        async function startUninstall() {{
+            var installDir = document.getElementById('inp-install-dir').value;
+            var dataDir = document.getElementById('inp-data-dir').value;
+            switchToProgressUI(true);
+            await window.pywebview.api.start_uninstall(installDir, dataDir, true);
+            startPolling();
+        }}
+
         function closeSetup(isFinish) {{
             var launch = isFinish ? document.getElementById('chk-launch').checked : false;
             if (window.pywebview && window.pywebview.api) {{
@@ -523,12 +631,12 @@ def main():
     html = build_installer_html(_INSTALL_STATE["install_dir"], _INSTALL_STATE["data_dir"])
 
     webview.create_window(
-        title="Instalar SIFMA Desktop",
+        title="SIFMA Desktop — Instalador",
         html=html,
         js_api=bridge,
         width=580,
-        height=520,
-        min_size=(540, 480),
+        height=500,
+        min_size=(540, 460),
         resizable=True,
     )
 

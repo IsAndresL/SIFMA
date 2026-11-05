@@ -325,82 +325,61 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONSULTA DE ACTUALIZACIONES Y BÓVEDA DE DATOS PROTEGIDA -->
+    <!-- MODAL DE ACTUALIZACIÓN DEL SISTEMA -->
     <div id="sifma-update-modal" class="onboarding-modal-backdrop" style="display: none;" onclick="if(event.target.id==='sifma-update-modal') closeUpdateCheckerModal()">
-        <div class="onboarding-dialog-card" style="max-width: 580px;">
-            <div class="onboarding-header" style="padding-bottom: 14px;">
+        <div class="onboarding-dialog-card" style="max-width: 440px;">
+            <div class="onboarding-header" style="padding: 20px 24px 12px;">
                 <button type="button" class="btn-close-onboarding" onclick="closeUpdateCheckerModal()" title="Cerrar">
                     <span class="material-icons-round">close</span>
                 </button>
-                <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(5, 150, 105, 0.1); color: var(--accent-emerald); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
-                    <span class="material-icons-round" style="font-size: 26px;">system_update_alt</span>
+                <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(5, 150, 105, 0.1); color: var(--accent-emerald); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+                    <span class="material-icons-round" style="font-size: 24px;">system_update_alt</span>
                 </div>
-                <h2 style="font-family: var(--font-brand); font-size: 22px; font-weight: 700; color: var(--text-heading); margin: 0;">
-                    Actualizaciones de SIFMA Desktop
+                <h2 style="font-family: var(--font-brand); font-size: 20px; font-weight: 700; color: var(--text-heading); margin: 0;">
+                    Actualización de SIFMA
                 </h2>
-                <p style="margin: 4px 0 0 0; font-size: 12.5px; color: var(--text-muted); font-weight: 500;">
-                    Verificación oficial en GitHub Releases con aislamiento de base de datos e imágenes
-                </p>
             </div>
 
-            <div class="onboarding-body" style="padding-top: 14px;">
-                <!-- Estado de consulta -->
-                <div id="update-checker-status-box" style="background: var(--bg-card-subtle, #f8fafc); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+            <div class="onboarding-body" style="padding: 12px 24px 16px;">
+                <div style="background: var(--bg-card-subtle, #f8fafc); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
                         <div>
-                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700;">Versión Instalada</div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Versión actual</div>
                             <div id="upd-current-version" style="font-size: 15px; font-weight: 700; color: var(--text-heading); font-family: monospace;">v1.2.0</div>
                         </div>
+                        <span class="material-icons-round" style="color: var(--text-muted); font-size: 18px;">arrow_forward</span>
                         <div style="text-align: right;">
-                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700;">Última Versión Oficial</div>
-                            <div id="upd-latest-version" style="font-size: 15px; font-weight: 700; color: var(--accent-emerald); font-family: monospace;">Consultando...</div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Disponible</div>
+                            <div id="upd-latest-version" style="font-size: 15px; font-weight: 700; color: var(--accent-emerald); font-family: monospace;">...</div>
                         </div>
                     </div>
-                    <div id="upd-status-message" style="font-size: 12.5px; color: var(--text-body); line-height: 1.45; padding-top: 8px; border-top: 1px dashed var(--border-color);">
-                        Conectando con el repositorio oficial <code>IsAndresL/SIFMA</code>...
+                    <div id="upd-status-message" style="font-size: 12.5px; color: var(--text-body); padding-top: 8px; border-top: 1px solid var(--border-color); text-align: center; font-weight: 500;">
+                        Comprobando...
                     </div>
                 </div>
 
-                <!-- Notas de versión -->
-                <div id="upd-release-notes-container" style="display: none; margin-bottom: 14px;">
-                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-heading); margin-bottom: 5px;">Notas de la Versión:</div>
-                    <div id="upd-release-notes" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; font-size: 12px; color: var(--text-muted); max-height: 120px; overflow-y: auto; white-space: pre-wrap; line-height: 1.45;"></div>
-                </div>
-
-                <!-- Garantía de Protección de Datos Locales (%APPDATA%\SIFMA) -->
-                <div style="background: rgba(5, 150, 105, 0.06); border: 1px solid rgba(5, 150, 105, 0.25); border-radius: 8px; padding: 12px 14px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #065f46;">
-                            <span class="material-icons-round" style="font-size: 17px; color: #059669;">verified_user</span>
-                            <span>Bóveda Local Protegida (Intocable por Actualizaciones)</span>
-                        </div>
-                        <button type="button" onclick="openProtectedDataFolder()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">
-                            <span class="material-icons-round" style="font-size: 14px;">folder_open</span>
-                            <span>Abrir Carpeta</span>
-                        </button>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px;">
+                    <div style="font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <strong>Datos:</strong> <code id="upd-protected-path" style="font-size: 11px; color: var(--text-heading);">%APPDATA%\SIFMA</code>
                     </div>
-                    <div style="font-size: 11.5px; color: var(--text-body); line-height: 1.45;">
-                        Tu base de datos (<code>sifma.db</code>) y las fotografías capturadas residen fuera del ejecutable en:<br>
-                        <code id="upd-protected-path" style="font-size: 11px; color: #047857; word-break: break-all;">%APPDATA%\SIFMA</code>
-                    </div>
-                    <div style="display: flex; gap: 16px; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
-                        <span><strong>Base de Datos:</strong> <span id="upd-db-size">-- KB</span></span>
-                        <span><strong>Imágenes Protegidas:</strong> <span id="upd-photos-count">--</span> archivos</span>
-                    </div>
+                    <button type="button" onclick="openProtectedDataFolder()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; flex-shrink: 0;">
+                        <span class="material-icons-round" style="font-size: 14px;">folder_open</span>
+                        <span>Carpeta</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="onboarding-footer" style="justify-content: space-between;">
-                <button type="button" class="btn btn-secondary" onclick="checkSystemUpdatesNow()" id="btn-recheck-updates" style="padding: 7px 14px; font-size: 12.5px;">
-                    <span class="material-icons-round" style="font-size: 16px;">refresh</span>
-                    <span>Volver a Consultar</span>
+            <div class="onboarding-footer" style="padding: 12px 24px; justify-content: space-between;">
+                <button type="button" class="btn btn-secondary" onclick="checkSystemUpdatesNow()" id="btn-recheck-updates" style="padding: 7px 12px; font-size: 12px;">
+                    <span class="material-icons-round" style="font-size: 15px;">refresh</span>
+                    <span>Comprobar</span>
                 </button>
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn btn-primary" id="btn-apply-update" style="display: none; padding: 7px 16px; font-size: 12.5px;" onclick="triggerSafeSystemUpdate()">
                         <span class="material-icons-round" style="font-size: 16px;">download</span>
-                        <span>Actualizar Ahora</span>
+                        <span>Actualizar</span>
                     </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeUpdateCheckerModal()" style="padding: 7px 16px; font-size: 12.5px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeUpdateCheckerModal()" style="padding: 7px 14px; font-size: 12.5px;">
                         <span>Cerrar</span>
                     </button>
                 </div>

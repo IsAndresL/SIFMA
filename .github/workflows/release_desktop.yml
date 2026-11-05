@@ -78,12 +78,7 @@ jobs:
         with:
           tag_name: ${{ steps.extract_version.outputs.tag }}
           name: "SIFMA Desktop ${{ steps.extract_version.outputs.tag }}"
-          body: |
-            ### Actualización Automática de SIFMA Desktop (${{ steps.extract_version.outputs.tag }})
-            Paquete compilado automáticamente tras el último commit en el repositorio oficial.
-
-            - **`SIFMA_Instalador_Setup.exe`**: Asistente visual de instalación con barra de progreso y creación de accesos directos para equipos nuevos.
-            - **`SIFMA_Desktop.exe`**: Binario directo utilizado por el actualizador interno automático de SIFMA (preserva intacta la base de datos `sifma.db` y las fotografías en `%APPDATA%\SIFMA`).
+          body: "Versión oficial ${{ steps.extract_version.outputs.tag }}"
           draft: false
           prerelease: false
           make_latest: "true"
