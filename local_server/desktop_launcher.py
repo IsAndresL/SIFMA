@@ -7,8 +7,6 @@ import os
 import socket
 import sys
 import threading
-import time
-import urllib.request
 
 # 1. Activar modo escritorio antes de importar la configuración de SIFMA
 os.environ["SIFMA_DESKTOP_MODE"] = "1"
@@ -45,21 +43,12 @@ def find_available_port(preferred_port: int = 5000) -> int:
         return s.getsockname()[1]
 
 
-def wait_for_server_ready(url: str, timeout_sec: float = 12.0) -> bool:
-    """Espera a que el motor interno Flask responda antes de transicionar desde el Splash Screen."""
-    deadline = time.time() + timeout_sec
-    while time.time() < deadline:
-        try:
-            with urllib.request.urlopen(url, timeout=1.0) as resp:
-                if resp.status in (200, 302):
-                    return True
-        except Exception:
-            time.sleep(0.08)
-    return False
-
-
-def build_splash_html() -> str:
-    """Construye la pantalla de carga animada (Splash Screen) con el emblema oficial SIFMA."""
+def build_splash_html(target_url: str) -> str:
+    """
+    Construye la pantalla de carga animada (Splash Screen).
+    La transición hacia el servidor interno se realiza desde JavaScript mediante polling asíncrono,
+    evitando llamadas cross-thread sobre el hilo gráfico de Windows (WinForms).
+    """
     svg_path = os.path.join(RESOURCE_DIR, "static", "img", "sifma_sin_texto.svg")
     logo_data_uri = ""
     if os.path.exists(svg_path):
@@ -73,14 +62,14 @@ def build_splash_html() -> str:
     logo_img_tag = (
         f'<img src="{logo_data_uri}" alt="SIFMA" class="splash-logo" />'
         if logo_data_uri
-        else '<div class="splash-logo-fallback">SIFMA</div>'
+        else '<div style="font-weight:700;color:#064e3b;">SIFMA</div>'
     )
 
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Iniciando SIFMA...</title>
+<title>SIFMA</title>
 <style>
     * {{ box-sizing: border-box; margin: 0; padding: 0; user-select: none; }}
     body {{
@@ -89,119 +78,119 @@ def build_splash_html() -> str:
         display: flex;
         align-items: center;
         justify-content: center;
-        background: radial-gradient(circle at 50% 35%, #132a1f 0%, #091510 70%, #050b08 100%);
-        color: #f8fafc;
+        background: #f8fafc;
+        color: #0f172a;
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         overflow: hidden;
     }}
     .splash-card {{
-        width: 460px;
-        padding: 40px 36px;
+        width: 420px;
+        padding: 36px 32px;
         text-align: center;
-        background: rgba(15, 29, 22, 0.78);
-        border: 1px solid rgba(16, 185, 129, 0.25);
-        border-radius: 18px;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(5, 150, 105, 0.12);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
     }}
     .logo-ring {{
-        width: 104px;
-        height: 104px;
-        margin: 0 auto 20px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.96);
+        width: 88px;
+        height: 88px;
+        margin: 0 auto 16px;
+        border-radius: 20px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18), 0 12px 28px rgba(0, 0, 0, 0.45);
-        animation: pulseRing 2.2s infinite ease-in-out;
+        animation: pulseLogo 2s infinite ease-in-out;
     }}
     .splash-logo {{
-        width: 78px;
-        height: 78px;
+        width: 64px;
+        height: 64px;
         display: block;
     }}
-    @keyframes pulseRing {{
-        0%, 100% {{ transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18); }}
-        50% {{ transform: scale(1.04); box-shadow: 0 0 0 12px rgba(16, 185, 129, 0.06); }}
+    @keyframes pulseLogo {{
+        0%, 100% {{ transform: scale(1); }}
+        50% {{ transform: scale(1.04); }}
     }}
     h1 {{
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 700;
-        letter-spacing: 2.5px;
-        color: #ffffff;
-        margin-bottom: 6px;
+        letter-spacing: 1.5px;
+        color: #0f172a;
+        margin-bottom: 4px;
     }}
     .subtitle {{
         font-size: 12.5px;
-        color: #94a3b8;
-        font-weight: 500;
-        margin-bottom: 28px;
-        line-height: 1.4;
+        color: #64748b;
+        margin-bottom: 24px;
     }}
     .progress-track {{
         width: 100%;
-        height: 7px;
-        background: rgba(255, 255, 255, 0.09);
+        height: 6px;
+        background: #f1f5f9;
         border-radius: 99px;
         overflow: hidden;
-        margin-bottom: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        margin-bottom: 10px;
     }}
     .progress-fill {{
         height: 100%;
-        width: 18%;
-        background: linear-gradient(90deg, #059669, #10b981, #34d399);
+        width: 15%;
+        background: #059669;
         border-radius: 99px;
-        transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        transition: width 0.25s ease;
     }}
     .status-row {{
         display: flex;
         align-items: center;
         justify-content: space-between;
         font-size: 12px;
-        color: #cbd5e1;
+        color: #475569;
     }}
     .percent-badge {{
         font-family: Consolas, monospace;
         font-weight: 700;
-        color: #34d399;
-    }}
-    .footer-meta {{
-        margin-top: 24px;
-        padding-top: 14px;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
-        font-size: 11px;
-        color: #64748b;
+        color: #059669;
     }}
 </style>
 </head>
 <body>
     <div class="splash-card">
-        <div class="logo-ring">
-            {logo_img_tag}
-        </div>
+        <div class="logo-ring">{logo_img_tag}</div>
         <h1>SIFMA</h1>
-        <div class="subtitle">Sistema Integral de Fenotipado y Monitoreo Agrícola</div>
+        <div class="subtitle">Fenotipado &amp; Telemetría</div>
         <div class="progress-track">
             <div id="splash-bar" class="progress-fill"></div>
         </div>
         <div class="status-row">
-            <span id="splash-status">Inicializando entorno nativo de escritorio...</span>
-            <span id="splash-pct" class="percent-badge">18%</span>
-        </div>
-        <div class="footer-meta">
-            Bóveda de datos local aislada y protegida &bull; SIFMA Desktop 2026
+            <span id="splash-status">Iniciando servicios...</span>
+            <span id="splash-pct" class="percent-badge">15%</span>
         </div>
     </div>
     <script>
-        window.updateSplash = function(pct, msg) {{
-            var bar = document.getElementById('splash-bar');
-            var st = document.getElementById('splash-status');
-            var pc = document.getElementById('splash-pct');
-            if (bar) bar.style.width = pct + '%';
-            if (st) st.textContent = msg;
-            if (pc) pc.textContent = pct + '%';
-        }};
+        var targetUrl = "{target_url}";
+        var pct = 15;
+        var bar = document.getElementById('splash-bar');
+        var st = document.getElementById('splash-status');
+        var pc = document.getElementById('splash-pct');
+
+        var timer = setInterval(function() {{
+            if (pct < 90) {{
+                pct += 7;
+                bar.style.width = pct + '%';
+                pc.textContent = pct + '%';
+                if (pct > 45) st.textContent = 'Cargando interfaz y base de datos...';
+            }}
+            fetch(targetUrl + '/login', {{ mode: 'no-cors', cache: 'no-store' }})
+                .then(function() {{
+                    clearInterval(timer);
+                    bar.style.width = '100%';
+                    pc.textContent = '100%';
+                    st.textContent = 'Listo';
+                    window.location.replace(targetUrl + '/login');
+                }})
+                .catch(function() {{}});
+        }}, 280);
     </script>
 </body>
 </html>"""
@@ -210,8 +199,33 @@ def build_splash_html() -> str:
 def main():
     import webview
 
+    port = find_available_port(5000)
+    local_url = f"http://127.0.0.1:{port}"
     icon_path = os.path.join(RESOURCE_DIR, "static", "img", "sifma_icon.ico")
-    splash_html = build_splash_html()
+    splash_html = build_splash_html(local_url)
+
+    server_holder = {"http_server": None}
+
+    def bootstrap_backend():
+        try:
+            from werkzeug.serving import make_server
+            from app import app
+            from core.config import config
+            from core.logger import logger
+
+            logger.info(f"SIFMA Desktop v{config.APP_VERSION} escuchando en {local_url}")
+            http_server = make_server("127.0.0.1", port, app, threaded=True)
+            server_holder["http_server"] = http_server
+            http_server.serve_forever()
+        except Exception as e:
+            try:
+                from core.logger import logger
+                logger.error(f"Error iniciando servidor interno: {e}")
+            except Exception:
+                pass
+
+    server_thread = threading.Thread(target=bootstrap_backend, daemon=True)
+    server_thread.start()
 
     window = webview.create_window(
         title="SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola",
@@ -221,50 +235,6 @@ def main():
         min_size=(1024, 680),
         text_select=True,
     )
-
-    server_holder = {"http_server": None}
-
-    def update_splash_ui(pct: int, text: str):
-        try:
-            safe_text = text.replace("'", "\\'")
-            window.evaluate_js(f"if(window.updateSplash) window.updateSplash({pct}, '{safe_text}');")
-        except Exception:
-            pass
-
-    def bootstrap_backend():
-        try:
-            time.sleep(0.15)
-            update_splash_ui(35, "Cargando motor de visión computacional y base de datos...")
-
-            from werkzeug.serving import make_server
-            from app import app
-            from core.config import config
-            from core.logger import logger
-
-            update_splash_ui(68, "Verificando bóveda de datos protegida (%APPDATA%\\SIFMA)...")
-            port = find_available_port(5000)
-            local_url = f"http://127.0.0.1:{port}"
-
-            logger.info("==========================================================")
-            logger.info(f"Iniciando SIFMA Desktop v{config.APP_VERSION}")
-            logger.info(f"Bóveda de datos protegida: {config.USER_DATA_DIR}")
-            logger.info(f"Base de datos activa: {config.DB_PATH}")
-            logger.info(f"Motor interno escuchando en: {local_url}")
-            logger.info("==========================================================")
-
-            http_server = make_server("127.0.0.1", port, app, threaded=True)
-            server_holder["http_server"] = http_server
-            server_thread = threading.Thread(target=http_server.serve_forever, daemon=True)
-            server_thread.start()
-
-            update_splash_ui(90, "Iniciando servicios analíticos y telemetría...")
-            wait_for_server_ready(f"{local_url}/login")
-
-            update_splash_ui(100, "¡Sistema listo! Abriendo plataforma...")
-            time.sleep(0.25)
-            window.load_url(local_url)
-        except Exception as exc:
-            update_splash_ui(100, f"Error al iniciar motor interno: {exc}")
 
     def on_closed():
         srv = server_holder.get("http_server")
@@ -278,9 +248,9 @@ def main():
     window.events.closed += on_closed
 
     if os.path.exists(icon_path):
-        webview.start(bootstrap_backend, icon=icon_path)
+        webview.start(icon=icon_path)
     else:
-        webview.start(bootstrap_backend)
+        webview.start()
 
 
 if __name__ == "__main__":

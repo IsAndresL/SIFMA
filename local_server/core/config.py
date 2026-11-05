@@ -44,9 +44,21 @@ def _resolve_user_data_dir() -> str:
         return os.path.abspath(custom_dir)
     if IS_DESKTOP_MODE:
         appdata_root = os.getenv("APPDATA") or os.path.expanduser("~")
-        target = os.path.join(appdata_root, "SIFMA")
-        os.makedirs(target, exist_ok=True)
-        return target
+        default_appdata = os.path.join(appdata_root, "SIFMA")
+        os.makedirs(default_appdata, exist_ok=True)
+        paths_cfg = os.path.join(default_appdata, "sifma_paths.json")
+        if os.path.exists(paths_cfg):
+            try:
+                import json
+                with open(paths_cfg, "r", encoding="utf-8") as f:
+                    saved = json.load(f)
+                chosen_dir = saved.get("user_data_dir")
+                if chosen_dir:
+                    os.makedirs(chosen_dir, exist_ok=True)
+                    return os.path.abspath(chosen_dir)
+            except Exception:
+                pass
+        return default_appdata
     return BASE_DIR
 
 USER_DATA_DIR: str = _resolve_user_data_dir()

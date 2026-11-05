@@ -744,6 +744,34 @@
             if (localStorage.getItem('sifma_processing_active') === 'true') {
                 window.startGlobalProcessingMonitor();
             }
+
+            // Comprobación automática de actualizaciones al iniciar sesión
+            if (!sessionStorage.getItem('sifma_update_checked_session')) {
+                sessionStorage.setItem('sifma_update_checked_session', 'true');
+                setTimeout(async () => {
+                    try {
+                        const res = await fetch('/api/system/update/check');
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        if (data && data.status === 'success' && data.update_available) {
+                            const navUpd = document.getElementById('nav-check-updates');
+                            if (navUpd && !navUpd.querySelector('.upd-dot')) {
+                                const dot = document.createElement('span');
+                                dot.className = 'upd-dot';
+                                dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#10b981;margin-left:auto;box-shadow:0 0 8px #10b981;';
+                                navUpd.appendChild(dot);
+                            }
+                            window.showToast({
+                                type: 'info',
+                                title: '¡Nueva Actualización Disponible! (v' + data.latest_version + ')',
+                                message: 'Se encontró una nueva versión oficial de SIFMA lista para instalar.',
+                                duration: 6500
+                            });
+                            openUpdateCheckerModal();
+                        }
+                    } catch (e) {}
+                }, 900);
+            }
         });
     </script>
 
