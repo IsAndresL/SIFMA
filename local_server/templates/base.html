@@ -532,6 +532,7 @@
                 applyBtn.innerHTML = '<span class="material-icons-round" style="font-size: 16px;">hourglass_top</span><span>Descargando...</span>';
             }
 
+            let isUpdating = false;
             try {
                 const res = await fetch('/api/system/update/apply', {
                     method: 'POST',
@@ -540,11 +541,20 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
+                    isUpdating = true;
+                    if (applyBtn) {
+                        applyBtn.disabled = true;
+                        applyBtn.innerHTML = '<span class="material-icons-round" style="font-size: 16px;">autorenew</span><span>Reiniciando SIFMA...</span>';
+                    }
+                    const msgEl = document.getElementById('upd-status-message');
+                    if (msgEl) {
+                        msgEl.textContent = 'Actualización lista. SIFMA se reiniciará automáticamente...';
+                    }
                     window.showToast({
                         type: 'success',
                         title: 'Actualizando SIFMA',
                         message: data.message,
-                        duration: 6000
+                        duration: 8000
                     });
                 } else if (data.requires_manual_download && data.download_url) {
                     window.showToast({
@@ -568,7 +578,7 @@
                     message: 'Fallo de comunicación durante la descarga del paquete.'
                 });
             } finally {
-                if (applyBtn) {
+                if (applyBtn && !isUpdating) {
                     applyBtn.disabled = false;
                     applyBtn.innerHTML = '<span class="material-icons-round" style="font-size: 16px;">download</span><span>Actualizar Ahora</span>';
                 }

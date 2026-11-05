@@ -250,41 +250,117 @@ class UpdateService:
         if magic != b"MZ":
             raise ValueError("El archivo descargado no corresponde a un ejecutable nativo de Windows (.exe).")
 
-        # Crear script .bat desacoplado que limpia el entorno _MEI, espera el cierre completo,
-        # reemplaza el binario con reintentos y relanza SIFMA limpio.
-        updater_bat = os.path.join(temp_update_dir, "apply_sifma_update.bat")
-        bat_content = (
-            "@echo off\r\n"
-            "set \"_PYI_APPLICATION_HOME_DIR=\"\r\n"
-            "set \"_PYI_ARCHIVE_FILE=\"\r\n"
-            "set \"_PYI_PARENT_PROCESS_LEVEL=\"\r\n"
-            "set \"_PYI_SPLASH_IPC=\"\r\n"
-            "set \"_MEIPASS=\"\r\n"
-            "set \"_MEIPASS2=\"\r\n"
-            "set \"TCL_LIBRARY=\"\r\n"
-            "set \"TK_LIBRARY=\"\r\n"
-            "set \"PYINSTALLER_RESET_ENVIRONMENT=1\"\r\n"
-            "timeout /t 3 /nobreak >nul\r\n"
-            f'taskkill /F /IM "{exe_name}" /T >nul 2>&1\r\n'
-            "timeout /t 1 /nobreak >nul\r\n"
-            "for /L %%i in (1,1,10) do (\r\n"
-            f'    move /Y "{staged_exe}" "{current_exe}" >nul 2>&1\r\n'
-            f'    if not exist "{staged_exe}" goto :LAUNCH\r\n'
-            "    timeout /t 1 /nobreak >nul\r\n"
-            ")\r\n"
-            ":LAUNCH\r\n"
-            f'start "" /D "{exe_dir}" "{current_exe}"\r\n'
-            'del "%~f0"\r\n'
-        )
-        with open(updater_bat, "w", encoding="utf-8") as bat_file:
-            bat_file.write(bat_content)
+        # Crear script de actualización en PowerShell (.ps1) que espera el cierre del proceso actual,
+        # reemplaza el binario .exe con reintentos y relanza SIFMA limpio sin heredar variables de PyInstaller.
+        updater_ps1 = os.path.join(temp_update_dir, "apply_sifma_update.ps1")
+        current_pid = os.getpid()
+
+        ps1_content = f"""param(
+    [string]$CurrentExe = "{current_exe}",
+    [string]$StagedExe = "{staged_exe}",
+    [string]$ExeDir = "{exe_dir}",
+    [int]$TargetPid = {current_pid}
+)
+
+$ErrorActionPreference = "Continue"
+$logFile = Join-Path (Split-Path -Parent $StagedExe) "sifma_update_runner.log"
+
+function Log-Msg ($msg) {{
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    "[$ts] $msg" | Out-File -FilePath $logFile -Append -Encoding UTF8
+}}
+
+Log-Msg "Iniciando reemplazo de binario para PID $TargetPid"
+Log-Msg "Destino: $CurrentExe"
+Log-Msg "Origen Staged: $StagedExe"
+
+# 1. Esperar cierre del proceso anterior
+Start-Sleep -Seconds 2
+if ($TargetPid -gt 0) {{
+    try {{
+        $proc = Get-Process -Id $TargetPid -ErrorAction SilentlyContinue
+        if ($proc) {{
+            Log-Msg "Esperando salida de PID $TargetPid..."
+            $proc.WaitForExit(6000)
+        }}
+    }} catch {{
+        Log-Msg "Excepcion esperando PID: $_"
+    }}
+}}
+
+# Cerrar cualquier instancia residual de SIFMA_Desktop
+try {{
+    Get-Process -Name "SIFMA_Desktop" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+}} catch {{}}
+
+Start-Sleep -Milliseconds 800
+
+# 2. Reemplazar el archivo binario con reintentos
+$replaced = $false
+for ($i = 1; $i -le 25; $i++) {{
+    try {{
+        if (-not (Test-Path -LiteralPath $StagedExe)) {{
+            Log-Msg "Staged exe ya fue movido exitosamente."
+            $replaced = $true
+            break
+        }}
+        Move-Item -LiteralPath $StagedExe -Destination $CurrentExe -Force -ErrorAction Stop
+        Log-Msg "Ejecutable reemplazado correctamente en intento $i."
+        $replaced = $true
+        break
+    }} catch {{
+        Log-Msg "Intento $i fallido al mover binario: $_"
+        Start-Sleep -Milliseconds 700
+    }}
+}}
+
+if (-not $replaced) {{
+    Log-Msg "ERROR CRITICO: No fue posible reemplazar $CurrentExe tras 25 intentos."
+    exit 1
+}}
+
+# 3. Limpiar variables internas de PyInstaller (_MEI / _PYI) en la sesion actual
+@('_PYI_APPLICATION_HOME_DIR', '_PYI_ARCHIVE_FILE', '_PYI_PARENT_PROCESS_LEVEL', '_PYI_SPLASH_IPC', '_MEIPASS', '_MEIPASS2', 'TCL_LIBRARY', 'TK_LIBRARY') | ForEach-Object {{
+    [System.Environment]::SetEnvironmentVariable($_, $null, 'Process')
+}}
+[System.Environment]::SetEnvironmentVariable('PYINSTALLER_RESET_ENVIRONMENT', '1', 'Process')
+
+# 4. Iniciar la nueva version de SIFMA Desktop
+if (Test-Path -LiteralPath $CurrentExe) {{
+    Log-Msg "Iniciando nueva version en $CurrentExe..."
+    try {{
+        Start-Process -FilePath $CurrentExe -WorkingDirectory $ExeDir
+        Log-Msg "Nueva version iniciada exitosamente."
+    }} catch {{
+        Log-Msg "Error al iniciar nueva version: $_"
+    }}
+}} else {{
+    Log-Msg "ERROR: No existe el binario en $CurrentExe tras el reemplazo."
+}}
+
+Start-Sleep -Seconds 2
+try {{
+    Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+}} catch {{}}
+"""
+        with open(updater_ps1, "w", encoding="utf-8", newline="\n") as ps_f:
+            ps_f.write(ps1_content)
 
         clean_env = cls._get_clean_subprocess_env()
         creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | getattr(
             subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200
         )
         subprocess.Popen(
-            ["cmd.exe", "/c", updater_bat],
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-WindowStyle",
+                "Hidden",
+                "-File",
+                updater_ps1,
+            ],
             cwd=temp_update_dir,
             env=clean_env,
             close_fds=True,
@@ -295,7 +371,7 @@ class UpdateService:
         )
 
         def _graceful_shutdown():
-            time.sleep(0.6)
+            time.sleep(1.2)
             try:
                 import webview
 

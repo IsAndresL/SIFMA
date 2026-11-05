@@ -199,16 +199,12 @@ class InstallerBridge:
                 inst_d = _INSTALL_STATE.get("install_dir")
                 if inst_d and os.path.exists(inst_d):
                     try:
-                        cleanup_bat = os.path.join(tempfile.gettempdir(), "sifma_uninstall_clean.bat")
-                        with open(cleanup_bat, "w", encoding="utf-8") as bf:
-                            bf.write(
-                                "@echo off\r\n"
-                                "timeout /t 2 /nobreak >nul\r\n"
-                                f'rmdir /s /q "{inst_d}" >nul 2>&1\r\n'
-                                'del "%~f0"\r\n'
-                            )
+                        cleanup_ps = (
+                            "Start-Sleep -Seconds 2; "
+                            f'Remove-Item -LiteralPath "{inst_d}" -Recurse -Force -ErrorAction SilentlyContinue'
+                        )
                         subprocess.Popen(
-                            ["cmd.exe", "/c", cleanup_bat],
+                            ["powershell.exe", "-NoProfile", "-WindowStyle", "Hidden", "-Command", cleanup_ps],
                             cwd=tempfile.gettempdir(),
                             env=clean_env,
                             close_fds=True,
