@@ -325,14 +325,20 @@ if (-not $replaced) {{
 }}
 [System.Environment]::SetEnvironmentVariable('PYINSTALLER_RESET_ENVIRONMENT', '1', 'Process')
 
-# 4. Iniciar la nueva version de SIFMA Desktop
+# 4. Iniciar la nueva version de SIFMA Desktop via Shell.Application (para garantizar ventana visible SW_SHOWNORMAL)
 if (Test-Path -LiteralPath $CurrentExe) {{
-    Log-Msg "Iniciando nueva version en $CurrentExe..."
+    Log-Msg "Iniciando nueva version en $CurrentExe via Shell.Application..."
     try {{
-        Start-Process -FilePath $CurrentExe -WorkingDirectory $ExeDir
-        Log-Msg "Nueva version iniciada exitosamente."
+        $shell = New-Object -ComObject Shell.Application
+        $shell.ShellExecute($CurrentExe, "", $ExeDir, "open", 1)
+        Log-Msg "Nueva version iniciada exitosamente con ShellExecute."
     }} catch {{
-        Log-Msg "Error al iniciar nueva version: $_"
+        Log-Msg "Fallo ShellExecute: $_ - intentando Start-Process..."
+        try {{
+            Start-Process -FilePath $CurrentExe -WorkingDirectory $ExeDir
+        }} catch {{
+            Log-Msg "Fallo Start-Process: $_"
+        }}
     }}
 }} else {{
     Log-Msg "ERROR: No existe el binario en $CurrentExe tras el reemplazo."

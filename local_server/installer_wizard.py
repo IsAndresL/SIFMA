@@ -180,15 +180,13 @@ class InstallerBridge:
             install_dir = _INSTALL_STATE["install_dir"]
             if os.path.exists(exe_path):
                 try:
+                    ps_launch = (
+                        f'$shell = New-Object -ComObject Shell.Application; '
+                        f'$shell.ShellExecute("{exe_path}", "", "{install_dir}", "open", 1)'
+                    )
                     subprocess.Popen(
-                        [exe_path],
-                        cwd=install_dir,
-                        env=clean_env,
-                        close_fds=True,
-                        stdin=subprocess.DEVNULL,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        creationflags=new_group_flag,
+                        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_launch],
+                        creationflags=no_win_flag,
                     )
                 except Exception:
                     pass

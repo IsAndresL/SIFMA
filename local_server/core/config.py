@@ -129,7 +129,7 @@ class AppConfig:
     Separa estrictamente los recursos estáticos de la aplicación (RESOURCE_DIR)
     de la base de datos e imágenes operativas del usuario (USER_DATA_DIR).
     """
-    APP_VERSION: str = "1.2.0"
+    APP_VERSION: str = "1.2.9"
     GITHUB_REPO: str = os.getenv("SIFMA_GITHUB_REPO", "IsAndresL/SIFMA")
     IS_FROZEN: bool = IS_FROZEN
     IS_DESKTOP_MODE: bool = IS_DESKTOP_MODE
