@@ -247,14 +247,15 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
     .header {{
         background: #064e3b;
         color: #ffffff;
-        padding: 18px 24px;
+        padding: 16px 24px;
         display: flex;
         align-items: center;
         gap: 14px;
+        flex-shrink: 0;
     }}
     .logo-box {{
-        width: 56px;
-        height: 56px;
+        width: 52px;
+        height: 52px;
         border-radius: 12px;
         background: #ffffff;
         display: flex;
@@ -273,11 +274,12 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
     }}
     .content {{
         flex: 1;
-        padding: 20px 24px;
+        padding: 18px 24px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         gap: 14px;
+        overflow-y: auto;
     }}
     .field-group {{
         display: flex;
@@ -373,6 +375,7 @@ def build_installer_html(install_dir: str, data_dir: str) -> str:
         align-items: center;
         justify-content: flex-end;
         gap: 10px;
+        flex-shrink: 0;
     }}
     .btn {{
         padding: 8px 18px;
@@ -523,9 +526,10 @@ def main():
         title="Instalar SIFMA Desktop",
         html=html,
         js_api=bridge,
-        width=540,
-        height=395,
-        resizable=False,
+        width=580,
+        height=520,
+        min_size=(540, 480),
+        resizable=True,
     )
 
     if os.path.exists(icon_path):
