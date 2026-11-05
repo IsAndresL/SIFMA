@@ -8,10 +8,41 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 
+for _pyi_var in (
+    "_PYI_APPLICATION_HOME_DIR",
+    "_PYI_ARCHIVE_FILE",
+    "_PYI_PARENT_PROCESS_LEVEL",
+    "_PYI_SPLASH_IPC",
+    "_MEIPASS2",
+):
+    os.environ.pop(_pyi_var, None)
+
 RESOURCE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+
+
+def get_clean_subprocess_env():
+    """Limpia las variables de entorno internas de PyInstaller (_MEI / _PYI) antes de lanzar otro ejecutable."""
+    env = os.environ.copy()
+    for k in list(env.keys()):
+        ku = k.upper()
+        if ku.startswith("_PYI") or ku.startswith("_MEI") or ku in ("TCL_LIBRARY", "TK_LIBRARY"):
+            env.pop(k, None)
+
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass and "PATH" in env:
+        norm_mei = os.path.normcase(os.path.normpath(meipass))
+        clean_parts = [
+            p for p in env["PATH"].split(os.pathsep)
+            if p and os.path.normcase(os.path.normpath(p)) != norm_mei
+        ]
+        env["PATH"] = os.pathsep.join(clean_parts)
+
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
 
 
 def get_default_install_dir() -> str:
@@ -138,26 +169,58 @@ class InstallerBridge:
         }
 
     def finish_installer(self, launch_now: bool = True):
+        clean_env = get_clean_subprocess_env()
+        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | getattr(
+            subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200
+        )
+
         if _INSTALL_STATE.get("mode") == "install" and launch_now:
             exe_path = _INSTALL_STATE.get("installed_exe") or os.path.join(
                 _INSTALL_STATE["install_dir"], "SIFMA_Desktop.exe"
             )
+            install_dir = _INSTALL_STATE["install_dir"]
             if os.path.exists(exe_path):
                 try:
-                    subprocess.Popen([exe_path], cwd=_INSTALL_STATE["install_dir"])
+                    subprocess.Popen(
+                        [
+                            "cmd.exe",
+                            "/c",
+                            f'timeout /t 1 /nobreak >nul & start "" /D "{install_dir}" "{exe_path}"',
+                        ],
+                        cwd=tempfile.gettempdir(),
+                        env=clean_env,
+                        close_fds=True,
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        creationflags=creation_flags,
+                    )
                 except Exception:
                     pass
 
         def _close():
-            time.sleep(0.2)
+            time.sleep(0.15)
             if _INSTALL_STATE.get("mode") == "uninstall":
                 inst_d = _INSTALL_STATE.get("install_dir")
                 if inst_d and os.path.exists(inst_d):
-                    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
                     subprocess.Popen(
-                        ["cmd.exe", "/c", f'timeout /t 1 /nobreak >nul & rmdir /s /q "{inst_d}"'],
+                        ["cmd.exe", "/c", f'timeout /t 2 /nobreak >nul & rmdir /s /q "{inst_d}"'],
+                        cwd=tempfile.gettempdir(),
+                        env=clean_env,
+                        close_fds=True,
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
                         creationflags=creation_flags,
                     )
+            try:
+                import webview
+
+                if webview.windows:
+                    webview.windows[0].destroy()
+            except Exception:
+                pass
+            time.sleep(0.5)
             os._exit(0)
 
         threading.Thread(target=_close, daemon=True).start()

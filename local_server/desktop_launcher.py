@@ -11,6 +11,17 @@ import threading
 # 1. Activar modo escritorio antes de importar la configuración de SIFMA
 os.environ["SIFMA_DESKTOP_MODE"] = "1"
 
+# Limpiar variables internas del bootloader de PyInstaller para que ningún subproceso
+# (como el actualizador o reinicio) herede la carpeta temporal _MEI del proceso actual.
+for _pyi_var in (
+    "_PYI_APPLICATION_HOME_DIR",
+    "_PYI_ARCHIVE_FILE",
+    "_PYI_PARENT_PROCESS_LEVEL",
+    "_PYI_SPLASH_IPC",
+    "_MEIPASS2",
+):
+    os.environ.pop(_pyi_var, None)
+
 # 2. En modo ejecutable sin consola (windowed), redirigir stdout/stderr a archivo de log seguro
 if sys.stdout is None or sys.stderr is None:
     try:
@@ -237,13 +248,19 @@ def main():
     )
 
     def on_closed():
-        srv = server_holder.get("http_server")
-        if srv is not None:
-            try:
-                srv.shutdown()
-            except Exception:
-                pass
-        os._exit(0)
+        def _shutdown():
+            import time
+
+            srv = server_holder.get("http_server")
+            if srv is not None:
+                try:
+                    srv.shutdown()
+                except Exception:
+                    pass
+            time.sleep(0.4)
+            os._exit(0)
+
+        threading.Thread(target=_shutdown, daemon=True).start()
 
     window.events.closed += on_closed
 

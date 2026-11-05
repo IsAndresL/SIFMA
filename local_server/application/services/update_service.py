@@ -180,6 +180,30 @@ class UpdateService:
                 "message": "Sin conexión al servidor de actualizaciones de GitHub. Verifica tu acceso a Internet.",
             }
 
+    @staticmethod
+    def _get_clean_subprocess_env() -> Dict[str, str]:
+        """
+        Retorna un entorno limpio sin las variables internas del bootloader de PyInstaller (_MEI / _PYI),
+        evitando que el nuevo ejecutable intente leer la carpeta temporal _MEI del proceso anterior.
+        """
+        env = os.environ.copy()
+        for k in list(env.keys()):
+            ku = k.upper()
+            if ku.startswith("_PYI") or ku.startswith("_MEI") or ku in ("TCL_LIBRARY", "TK_LIBRARY"):
+                env.pop(k, None)
+
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass and "PATH" in env:
+            norm_mei = os.path.normcase(os.path.normpath(meipass))
+            clean_parts = [
+                p for p in env["PATH"].split(os.pathsep)
+                if p and os.path.normcase(os.path.normpath(p)) != norm_mei
+            ]
+            env["PATH"] = os.pathsep.join(clean_parts)
+
+        env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+        return env
+
     @classmethod
     def download_and_apply_update(cls, download_url: str) -> Dict[str, Any]:
         """
@@ -201,6 +225,8 @@ class UpdateService:
             }
 
         current_exe = os.path.abspath(sys.executable)
+        exe_dir = os.path.dirname(current_exe)
+        exe_name = os.path.basename(current_exe)
         temp_update_dir = os.path.join(tempfile.gettempdir(), "sifma_updater")
         os.makedirs(temp_update_dir, exist_ok=True)
         staged_exe = os.path.join(temp_update_dir, "SIFMA_Desktop_Update.exe")
@@ -224,27 +250,60 @@ class UpdateService:
         if magic != b"MZ":
             raise ValueError("El archivo descargado no corresponde a un ejecutable nativo de Windows (.exe).")
 
-        # Crear script .bat que espera el cierre del proceso actual, reemplaza solo el .exe y relanza SIFMA
+        # Crear script .bat desacoplado que limpia el entorno _MEI, espera el cierre completo,
+        # reemplaza el binario con reintentos y relanza SIFMA limpio.
         updater_bat = os.path.join(temp_update_dir, "apply_sifma_update.bat")
-        current_pid = os.getpid()
         bat_content = (
             "@echo off\r\n"
-            "chcp 65001 >nul\r\n"
-            f"timeout /t 2 /nobreak >nul\r\n"
-            f"taskkill /PID {current_pid} /F >nul 2>&1\r\n"
+            "set \"_PYI_APPLICATION_HOME_DIR=\"\r\n"
+            "set \"_PYI_ARCHIVE_FILE=\"\r\n"
+            "set \"_PYI_PARENT_PROCESS_LEVEL=\"\r\n"
+            "set \"_PYI_SPLASH_IPC=\"\r\n"
+            "set \"_MEIPASS=\"\r\n"
+            "set \"_MEIPASS2=\"\r\n"
+            "set \"TCL_LIBRARY=\"\r\n"
+            "set \"TK_LIBRARY=\"\r\n"
+            "set \"PYINSTALLER_RESET_ENVIRONMENT=1\"\r\n"
+            "timeout /t 3 /nobreak >nul\r\n"
+            f'taskkill /F /IM "{exe_name}" /T >nul 2>&1\r\n'
             "timeout /t 1 /nobreak >nul\r\n"
-            f'move /Y "{staged_exe}" "{current_exe}" >nul\r\n'
-            f'start "" "{current_exe}"\r\n'
+            "for /L %%i in (1,1,10) do (\r\n"
+            f'    move /Y "{staged_exe}" "{current_exe}" >nul 2>&1\r\n'
+            f'    if not exist "{staged_exe}" goto :LAUNCH\r\n'
+            "    timeout /t 1 /nobreak >nul\r\n"
+            ")\r\n"
+            ":LAUNCH\r\n"
+            f'start "" /D "{exe_dir}" "{current_exe}"\r\n'
             'del "%~f0"\r\n'
         )
         with open(updater_bat, "w", encoding="utf-8") as bat_file:
             bat_file.write(bat_content)
 
-        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
-        subprocess.Popen(["cmd.exe", "/c", updater_bat], creationflags=creation_flags)
+        clean_env = cls._get_clean_subprocess_env()
+        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | getattr(
+            subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200
+        )
+        subprocess.Popen(
+            ["cmd.exe", "/c", updater_bat],
+            cwd=temp_update_dir,
+            env=clean_env,
+            close_fds=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=creation_flags,
+        )
 
         def _graceful_shutdown():
-            time.sleep(1.2)
+            time.sleep(0.6)
+            try:
+                import webview
+
+                if webview.windows:
+                    webview.windows[0].destroy()
+            except Exception:
+                pass
+            time.sleep(0.8)
             os._exit(0)
 
         threading.Thread(target=_graceful_shutdown, daemon=True).start()
@@ -252,9 +311,6 @@ class UpdateService:
         return {
             "status": "success",
             "requires_manual_download": False,
-            "message": (
-                "Actualización descargada y verificada. SIFMA se reiniciará automáticamente en unos segundos "
-                "conservando intactos todos tus datos e imágenes."
-            ),
+            "message": "Actualizando y reiniciando SIFMA...",
         }
 
