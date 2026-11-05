@@ -32,21 +32,28 @@ jobs:
           cache: "pip"
           cache-dependency-path: "local_server/requirements.txt"
 
-      - name: Extraer version oficial (APP_VERSION) desde config.py
+      - name: Calcular e inyectar version automatica en config.py
         id: extract_version
         shell: pwsh
         run: |
-          $content = Get-Content "local_server/core/config.py" -Raw
-          if ($content -match 'APP_VERSION:\s*str\s*=\s*"([^"]+)"') {
-              $ver = $matches[1]
+          $configPath = "local_server/core/config.py"
+          $content = Get-Content $configPath -Raw
+          if ($content -match 'APP_VERSION:\s*str\s*=\s*"(\d+\.\d+)(?:\.\d+)?"') {
+              $majorMinor = $matches[1]
           } else {
-              $ver = "1.2.0"
+              $majorMinor = "1.2"
           }
-          $tag = "v$ver"
-          $commitMsg = (git log -1 --pretty=%B).Trim()
-          Write-Output "version=$ver" >> $env:GITHUB_OUTPUT
+          $buildNum = "${{ github.run_number }}"
+          $autoVer = "$majorMinor.$buildNum"
+          $tag = "v$autoVer"
+
+          # Inyectar la nueva version dentro de config.py antes de compilar el .exe
+          $updatedContent = $content -replace 'APP_VERSION:\s*str\s*=\s*"[^"]+"', "APP_VERSION: str = `"$autoVer`""
+          Set-Content -Path $configPath -Value $updatedContent -Encoding UTF8
+
+          Write-Output "version=$autoVer" >> $env:GITHUB_OUTPUT
           Write-Output "tag=$tag" >> $env:GITHUB_OUTPUT
-          Write-Host "Version detectada: $ver (Tag: $tag)"
+          Write-Host "Version autogenerada e inyectada para este commit: $autoVer (Tag: $tag)"
 
       - name: Instalar dependencias de SIFMA y PyInstaller
         shell: pwsh
