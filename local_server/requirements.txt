@@ -1,4 +1,4 @@
-# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
 # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
 # Dependencias oficiales verificadas para el Servidor Local SIFMA (Python 3.10 - 3.13)
 

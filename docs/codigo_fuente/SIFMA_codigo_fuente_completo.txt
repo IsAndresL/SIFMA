@@ -1,5 +1,5 @@
 ================================================================================
-SIFMA — SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AGRÍCOLA
+SIFMA — SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AMBIENTAL
 CÓDIGO FUENTE COMPLETO PARA DEPÓSITO LEGAL ANTE LA DNDA (COLOMBIA)
 ================================================================================
 Versión de Software: 1.0.0
@@ -104,7 +104,7 @@ Total de Líneas de Código Fuente: 24218
 ARCHIVO   1/85: instalacion/1_instalar_dependencias/Instalar_Dependencias.bat (65 líneas)
 ================================================================================
     1 | @echo off
-    2 | :: SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 | :: SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 | :: Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 | :: Año: 2026.
     5 | 
@@ -112,7 +112,7 @@ ARCHIVO   1/85: instalacion/1_instalar_dependencias/Instalar_Dependencias.bat (6
     7 | title SIFMA - Paso 1: Instalador de Dependencias
     8 | 
     9 | echo ========================================================
-   10 | echo        SIFMA - SISTEMA DE FENOTIPADO Y TELEMETRIA
+   10 | echo        SIFMA - SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AMBIENTAL
    11 | echo        Paso 1: Instalacion Automatizada de Dependencias
    12 | echo ========================================================
    13 | echo.
@@ -174,7 +174,7 @@ ARCHIVO   1/85: instalacion/1_instalar_dependencias/Instalar_Dependencias.bat (6
 ARCHIVO   2/85: instalacion/2_iniciar_servidor/Iniciar_Servidor.bat (37 líneas)
 ================================================================================
     1 | @echo off
-    2 | :: SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 | :: SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 | :: Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 | :: Año: 2026.
     5 | 
@@ -216,7 +216,7 @@ ARCHIVO   2/85: instalacion/2_iniciar_servidor/Iniciar_Servidor.bat (37 líneas)
 ARCHIVO   3/85: instalacion/3_crear_acceso_directo/Crear_Acceso_Directo.bat (13 líneas)
 ================================================================================
     1 | @echo off
-    2 | :: SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 | :: SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 | :: Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 | :: Año: 2026.
     5 | 
@@ -233,7 +233,7 @@ ARCHIVO   3/85: instalacion/3_crear_acceso_directo/Crear_Acceso_Directo.bat (13 
 ================================================================================
 ARCHIVO   4/85: instalacion/3_crear_acceso_directo/Crear_Acceso_Directo.ps1 (36 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -257,7 +257,7 @@ ARCHIVO   4/85: instalacion/3_crear_acceso_directo/Crear_Acceso_Directo.ps1 (36 
    22 | if (Test-Path $iconPath) {
    23 |     $shortcut.IconLocation = "$iconPath,0"
    24 | }
-   25 | $shortcut.Description = "Sistema Integral de Fenotipado y Monitoreo Agricola (SIFMA) - Servidor Local"
+   25 | $shortcut.Description = "Sistema Integral de Fenotipado y Monitoreo Ambiental (SIFMA) - Servidor Local"
    26 | $shortcut.Save()
    27 | 
    28 | Write-Host "========================================================" -ForegroundColor Green
@@ -274,7 +274,7 @@ ARCHIVO   4/85: instalacion/3_crear_acceso_directo/Crear_Acceso_Directo.ps1 (36 
 ================================================================================
 ARCHIVO   5/85: local_server/app.py (77 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -356,7 +356,7 @@ ARCHIVO   5/85: local_server/app.py (77 líneas)
 ================================================================================
 ARCHIVO   6/85: local_server/application/__init__.py (21 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -382,7 +382,7 @@ ARCHIVO   6/85: local_server/application/__init__.py (21 líneas)
 ================================================================================
 ARCHIVO   7/85: local_server/application/services/__init__.py (23 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -410,7 +410,7 @@ ARCHIVO   7/85: local_server/application/services/__init__.py (23 líneas)
 ================================================================================
 ARCHIVO   8/85: local_server/application/services/analytics_service.py (1766 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -2181,7 +2181,7 @@ ARCHIVO   8/85: local_server/application/services/analytics_service.py (1766 lí
 ================================================================================
 ARCHIVO   9/85: local_server/application/services/audit_service.py (157 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -2343,7 +2343,7 @@ ARCHIVO   9/85: local_server/application/services/audit_service.py (157 líneas)
 ================================================================================
 ARCHIVO  10/85: local_server/application/services/conclusion_service.py (36 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -2384,7 +2384,7 @@ ARCHIVO  10/85: local_server/application/services/conclusion_service.py (36 lín
 ================================================================================
 ARCHIVO  11/85: local_server/application/services/system_service.py (68 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -2457,7 +2457,7 @@ ARCHIVO  11/85: local_server/application/services/system_service.py (68 líneas)
 ================================================================================
 ARCHIVO  12/85: local_server/application/services/telemetry_service.py (200 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -2662,7 +2662,7 @@ ARCHIVO  12/85: local_server/application/services/telemetry_service.py (200 lín
 ================================================================================
 ARCHIVO  13/85: local_server/application/services/user_service.py (170 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -2837,7 +2837,7 @@ ARCHIVO  13/85: local_server/application/services/user_service.py (170 líneas)
 ================================================================================
 ARCHIVO  14/85: local_server/application/services/vision_service.py (466 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3308,7 +3308,7 @@ ARCHIVO  14/85: local_server/application/services/vision_service.py (466 líneas
 ================================================================================
 ARCHIVO  15/85: local_server/application/services/weather_service.py (144 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3457,7 +3457,7 @@ ARCHIVO  15/85: local_server/application/services/weather_service.py (144 línea
 ================================================================================
 ARCHIVO  16/85: local_server/core/__init__.py (9 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3471,7 +3471,7 @@ ARCHIVO  16/85: local_server/core/__init__.py (9 líneas)
 ================================================================================
 ARCHIVO  17/85: local_server/core/config.py (67 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3543,7 +3543,7 @@ ARCHIVO  17/85: local_server/core/config.py (67 líneas)
 ================================================================================
 ARCHIVO  18/85: local_server/core/dependencies.py (73 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3621,7 +3621,7 @@ ARCHIVO  18/85: local_server/core/dependencies.py (73 líneas)
 ================================================================================
 ARCHIVO  19/85: local_server/core/logger.py (22 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3648,7 +3648,7 @@ ARCHIVO  19/85: local_server/core/logger.py (22 líneas)
 ================================================================================
 ARCHIVO  20/85: local_server/core/security.py (58 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3711,7 +3711,7 @@ ARCHIVO  20/85: local_server/core/security.py (58 líneas)
 ================================================================================
 ARCHIVO  21/85: local_server/core/vision/__init__.py (10 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3726,7 +3726,7 @@ ARCHIVO  21/85: local_server/core/vision/__init__.py (10 líneas)
 ================================================================================
 ARCHIVO  22/85: local_server/core/vision/fruit_detector.py (54 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3785,7 +3785,7 @@ ARCHIVO  22/85: local_server/core/vision/fruit_detector.py (54 líneas)
 ================================================================================
 ARCHIVO  23/85: local_server/core/vision/metrics.py (109 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -3899,7 +3899,7 @@ ARCHIVO  23/85: local_server/core/vision/metrics.py (109 líneas)
 ================================================================================
 ARCHIVO  24/85: local_server/core/vision/pipeline.py (141 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4045,7 +4045,7 @@ ARCHIVO  24/85: local_server/core/vision/pipeline.py (141 líneas)
 ================================================================================
 ARCHIVO  25/85: local_server/core/vision/segmentation.py (86 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4136,7 +4136,7 @@ ARCHIVO  25/85: local_server/core/vision/segmentation.py (86 líneas)
 ================================================================================
 ARCHIVO  26/85: local_server/domain/__init__.py (52 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4193,7 +4193,7 @@ ARCHIVO  26/85: local_server/domain/__init__.py (52 líneas)
 ================================================================================
 ARCHIVO  27/85: local_server/domain/interfaces/__init__.py (28 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4226,7 +4226,7 @@ ARCHIVO  27/85: local_server/domain/interfaces/__init__.py (28 líneas)
 ================================================================================
 ARCHIVO  28/85: local_server/domain/interfaces/repositories.py (48 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4279,7 +4279,7 @@ ARCHIVO  28/85: local_server/domain/interfaces/repositories.py (48 líneas)
 ================================================================================
 ARCHIVO  29/85: local_server/domain/interfaces/telemetry.py (14 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4298,7 +4298,7 @@ ARCHIVO  29/85: local_server/domain/interfaces/telemetry.py (14 líneas)
 ================================================================================
 ARCHIVO  30/85: local_server/domain/interfaces/vision.py (23 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4326,7 +4326,7 @@ ARCHIVO  30/85: local_server/domain/interfaces/vision.py (23 líneas)
 ================================================================================
 ARCHIVO  31/85: local_server/domain/models/__init__.py (24 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4355,7 +4355,7 @@ ARCHIVO  31/85: local_server/domain/models/__init__.py (24 líneas)
 ================================================================================
 ARCHIVO  32/85: local_server/domain/models/agronomic_conclusion.py (39 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4399,7 +4399,7 @@ ARCHIVO  32/85: local_server/domain/models/agronomic_conclusion.py (39 líneas)
 ================================================================================
 ARCHIVO  33/85: local_server/domain/models/audit_log.py (112 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4516,7 +4516,7 @@ ARCHIVO  33/85: local_server/domain/models/audit_log.py (112 líneas)
 ================================================================================
 ARCHIVO  34/85: local_server/domain/models/biometric_metric.py (52 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4573,7 +4573,7 @@ ARCHIVO  34/85: local_server/domain/models/biometric_metric.py (52 líneas)
 ================================================================================
 ARCHIVO  35/85: local_server/domain/models/capture_session.py (38 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4616,7 +4616,7 @@ ARCHIVO  35/85: local_server/domain/models/capture_session.py (38 líneas)
 ================================================================================
 ARCHIVO  36/85: local_server/domain/models/config.py (85 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4706,7 +4706,7 @@ ARCHIVO  36/85: local_server/domain/models/config.py (85 líneas)
 ================================================================================
 ARCHIVO  37/85: local_server/domain/models/crop_profile.py (93 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4804,7 +4804,7 @@ ARCHIVO  37/85: local_server/domain/models/crop_profile.py (93 líneas)
 ================================================================================
 ARCHIVO  38/85: local_server/domain/models/sensor_reading.py (51 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -4860,7 +4860,7 @@ ARCHIVO  38/85: local_server/domain/models/sensor_reading.py (51 líneas)
 ================================================================================
 ARCHIVO  39/85: local_server/domain/models/user.py (168 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5033,7 +5033,7 @@ ARCHIVO  39/85: local_server/domain/models/user.py (168 líneas)
 ================================================================================
 ARCHIVO  40/85: local_server/infrastructure/__init__.py (7 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5045,7 +5045,7 @@ ARCHIVO  40/85: local_server/infrastructure/__init__.py (7 líneas)
 ================================================================================
 ARCHIVO  41/85: local_server/infrastructure/vision/__init__.py (13 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5063,7 +5063,7 @@ ARCHIVO  41/85: local_server/infrastructure/vision/__init__.py (13 líneas)
 ================================================================================
 ARCHIVO  42/85: local_server/infrastructure/vision/biometric_calculator.py (251 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5319,7 +5319,7 @@ ARCHIVO  42/85: local_server/infrastructure/vision/biometric_calculator.py (251 
 ================================================================================
 ARCHIVO  43/85: local_server/infrastructure/vision/pipeline_manager.py (430 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5754,7 +5754,7 @@ ARCHIVO  43/85: local_server/infrastructure/vision/pipeline_manager.py (430 lín
 ================================================================================
 ARCHIVO  44/85: local_server/infrastructure/vision/strategies/__init__.py (7 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5766,7 +5766,7 @@ ARCHIVO  44/85: local_server/infrastructure/vision/strategies/__init__.py (7 lí
 ================================================================================
 ARCHIVO  45/85: local_server/infrastructure/vision/strategies/exg_segmentation.py (94 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5865,7 +5865,7 @@ ARCHIVO  45/85: local_server/infrastructure/vision/strategies/exg_segmentation.p
 ================================================================================
 ARCHIVO  46/85: local_server/presentation/__init__.py (8 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5878,7 +5878,7 @@ ARCHIVO  46/85: local_server/presentation/__init__.py (8 líneas)
 ================================================================================
 ARCHIVO  47/85: local_server/presentation/api/__init__.py (15 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -5898,7 +5898,7 @@ ARCHIVO  47/85: local_server/presentation/api/__init__.py (15 líneas)
 ================================================================================
 ARCHIVO  48/85: local_server/presentation/api/batch_routes.py (290 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -6193,7 +6193,7 @@ ARCHIVO  48/85: local_server/presentation/api/batch_routes.py (290 líneas)
 ================================================================================
 ARCHIVO  49/85: local_server/presentation/api/conclusion_routes.py (61 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -6259,7 +6259,7 @@ ARCHIVO  49/85: local_server/presentation/api/conclusion_routes.py (61 líneas)
 ================================================================================
 ARCHIVO  50/85: local_server/presentation/api/session_routes.py (93 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -6357,7 +6357,7 @@ ARCHIVO  50/85: local_server/presentation/api/session_routes.py (93 líneas)
 ================================================================================
 ARCHIVO  51/85: local_server/presentation/api/telemetry_routes.py (277 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -6639,7 +6639,7 @@ ARCHIVO  51/85: local_server/presentation/api/telemetry_routes.py (277 líneas)
 ================================================================================
 ARCHIVO  52/85: local_server/presentation/api/user_routes.py (284 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -6928,7 +6928,7 @@ ARCHIVO  52/85: local_server/presentation/api/user_routes.py (284 líneas)
 ================================================================================
 ARCHIVO  53/85: local_server/presentation/web/__init__.py (7 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -6940,7 +6940,7 @@ ARCHIVO  53/85: local_server/presentation/web/__init__.py (7 líneas)
 ================================================================================
 ARCHIVO  54/85: local_server/presentation/web/dashboard_routes.py (803 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -7749,13 +7749,13 @@ ARCHIVO  54/85: local_server/presentation/web/dashboard_routes.py (803 líneas)
 ARCHIVO  55/85: local_server/static/css/index.css (1795 líneas)
 ================================================================================
     1 | /**
-    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |  * Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |  * Año: 2026.
     5 |  */
     6 | 
     7 | /* ==========================================================================
-    8 |    SIFMA - SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AGRONÓMICO
+    8 |    SIFMA - SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AMBIENTAL
     9 |    SISTEMA DE DISEÑO GLOBAL UNIFICADO (PALETA BIOPAISAJE & VERDE BOSQUE)
    10 |    ========================================================================== */
    11 | 
@@ -9549,7 +9549,7 @@ ARCHIVO  55/85: local_server/static/css/index.css (1795 líneas)
 ARCHIVO  56/85: local_server/static/js/dashboard.js (209 líneas)
 ================================================================================
     1 | /**
-    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |  * Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |  * Año: 2026.
     5 |  */
@@ -9763,7 +9763,7 @@ ARCHIVO  56/85: local_server/static/js/dashboard.js (209 líneas)
 ARCHIVO  57/85: local_server/static/js/processing.js (112 líneas)
 ================================================================================
     1 | /**
-    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |  * Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |  * Año: 2026.
     5 |  */
@@ -9880,7 +9880,7 @@ ARCHIVO  57/85: local_server/static/js/processing.js (112 líneas)
 ARCHIVO  58/85: local_server/static/js/sensors.js (102 líneas)
 ================================================================================
     1 | /**
-    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |  * SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |  * Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |  * Año: 2026.
     5 |  */
@@ -9987,7 +9987,7 @@ ARCHIVO  58/85: local_server/static/js/sensors.js (102 líneas)
 ARCHIVO  59/85: local_server/templates/about.html (293 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -10016,7 +10016,7 @@ ARCHIVO  59/85: local_server/templates/about.html (293 líneas)
    28 |                         </span>
    29 |                     </div>
    30 |                     <p style="font-size: 13.5px; color: var(--text-body); font-weight: 500; margin: 0; line-height: 1.4;">
-   31 |                         Sistema Integrado de Fenotipado Digital y Telemetría Agronómica en Torres Aeropónicas Verticales
+   31 |                         Sistema Integral de Fenotipado y Monitoreo Ambiental
    32 |                     </p>
    33 |                 </div>
    34 |             </div>
@@ -10285,7 +10285,7 @@ ARCHIVO  59/85: local_server/templates/about.html (293 líneas)
 ARCHIVO  60/85: local_server/templates/audit_logs.html (317 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -10607,7 +10607,7 @@ ARCHIVO  60/85: local_server/templates/audit_logs.html (317 líneas)
 ARCHIVO  61/85: local_server/templates/base.html (602 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -10617,7 +10617,7 @@ ARCHIVO  61/85: local_server/templates/base.html (602 líneas)
     9 | <head>
    10 |     <meta charset="UTF-8">
    11 |     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-   12 |     <meta name="description" content="SIFMA: Sistema Integrado de Fenotipado y Monitoreo Agronómico.">
+   12 |     <meta name="description" content="SIFMA: Sistema Integral de Fenotipado y Monitoreo Ambiental.">
    13 |     <title>SIFMA - {% block title %}Dashboard Analítico{% endblock %}</title>
    14 |     
    15 |     <!-- Favicon Oficial SIFMA -->
@@ -10849,7 +10849,7 @@ ARCHIVO  61/85: local_server/templates/base.html (602 líneas)
   241 |                     Bienvenido a SIFMA
   242 |                 </h2>
   243 |                 <p style="margin: 5px 0 0 0; font-size: 13.5px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.3px;">
-  244 |                     Sistema Integral de Fenotipado y Monitoreo Agronómico
+  244 |                     Sistema Integral de Fenotipado y Monitoreo Ambiental
   245 |                 </p>
   246 |             </div>
   247 | 
@@ -11214,7 +11214,7 @@ ARCHIVO  61/85: local_server/templates/base.html (602 líneas)
 ARCHIVO  62/85: local_server/templates/benchmark.html (367 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -11586,7 +11586,7 @@ ARCHIVO  62/85: local_server/templates/benchmark.html (367 líneas)
 ARCHIVO  63/85: local_server/templates/calendar.html (653 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -12244,7 +12244,7 @@ ARCHIVO  63/85: local_server/templates/calendar.html (653 líneas)
 ARCHIVO  64/85: local_server/templates/config.html (1305 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -13554,7 +13554,7 @@ ARCHIVO  64/85: local_server/templates/config.html (1305 líneas)
 ARCHIVO  65/85: local_server/templates/cross_analysis.html (1626 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -15185,7 +15185,7 @@ ARCHIVO  65/85: local_server/templates/cross_analysis.html (1626 líneas)
 ARCHIVO  66/85: local_server/templates/dashboard.html (508 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -15698,7 +15698,7 @@ ARCHIVO  66/85: local_server/templates/dashboard.html (508 líneas)
 ARCHIVO  67/85: local_server/templates/error.html (25 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -15728,7 +15728,7 @@ ARCHIVO  67/85: local_server/templates/error.html (25 líneas)
 ARCHIVO  68/85: local_server/templates/gallery.html (668 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -16401,7 +16401,7 @@ ARCHIVO  68/85: local_server/templates/gallery.html (668 líneas)
 ARCHIVO  69/85: local_server/templates/login.html (77 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -16436,7 +16436,7 @@ ARCHIVO  69/85: local_server/templates/login.html (77 líneas)
    34 |                 <img src="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}" alt="SIFMA Emblem" style="width: 100%; height: 100%; display: block;">
    35 |             </div>
    36 |             <h1>SIFMA</h1>
-   37 |             <p>Sistema Integrado de Fenotipado y Monitoreo Agronómico</p>
+   37 |             <p>Sistema Integral de Fenotipado y Monitoreo Ambiental</p>
    38 |         </div>
    39 | 
    40 |         <!-- Alerta de Error -->
@@ -16483,7 +16483,7 @@ ARCHIVO  69/85: local_server/templates/login.html (77 líneas)
 ARCHIVO  70/85: local_server/templates/processing.html (816 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -17304,7 +17304,7 @@ ARCHIVO  70/85: local_server/templates/processing.html (816 líneas)
 ARCHIVO  71/85: local_server/templates/scientific_report.html (1973 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -18154,15 +18154,14 @@ ARCHIVO  71/85: local_server/templates/scientific_report.html (1973 líneas)
   849 |                     <img src="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}" alt="SIFMA Emblem" style="width: 100%; height: 100%; display: block;">
   850 |                 </div>
   851 |                 <div class="report-header-title">
-  852 |                     <h1>SIFMA - DOSSIER CIENTÍFICO</h1>
-  853 |                     <p>Sistema de Fenotipado & Telemetría Agronómica en Torres Hidropónicas</p>
+  852 |                     <h1>SIFMA</h1>
+  853 |                     <p>Sistema Integral de Fenotipado y Monitoreo Ambiental</p>
   854 |                 </div>
   855 |             </div>
   856 |             <div class="report-meta-box">
   857 |                 <div>INFORME ID: <strong>{{ dossier.report_id }}</strong></div>
   858 |                 <div>FECHA DE EMISIÓN: <strong>{{ dossier.generated_at }}</strong></div>
-  859 |                 <div>PIPELINE: <strong>SIFMA-CV v1.1 (Otsu + LAB + HSV)</strong></div>
-  860 |             </div>
+  859 |   860 |             </div>
   861 |         </header>
   862 | 
   863 |         <!-- SECCIÓN: METADATOS TÉCNICOS DE LA JORNADA -->
@@ -19282,7 +19281,7 @@ ARCHIVO  71/85: local_server/templates/scientific_report.html (1973 líneas)
 ARCHIVO  72/85: local_server/templates/sensors.html (991 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -20278,7 +20277,7 @@ ARCHIVO  72/85: local_server/templates/sensors.html (991 líneas)
 ARCHIVO  73/85: local_server/templates/timelapse.html (592 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -20875,7 +20874,7 @@ ARCHIVO  73/85: local_server/templates/timelapse.html (592 líneas)
 ARCHIVO  74/85: local_server/templates/users.html (702 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->
@@ -21581,7 +21580,7 @@ ARCHIVO  74/85: local_server/templates/users.html (702 líneas)
 ================================================================================
 ARCHIVO  75/85: raspi_node/calibrate_cameras.py (519 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -22107,7 +22106,7 @@ ARCHIVO  76/85: raspi_node/configurar_camaras_dual.sh (67 líneas)
 ================================================================================
     1 | #!/bin/bash
     2 | 
-    3 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    3 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     4 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     5 | # Año: 2026.
     6 | 
@@ -22177,7 +22176,7 @@ ARCHIVO  76/85: raspi_node/configurar_camaras_dual.sh (67 líneas)
 ================================================================================
 ARCHIVO  77/85: raspi_node/dependencies.py (71 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -22255,7 +22254,7 @@ ARCHIVO  78/85: raspi_node/install_autostart.sh (80 líneas)
 ================================================================================
     1 | #!/bin/bash
     2 | 
-    3 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    3 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     4 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     5 | # Año: 2026.
     6 | 
@@ -22338,7 +22337,7 @@ ARCHIVO  78/85: raspi_node/install_autostart.sh (80 líneas)
 ================================================================================
 ARCHIVO  79/85: raspi_node/main_capture.py (351 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -22694,7 +22693,7 @@ ARCHIVO  79/85: raspi_node/main_capture.py (351 líneas)
 ================================================================================
 ARCHIVO  80/85: raspi_node/panel_app.py (301 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -23000,7 +22999,7 @@ ARCHIVO  80/85: raspi_node/panel_app.py (301 líneas)
 ================================================================================
 ARCHIVO  81/85: raspi_node/panel_touch_lite.py (421 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -23426,7 +23425,7 @@ ARCHIVO  81/85: raspi_node/panel_touch_lite.py (421 líneas)
 ================================================================================
 ARCHIVO  82/85: raspi_node/services/__init__.py (8 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -23439,7 +23438,7 @@ ARCHIVO  82/85: raspi_node/services/__init__.py (8 líneas)
 ================================================================================
 ARCHIVO  83/85: raspi_node/services/camera_service.py (185 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -23629,7 +23628,7 @@ ARCHIVO  83/85: raspi_node/services/camera_service.py (185 líneas)
 ================================================================================
 ARCHIVO  84/85: raspi_node/services/storage_service.py (146 líneas)
 ================================================================================
-    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    1 | # SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     2 | # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     3 | # Año: 2026.
     4 | 
@@ -23781,7 +23780,7 @@ ARCHIVO  84/85: raspi_node/services/storage_service.py (146 líneas)
 ARCHIVO  85/85: raspi_node/templates/index.html (961 líneas)
 ================================================================================
     1 | <!--
-    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+    2 |   SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
     3 |   Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
     4 |   Año: 2026.
     5 | -->

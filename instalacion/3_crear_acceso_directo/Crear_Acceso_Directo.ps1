@@ -1,4 +1,4 @@
-# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
 # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
 # Año: 2026.
 
@@ -22,7 +22,7 @@ $shortcut.WorkingDirectory = $workDir
 if (Test-Path $iconPath) {
     $shortcut.IconLocation = "$iconPath,0"
 }
-$shortcut.Description = "Sistema Integral de Fenotipado y Monitoreo Agricola (SIFMA) - Servidor Local"
+$shortcut.Description = "Sistema Integral de Fenotipado y Monitoreo Ambiental (SIFMA) - Servidor Local"
 $shortcut.Save()
 
 Write-Host "========================================================" -ForegroundColor Green

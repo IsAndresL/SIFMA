@@ -1,4 +1,4 @@
-# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
 
 **Versión:** 1.0.0  
 **Año de desarrollo:** 2026  
@@ -9,7 +9,7 @@
 
 ## 1. Descripción General del Software
 
-SIFMA (Sistema Integral de Fenotipado y Monitoreo Agrícola) es una plataforma computacional diseñada para la captura no destructiva, análisis biométrico por visión artificial y telemetría microclimática multivariable en torres hidropónicas verticales. El sistema procesa pares de imágenes (cenitales y laterales) mediante un pipeline de visión en espacios de color HSV, LAB y ExG para cuantificar el área foliar fotosintéticamente activa, la altura de planta, el diámetro del tallo basal y el índice de salud foliar, correlacionando dichos parámetros con ocho variables fisicoquímicas y ambientales adquiridas por sensores en tiempo real.
+SIFMA (Sistema Integral de Fenotipado y Monitoreo Ambiental) es una plataforma computacional diseñada para la captura no destructiva, análisis biométrico por visión artificial y telemetría microclimática multivariable en torres hidropónicas verticales. El sistema procesa pares de imágenes (cenitales y laterales) mediante un pipeline de visión en espacios de color HSV, LAB y ExG para cuantificar el área foliar fotosintéticamente activa, la altura de planta, el diámetro del tallo basal y el índice de salud foliar, correlacionando dichos parámetros con ocho variables fisicoquímicas y ambientales adquiridas por sensores en tiempo real.
 
 ---
 

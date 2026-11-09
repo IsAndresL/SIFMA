@@ -1,6 +1,6 @@
 # SIFMA — Documento Técnico de Arquitectura y Procedimientos del Software
 
-**Obra:** SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola en Torres Hidropónicas Verticales  
+**Obra:** SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental  
 **Versión:** 1.0.0  
 **Año de creación:** 2026  
 **Finalidad del documento:** Descripción técnica formal de procedimientos y arquitectura para el depósito y registro de soporte lógico (software) ante la Dirección Nacional de Derecho de Autor (DNDA), República de Colombia.  

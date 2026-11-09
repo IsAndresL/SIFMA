@@ -1,6 +1,6 @@
 # SIFMA — Manual de Usuario y Operación del Sistema
 
-**Obra:** SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola en Torres Hidropónicas Verticales  
+**Obra:** SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental  
 **Versión del documento:** 1.0.0  
 **Fecha de emisión:** Noviembre de 2026  
 **Autores (desarrolladores del software):**  

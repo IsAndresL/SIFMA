@@ -1,4 +1,4 @@
-# SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+# SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
 # Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
 # Año: 2026.
 
@@ -239,7 +239,7 @@ def main():
     server_thread.start()
 
     window = webview.create_window(
-        title="SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola",
+        title="SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental",
         html=splash_html,
         width=1380,
         height=860,

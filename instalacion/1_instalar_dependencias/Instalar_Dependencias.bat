@@ -1,5 +1,5 @@
 @echo off
-:: SIFMA — Sistema Integral de Fenotipado y Monitoreo Agrícola
+:: SIFMA — Sistema Integral de Fenotipado y Monitoreo Ambiental
 :: Autores: Andrés Felipe Luna Camargo, Cristian David Peña Martínez
 :: Año: 2026.
 
@@ -7,7 +7,7 @@ chcp 65001 > nul
 title SIFMA - Paso 1: Instalador de Dependencias
 
 echo ========================================================
-echo        SIFMA - SISTEMA DE FENOTIPADO Y TELEMETRIA
+echo        SIFMA - SISTEMA INTEGRAL DE FENOTIPADO Y MONITOREO AMBIENTAL
 echo        Paso 1: Instalacion Automatizada de Dependencias
 echo ========================================================
 echo.
