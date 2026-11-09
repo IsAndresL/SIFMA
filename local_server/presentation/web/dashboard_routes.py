@@ -15,7 +15,8 @@ from application.services import (
     UserService,
     WeatherService,
     AuditService,
-    UpdateService
+    UpdateService,
+    ReportArchiveService
 )
 from infrastructure.database.repositories import (
     SensorRepository, 
@@ -281,6 +282,8 @@ def index():
     
     profiles = system_service.get_all_profiles()
     selected_profile = system_service.get_profile_for_plant(active_plant_id)
+    archived_reports = ReportArchiveService.list_reports()
+    reports_dir = ReportArchiveService.get_reports_dir()
 
     return render_template('dashboard.html', 
                            config=config,
@@ -290,7 +293,9 @@ def index():
                            weather=current_weather,
                            target_date=daily_data["target_date"],
                            available_dates=daily_data["available_dates"],
-                           active_plant_id=active_plant_id)
+                           active_plant_id=active_plant_id,
+                           archived_reports=archived_reports,
+                           reports_dir=reports_dir)
 
 @dashboard_bp.route('/sensors')
 @permission_required('sensors', 'Sensores Ambientales')

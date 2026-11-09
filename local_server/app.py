@@ -37,6 +37,7 @@ def create_app():
     os.makedirs(config.UPLOAD_DIR, exist_ok=True)
     os.makedirs(config.PROCESSED_DIR, exist_ok=True)
     os.makedirs(config.TELEMETRY_DIR, exist_ok=True)
+    os.makedirs(config.REPORTS_DIR, exist_ok=True)
     
     db.init_app(app)
     

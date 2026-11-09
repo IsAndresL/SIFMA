@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossier y Reporte Científico - {{ dossier.report_id }} - SIFMA</title>
+    <title>{{ dossier.report_id }}</title>
     
     <!-- Favicon Oficial SIFMA -->
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/sifma_sin_texto.svg') }}">
@@ -737,6 +737,9 @@
                 {% endfor %}
             </select>
 
+            <!-- Nombre / Etiqueta opcional para guardar el PDF -->
+            <input type="text" id="report-custom-name-input" placeholder="Etiqueta opcional (ej. Semana 1)" oninput="syncDocumentTitleForPdf()" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; width: 175px; outline: none; font-family: 'Inter', sans-serif;" title="Nombre adicional opcional que se anexará al código {{ dossier.report_id }}.pdf">
+
             <!-- Botón de Personalización -->
             <button type="button" class="btn-action btn-config-action" onclick="toggleConfigDrawer()" title="Personalizar secciones, gráficas y fotos">
                 <span class="material-icons-round" style="font-size: 16px;">tune</span>
@@ -749,10 +752,16 @@
                 <span>Firmar</span>
             </button>
 
-            <!-- Botón de Impresión / PDF -->
-            <button type="button" class="btn-action btn-primary-action" onclick="window.print()" title="Imprimir o Guardar como PDF">
-                <span class="material-icons-round" style="font-size: 16px;">picture_as_pdf</span>
-                <span>Imprimir / PDF</span>
+            <!-- Botón de Guardado Directo en Carpeta de Reportes -->
+            <button type="button" id="btn-save-archive-pdf" class="btn-action btn-primary-action" onclick="saveReportToArchiveFolder()" title="Guardar PDF directamente en la carpeta de reportes de SIFMA con el nombre {{ dossier.report_id }}.pdf">
+                <span class="material-icons-round" style="font-size: 16px;">save_alt</span>
+                <span>Guardar PDF en Sistema</span>
+            </button>
+
+            <!-- Botón de Impresión / PDF Estándar -->
+            <button type="button" class="btn-action btn-outline-action" onclick="triggerStandardPrint()" title="Abrir diálogo de impresión del sistema">
+                <span class="material-icons-round" style="font-size: 16px;">print</span>
+                <span>Imprimir</span>
             </button>
 
         </div>
@@ -1965,6 +1974,103 @@
             const sig2 = localStorage.getItem('sifma_saved_signature_2');
             if (sig1) renderSignatureSlot(1, sig1);
             if (sig2) renderSignatureSlot(2, sig2);
+        }
+
+        function sanitizeFileSlug(val) {
+            return (val || '').trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '').replace(/\s+/g, '_').slice(0, 80);
+        }
+
+        function syncDocumentTitleForPdf() {
+            const baseId = (DOSSIER_DATA && DOSSIER_DATA.report_id) ? DOSSIER_DATA.report_id : 'SIFMA-REP';
+            const customInput = document.getElementById('report-custom-name-input');
+            const extra = customInput ? sanitizeFileSlug(customInput.value) : '';
+            document.title = extra ? `${baseId}_${extra}` : baseId;
+        }
+
+        function triggerStandardPrint() {
+            syncDocumentTitleForPdf();
+            window.print();
+        }
+
+        async function saveReportToArchiveFolder() {
+            syncDocumentTitleForPdf();
+            const btn = document.getElementById('btn-save-archive-pdf');
+            const customInput = document.getElementById('report-custom-name-input');
+            const customName = customInput ? customInput.value.trim() : '';
+            const evaluatorEl = document.getElementById('meta-evaluator-name');
+            const authorName = evaluatorEl ? evaluatorEl.innerText.trim() : '';
+
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-icons-round" style="font-size: 16px;">hourglass_top</span><span>Guardando PDF...</span>';
+            }
+
+            try {
+                const res = await fetch('/api/reports/save_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report_id: DOSSIER_DATA.report_id,
+                        custom_name: customName,
+                        target_date: DOSSIER_DATA.target_date,
+                        plant_id: DOSSIER_DATA.plant_id,
+                        crop_name: DOSSIER_DATA.display_name,
+                        author: authorName
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showReportSavedBanner(data.report.filename, data.reports_dir);
+                } else if (data.status === 'fallback_print') {
+                    document.title = data.suggested_title || DOSSIER_DATA.report_id;
+                    window.print();
+                } else {
+                    alert(data.message || 'No se pudo guardar el PDF.');
+                }
+            } catch (err) {
+                window.print();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        function showReportSavedBanner(filename, folderPath) {
+            let banner = document.getElementById('report-saved-toast');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'report-saved-toast';
+                banner.className = 'no-print';
+                banner.style.cssText = 'position: fixed; bottom: 22px; right: 22px; background: #0f172a; color: #ffffff; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.35); z-index: 10050; font-family: Inter, sans-serif; max-width: 460px; display: flex; flex-direction: column; gap: 6px;';
+                document.body.appendChild(banner);
+            }
+            banner.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; color: #34d399;">
+                        <span class="material-icons-round" style="font-size: 18px;">check_circle</span>
+                        <span>Reporte PDF Archivado en SIFMA</span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.parentElement.style.display='none'" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px;">&times;</button>
+                </div>
+                <div style="font-size: 12px; color: #f8fafc; font-family: 'JetBrains Mono', monospace; word-break: break-all;">
+                    ${filename}
+                </div>
+                <div style="font-size: 11px; color: #94a3b8;">
+                    Disponible en el Buscador de Reportes del Dashboard.
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                    <button type="button" onclick="fetch('/api/reports/open_folder', {method:'POST'})" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                        Abrir Carpeta Predeterminada
+                    </button>
+                    <a href="/?plant_id=${DOSSIER_DATA.plant_id}" style="background: #059669; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; text-decoration: none; font-weight: 600;">
+                        Ver en el Dashboard
+                    </a>
+                </div>
+            `;
+            banner.style.display = 'flex';
         }
     </script>
 

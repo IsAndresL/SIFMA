@@ -12,5 +12,6 @@ from . import conclusion_routes
 from . import session_routes
 from . import user_routes
 from . import update_routes
+from . import report_routes
 
 __all__ = ["api_bp"]

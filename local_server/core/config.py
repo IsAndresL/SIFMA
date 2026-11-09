@@ -163,6 +163,7 @@ class AppConfig:
     UPLOAD_DIR: str = os.path.join(DATA_DIR, "uploads")
     PROCESSED_DIR: str = os.path.join(DATA_DIR, "processed")
     TELEMETRY_DIR: str = os.path.join(DATA_DIR, "telemetry")
+    REPORTS_DIR: str = os.path.join(DATA_DIR, "reports")
 
     # Parámetros del fenotipado
     DEFAULT_PLANT_ID: int = 1
