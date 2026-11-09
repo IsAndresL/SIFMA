@@ -55,7 +55,7 @@ class User(db.Model):
     @property
     def role_display(self) -> str:
         roles_map = {
-            "admin": "Super Usuario (Admin)",
+            "admin": "Administrador",
             "investigador": "Investigador / Agrónomo",
             "operador": "Técnico de Campo",
             "personalizado": "Acceso Personalizado"

@@ -39,6 +39,10 @@
                     <span class="material-icons-round" style="font-size: 16px;">system_update_alt</span>
                     <span>Consultar Actualizaciones</span>
                 </button>
+                <button type="button" onclick="openUserManualModal()" class="btn btn-secondary" style="font-size: 12.5px; padding: 9px 16px;">
+                    <span class="material-icons-round" style="font-size: 16px; color: #dc2626;">picture_as_pdf</span>
+                    <span>Manual de Usuario (PDF)</span>
+                </button>
                 <button type="button" onclick="openOnboardingModal()" class="btn btn-secondary" style="font-size: 12.5px; padding: 9px 16px;">
                     <span class="material-icons-round" style="font-size: 16px;">menu_book</span>
                     <span>Guía de Inicio SIFMA</span>
@@ -234,7 +238,54 @@
 
     </div>
 
-
+    <!-- MODAL VISOR DEL MANUAL DE USUARIO EN PDF -->
+    <div id="user-manual-pdf-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(4px); z-index: 10050; align-items: center; justify-content: center; padding: 18px;" onclick="if(event.target === this) closeUserManualModal()">
+        <div style="background: #ffffff; border-radius: 14px; width: 100%; max-width: 1120px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-card-subtle);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="material-icons-round" style="color: #dc2626; font-size: 22px;">picture_as_pdf</span>
+                    <div>
+                        <strong style="font-size: 14px; color: var(--text-heading); display: block;">Manual de Usuario — SIFMA</strong>
+                        <span style="font-size: 11.5px; color: var(--text-muted);">Sistema Integral de Fenotipado y Monitoreo Ambiental</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <a href="{{ url_for('static', filename='docs/MANUAL_DE_USUARIO.pdf') }}" download="MANUAL_DE_USUARIO_SIFMA.pdf" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
+                        <span class="material-icons-round" style="font-size: 15px;">download</span>
+                        <span>Guardar PDF</span>
+                    </a>
+                    <button type="button" onclick="closeUserManualModal()" class="btn btn-secondary" style="font-size: 12px; padding: 6px 10px;">
+                        <span class="material-icons-round" style="font-size: 16px;">close</span>
+                        <span>Cerrar</span>
+                    </button>
+                </div>
+            </div>
+            <div style="flex: 1; background: #334155; position: relative;">
+                <iframe id="user-manual-pdf-frame" src="" style="width: 100%; height: 100%; border: none;" title="Manual de Usuario SIFMA PDF"></iframe>
+            </div>
+        </div>
+    </div>
 
 </div>
+
+<script>
+    function openUserManualModal() {
+        const modal = document.getElementById('user-manual-pdf-modal');
+        const frame = document.getElementById('user-manual-pdf-frame');
+        const pdfUrl = "{{ url_for('static', filename='docs/MANUAL_DE_USUARIO.pdf') }}";
+        if (frame && !frame.getAttribute('src')) {
+            frame.setAttribute('src', pdfUrl);
+        }
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeUserManualModal() {
+        const modal = document.getElementById('user-manual-pdf-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
 {% endblock %}

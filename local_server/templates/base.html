@@ -210,8 +210,8 @@
                 
                 <div class="header-controls-row">
                     {% block header_controls %}
-                    <!-- Selector de Canastilla / Torre -->
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <!-- Selector de Canastilla / Torre (Oculto para modo de ecosistema único por torre) -->
+                    <div style="display: none; align-items: center; gap: 6px;">
                         <span class="material-icons-round text-muted" style="font-size: 18px;">view_in_ar</span>
                         <select id="header-plant-selector" class="form-input-control" style="padding: 6px 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: auto;" onchange="switchActivePlant(this.value)">
                             <option value="1" {% if active_plant_id == 1 %}selected{% endif %}>Canastilla #1</option>

@@ -15,6 +15,7 @@ datas = [
     (os.path.join(BASE_DIR, 'static', 'css'), os.path.join('static', 'css')),
     (os.path.join(BASE_DIR, 'static', 'js'), os.path.join('static', 'js')),
     (os.path.join(BASE_DIR, 'static', 'img'), os.path.join('static', 'img')),
+    (os.path.join(BASE_DIR, 'static', 'docs'), os.path.join('static', 'docs')),
 ]
 
 hiddenimports = [

@@ -213,6 +213,16 @@ def init_db_data(app):
                 lat_h_min=30, lat_h_max=88, lat_s_min=40, lat_s_max=255, lat_v_min=35, lat_v_max=255,
                 lat_l_min=20, lat_l_max=255, lat_a_min=0, lat_a_max=118, lat_b_min=125, lat_b_max=255,
                 lat_pixel_to_cm_ratio=0.025, lat_min_area=50, lat_filter_isolated=True
+            ),
+            CropProfile(
+                crop_type="personalizada",
+                display_name="Personalizada / Otra Especie",
+                h_min=26, h_max=92, s_min=35, s_max=255, v_min=30, v_max=255,
+                l_min=20, l_max=250, a_min=0, a_max=124, b_min=120, b_max=255,
+                pixel_to_cm_ratio=0.038, has_stem=True,
+                lat_h_min=30, lat_h_max=88, lat_s_min=40, lat_s_max=255, lat_v_min=35, lat_v_max=255,
+                lat_l_min=20, lat_l_max=255, lat_a_min=0, lat_a_max=118, lat_b_min=125, lat_b_max=255,
+                lat_pixel_to_cm_ratio=0.025, lat_min_area=50, lat_filter_isolated=True
             )
         ]
 

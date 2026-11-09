@@ -721,8 +721,8 @@
 
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             
-            <!-- Selector de Canastilla / Torre -->
-            <select onchange="window.location.href='/reports?plant_id=' + this.value + '&date={{ dossier.target_date }}'" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
+            <!-- Selector de Canastilla / Torre (Oculto para modo de ecosistema único por torre) -->
+            <select onchange="window.location.href='/reports?plant_id=' + this.value + '&date={{ dossier.target_date }}'" style="display: none; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
                 {% for pid in range(1, 5) %}
                     <option value="{{ pid }}" {% if dossier.plant_id == pid %}selected{% endif %} style="color: #000;">
                         Canastilla #{{ pid }} ({{ plant_profiles_map[pid].display_name if plant_profiles_map and pid in plant_profiles_map else 'Torre ' ~ pid }})

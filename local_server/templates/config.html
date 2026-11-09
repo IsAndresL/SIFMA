@@ -20,11 +20,11 @@
                 <span class="material-icons-round" style="font-size: 22px;">view_in_ar</span>
             </div>
             <div>
-                <h3>Asignación de Especies Vegetales por Canastilla / Torre</h3>
-                <p>Configura qué cultivo está sembrado en cada una de las 4 canastillas del sistema</p>
+                <h3>Asignación de Especie Vegetal del Ecosistema</h3>
+                <p>Configura el cultivo activo en la torre para ajustar los parámetros de segmentación y análisis</p>
             </div>
         </div>
-        <span class="badge badge-primary">
+        <span class="badge badge-primary" style="display: none;">
             Canastilla Activa: #{{ active_plant_id }}
         </span>
     </div>
@@ -35,13 +35,13 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
             {% for pid in range(1, 5) %}
                 {% set pinfo = plant_profiles_map[pid] %}
-                <div style="background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 2px solid {% if active_plant_id == pid %}var(--accent-success){% else %}var(--border-color){% endif %};">
+                <div style="{% if pid > 1 %}display: none; {% endif %}background: #ffffff; padding: 14px 16px; border-radius: 10px; border: 2px solid {% if active_plant_id == pid %}var(--accent-success){% else %}var(--border-color){% endif %};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span style="font-weight: 700; font-size: 13.5px; color: var(--text-heading);">
-                            Canastilla #{{ pid }}
+                            {% if pid == 1 %}Ecosistema Activo (Torre Principal){% else %}Canastilla #{{ pid }}{% endif %}
                         </span>
                         {% if active_plant_id == pid %}
-                            <span class="badge badge-success" style="font-size: 10.5px;">En Sesión</span>
+                            <span class="badge badge-success" style="font-size: 10.5px;">Activo</span>
                         {% endif %}
                     </div>
 
@@ -60,14 +60,14 @@
         <div style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
             <button type="submit" class="btn btn-primary">
                 <span class="material-icons-round">save</span>
-                <span>Guardar Asignación de Canastillas</span>
+                <span>Guardar Especie Asignada</span>
             </button>
         </div>
     </form>
 </div>
 
-<!-- CARD 2: MODO DE VINCULACIÓN DE TELEMETRÍA Y MIGRACIÓN/SINCRONIZACIÓN -->
-<div class="widget-card" style="max-width: 960px; margin: 0 auto 30px auto;">
+<!-- CARD 2: MODO DE VINCULACIÓN DE TELEMETRÍA Y MIGRACIÓN/SINCRONIZACIÓN (Oculto para modo de ecosistema único por torre) -->
+<div class="widget-card" style="display: none; max-width: 960px; margin: 0 auto 30px auto;">
     <div class="widget-header">
         <div class="widget-header-title" style="display: flex; align-items: center; gap: 12px;">
             <div class="kpi-icon-badge cyan" style="width: 38px; height: 38px;">
