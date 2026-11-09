@@ -50,6 +50,54 @@
 
 {% block content %}
 
+<!-- BARRA COMPACTA SUPERIOR: BUSCADOR Y ARCHIVO DE REPORTES PDF -->
+<div class="widget-card" style="padding: 10px 14px; margin-bottom: 14px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <!-- Título Compacto -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round" style="font-size: 18px; color: var(--accent-success);">folder_special</span>
+            <strong style="font-size: 13px; color: var(--text-heading);">Reportes PDF</strong>
+            <span id="reports-count-badge" class="badge badge-success" style="font-size: 10.5px; padding: 2px 6px;">{{ archived_reports | length if archived_reports else 0 }}</span>
+        </div>
+
+        <!-- Controles de Búsqueda en una sola línea -->
+        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 240px; max-width: 540px;">
+            <div style="position: relative; flex: 1;">
+                <span class="material-icons-round" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted);">search</span>
+                <input type="text" id="report-search-query" class="form-input-control" placeholder="Buscar reporte por ID, fecha o etiqueta..." oninput="filterArchivedReports()" style="padding: 5px 8px 5px 28px; width: 100%; font-size: 12px; height: 30px;">
+            </div>
+            <input type="date" id="report-search-date" class="form-input-control" onchange="filterArchivedReports()" style="width: 130px; font-size: 11.5px; padding: 4px 6px; height: 30px;" title="Filtrar por fecha">
+            <button type="button" class="btn btn-outline btn-sm" onclick="clearReportSearchFilters()" style="padding: 4px 8px; font-size: 11px; height: 30px;" title="Limpiar filtro">
+                <span class="material-icons-round" style="font-size: 14px;">close</span>
+            </button>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleReportsDrawer()" id="btn-toggle-reports-drawer" style="padding: 4px 9px; font-size: 11.5px; height: 30px; display: inline-flex; align-items: center; gap: 4px;">
+                <span class="material-icons-round" style="font-size: 15px;">list</span>
+                <span>Ver Lista</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('import-report-pdf-input').click()" style="padding: 4px 8px; font-size: 11.5px; height: 30px;" title="Importar PDF a la carpeta">
+                <span class="material-icons-round" style="font-size: 15px;">upload_file</span>
+            </button>
+            <input type="file" id="import-report-pdf-input" accept="application/pdf" style="display: none;" onchange="uploadExternalReportPdf(this)">
+            <button type="button" class="btn btn-outline btn-sm" onclick="openReportsFolderInExplorer()" style="padding: 4px 8px; font-size: 11.5px; height: 30px;" title="Abrir carpeta: {{ reports_dir }}">
+                <span class="material-icons-round" style="font-size: 15px;">folder_open</span>
+            </button>
+            <a href="{{ url_for('dashboard.scientific_report_view', date=target_date, plant_id=active_plant_id) }}" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 11.5px; height: 30px; display: inline-flex; align-items: center; gap: 4px;">
+                <span class="material-icons-round" style="font-size: 15px;">picture_as_pdf</span>
+                <span>Nuevo Reporte</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Listado Compacto Desplegable (Con scroll máximo de 165px) -->
+    <div id="archived-reports-list-wrapper" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); max-height: 165px; overflow-y: auto;">
+        <div id="archived-reports-list-container"></div>
+    </div>
+</div>
+
 <!-- AVISO DE JORNADA SIN DATOS / ESTADO BASE CERO -->
 {% if not daily.has_data %}
 <div class="zero-data-banner">
@@ -409,57 +457,6 @@
     </div>
 </div>
 
-<!-- BUSCADOR Y ARCHIVO DE REPORTES Y DOSSIERS PDF -->
-<div class="widget-card" style="margin-top: 22px;">
-    <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div class="kpi-icon-badge emerald" style="width: 38px; height: 38px;">
-                <span class="material-icons-round" style="font-size: 21px;">folder_special</span>
-            </div>
-            <div>
-                <h3 style="margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text-heading);">Buscador y Archivo de Reportes PDF</h3>
-                <p style="margin: 2px 0 0 0; font-size: 11.5px; color: var(--text-muted);">
-                    Carpeta predeterminada: <code style="font-size: 10.5px; background: var(--bg-card-subtle); padding: 2px 6px; border-radius: 4px;">{{ reports_dir }}</code>
-                </p>
-            </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <a href="{{ url_for('dashboard.scientific_report_view', date=target_date, plant_id=active_plant_id) }}" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px;">
-                <span class="material-icons-round" style="font-size: 16px;">note_add</span>
-                <span>Generar Reporte del Día</span>
-            </a>
-            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('import-report-pdf-input').click()" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px;" title="Importar un archivo PDF existente a la carpeta predeterminada de reportes">
-                <span class="material-icons-round" style="font-size: 16px;">upload_file</span>
-                <span>Importar PDF</span>
-            </button>
-            <input type="file" id="import-report-pdf-input" accept="application/pdf" style="display: none;" onchange="uploadExternalReportPdf(this)">
-            <button type="button" class="btn btn-outline btn-sm" onclick="openReportsFolderInExplorer()" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px;" title="Abrir carpeta de reportes en Windows">
-                <span class="material-icons-round" style="font-size: 16px;">folder_open</span>
-                <span>Abrir Carpeta</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Barra de Filtros: Búsqueda por ID / Nombre adicional y Fecha -->
-    <div style="display: grid; grid-template-columns: minmax(220px, 1fr) 190px auto; gap: 10px; margin-bottom: 16px; align-items: center;">
-        <div style="position: relative;">
-            <span class="material-icons-round" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 17px; color: var(--text-muted);">search</span>
-            <input type="text" id="report-search-query" class="form-input-control" placeholder="Buscar por ID (ej. SIFMA-REP-20261109-CAN1), etiqueta o nombre..." oninput="filterArchivedReports()" style="padding-left: 34px; width: 100%; font-size: 12.5px;">
-        </div>
-        <div>
-            <input type="date" id="report-search-date" class="form-input-control" onchange="filterArchivedReports()" style="width: 100%; font-size: 12.5px;" title="Filtrar reportes por fecha">
-        </div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="clearReportSearchFilters()" style="padding: 7px 12px; font-size: 12px;">
-            Limpiar
-        </button>
-    </div>
-
-    <!-- Tabla / Listado de Reportes Guardados -->
-    <div id="archived-reports-list-container" style="overflow-x: auto;">
-        <!-- Renderizado por JavaScript al iniciar y al filtrar -->
-    </div>
-</div>
-
 <!-- MODAL VISOR INTERNO DE REPORTES PDF -->
 <div id="dashboard-pdf-viewer-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(4px); z-index: 10050; align-items: center; justify-content: center; padding: 18px;" onclick="if(event.target === this) closeDashboardPdfModal()">
     <div style="background: #ffffff; border-radius: 14px; width: 100%; max-width: 1120px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 1px solid var(--border-color);">
@@ -496,16 +493,26 @@
     const activePlantId = {{ active_plant_id }};
     let archivedReportsList = {{ archived_reports | default([]) | tojson | safe }};
 
+    function toggleReportsDrawer(forceOpen) {
+        const wrapper = document.getElementById('archived-reports-list-wrapper');
+        if (!wrapper) return;
+        if (typeof forceOpen === 'boolean') {
+            wrapper.style.display = forceOpen ? 'block' : 'none';
+        } else {
+            wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
     function renderArchivedReportsTable(reports) {
         const container = document.getElementById('archived-reports-list-container');
+        const countBadge = document.getElementById('reports-count-badge');
+        if (countBadge) countBadge.textContent = reports ? reports.length : 0;
         if (!container) return;
 
         if (!reports || reports.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 28px 16px; color: var(--text-muted); background: var(--bg-card-subtle); border-radius: 10px; border: 1px dashed var(--border-color);">
-                    <span class="material-icons-round" style="font-size: 32px; color: #94a3b8; display: block; margin-bottom: 6px;">description</span>
-                    <div style="font-weight: 700; font-size: 13px; color: var(--text-secondary);">No se encontraron reportes PDF archivados con ese criterio</div>
-                    <div style="font-size: 11.5px; margin-top: 3px;">Puedes guardar un reporte desde <strong>Dossier y Reportes &rarr; Guardar PDF en Sistema</strong> o importar un PDF existente.</div>
+                <div style="text-align: center; padding: 10px; font-size: 11.5px; color: var(--text-muted);">
+                    No se encontraron reportes PDF archivados. Usa <strong>Nuevo Reporte &rarr; Guardar PDF en Sistema</strong>.
                 </div>
             `;
             return;
@@ -515,59 +522,42 @@
             const safeFile = (r.filename || '').replace(/'/g, "\\'");
             const safeCustom = (r.custom_name || '').replace(/'/g, "\\'");
             const badgeCustom = r.custom_name
-                ? `<span class="badge badge-success" style="font-size: 11px; margin-left: 6px;">${r.custom_name}</span>`
-                : `<span style="font-size: 11px; color: var(--text-muted); margin-left: 6px; font-style: italic;">Sin etiqueta</span>`;
+                ? `<span class="badge badge-success" style="font-size: 10px; padding: 1px 6px;">${r.custom_name}</span>`
+                : '';
 
             return `
-                <tr>
-                    <td style="font-family: monospace; font-weight: 700; font-size: 12px; color: var(--text-heading);">
-                        ${r.report_id || r.filename}
-                    </td>
-                    <td>
-                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
-                            <span style="font-size: 12px; color: var(--text-body); font-family: monospace;">${r.filename}</span>
-                            ${badgeCustom}
-                        </div>
-                    </td>
-                    <td style="font-size: 12px; font-weight: 600;">${r.target_date || '--'}</td>
-                    <td style="font-size: 11.5px; color: var(--text-muted);">${r.created_at || '--'} (${r.size_kb || 0} KB)</td>
-                    <td style="text-align: right; white-space: nowrap;">
-                        <button type="button" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 11.5px;" onclick="openDashboardPdfModal('${r.url}', '${safeFile}', '${r.target_date || ''}')">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            <span>Visualizar</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; border-bottom: 1px solid var(--border-light); font-size: 11.5px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0;">
+                        <span class="material-icons-round" style="font-size: 15px; color: #dc2626;">picture_as_pdf</span>
+                        <strong style="font-family: monospace; color: var(--text-heading);">${r.report_id || r.filename}</strong>
+                        ${badgeCustom}
+                        <span style="color: var(--text-muted); font-size: 11px;">&bull; Fecha: ${r.target_date || '--'} (${r.size_kb || 0} KB)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                        <button type="button" class="btn btn-primary btn-sm" style="padding: 2px 8px; font-size: 11px;" onclick="openDashboardPdfModal('${r.url}', '${safeFile}', '${r.target_date || ''}')">
+                            <span class="material-icons-round" style="font-size: 13px;">visibility</span>
+                            <span>Ver PDF</span>
                         </button>
-                        <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11.5px;" onclick="promptRenameReport('${safeFile}', '${safeCustom}')" title="Asignar o cambiar nombre adicional">
-                            <span class="material-icons-round" style="font-size: 14px;">edit</span>
+                        <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="promptRenameReport('${safeFile}', '${safeCustom}')" title="Etiquetar / Renombrar">
+                            <span class="material-icons-round" style="font-size: 13px;">edit</span>
                         </button>
-                        <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11.5px; color: #dc2626;" onclick="deleteArchivedReport('${safeFile}')" title="Eliminar PDF">
-                            <span class="material-icons-round" style="font-size: 14px;">delete</span>
+                        <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11px; color: #dc2626;" onclick="deleteArchivedReport('${safeFile}')" title="Eliminar">
+                            <span class="material-icons-round" style="font-size: 13px;">delete</span>
                         </button>
-                    </td>
-                </tr>
+                    </div>
+                </div>
             `;
         }).join('');
 
-        container.innerHTML = `
-            <table class="table" style="font-size: 12px; width: 100%;">
-                <thead>
-                    <tr>
-                        <th>INFORME ID</th>
-                        <th>ARCHIVO PDF / NOMBRE ADICIONAL</th>
-                        <th>FECHA MUESTREO</th>
-                        <th>GUARDADO</th>
-                        <th style="text-align: right;">ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rowsHtml}
-                </tbody>
-            </table>
-        `;
+        container.innerHTML = rowsHtml;
     }
 
     async function filterArchivedReports() {
         const q = (document.getElementById('report-search-query')?.value || '').trim();
         const d = (document.getElementById('report-search-date')?.value || '').trim();
+        if (q || d) {
+            toggleReportsDrawer(true);
+        }
         try {
             const params = new URLSearchParams();
             if (q) params.set('q', q);
@@ -589,6 +579,7 @@
         if (qInput) qInput.value = '';
         if (dInput) dInput.value = '';
         filterArchivedReports();
+        toggleReportsDrawer(false);
     }
 
     function openDashboardPdfModal(pdfUrl, filename, targetDate) {
