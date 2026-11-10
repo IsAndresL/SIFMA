@@ -348,3 +348,4 @@ class ReportArchiveService:
         except Exception as e:
             logger.warning(f"Exportación directa WebView2 PDF no disponible: {e}")
             return False
+

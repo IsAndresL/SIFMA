@@ -179,3 +179,4 @@ def open_reports_archive_folder():
         "status": "success" if ok else "error",
         "reports_dir": ReportArchiveService.get_reports_dir(),
     })
+
