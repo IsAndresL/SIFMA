@@ -11,6 +11,7 @@ from application.services import (
     SystemService, 
     TelemetryApplicationService, 
     AnalyticsApplicationService, 
+    VisionApplicationService,
     ConclusionApplicationService,
     UserService,
     WeatherService,
@@ -29,6 +30,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 system_service = SystemService()
 telemetry_service = TelemetryApplicationService.get_instance()
 analytics_service = AnalyticsApplicationService()
+vision_service = VisionApplicationService()
 conclusion_service = ConclusionApplicationService()
 user_service = UserService()
 weather_service = WeatherService.get_instance()
