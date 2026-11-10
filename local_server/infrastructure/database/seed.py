@@ -65,7 +65,17 @@ def init_db_data(app):
                 "ALTER TABLE config ADD COLUMN lateral_stem_roi_width FLOAT DEFAULT 0.2000",
                 "ALTER TABLE config ADD COLUMN lateral_stem_mode VARCHAR(20) DEFAULT 'auto_edge'",
                 "ALTER TABLE users ADD COLUMN permissions TEXT DEFAULT NULL",
-                "ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) DEFAULT NULL"
+                "ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) DEFAULT NULL",
+                "ALTER TABLE biometric_metric ADD COLUMN healthy_tissue_pct FLOAT DEFAULT 100.0",
+                "ALTER TABLE biometric_metric ADD COLUMN chlorosis_pct FLOAT DEFAULT 0.0",
+                "ALTER TABLE biometric_metric ADD COLUMN necrosis_pct FLOAT DEFAULT 0.0",
+                "ALTER TABLE biometric_metric ADD COLUMN gli_index FLOAT DEFAULT 0.0",
+                "ALTER TABLE biometric_metric ADD COLUMN vari_index FLOAT DEFAULT 0.0",
+                "ALTER TABLE biometric_metric ADD COLUMN exg_index FLOAT DEFAULT 0.0",
+                "ALTER TABLE biometric_metric ADD COLUMN ai_diagnosis_label VARCHAR(160) DEFAULT NULL",
+                "ALTER TABLE biometric_metric ADD COLUMN ai_confidence FLOAT DEFAULT 0.0",
+                "ALTER TABLE biometric_metric ADD COLUMN ai_diagnosis_json TEXT DEFAULT NULL",
+                "ALTER TABLE biometric_metric ADD COLUMN image_path_spectral_map VARCHAR(300) DEFAULT NULL"
             ]:
                 try:
                     conn.execute(db.text(col_sql))

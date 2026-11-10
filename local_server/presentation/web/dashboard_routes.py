@@ -436,6 +436,10 @@ def gallery():
     for s in sessions:
         if s.metrics:
             avg_metric = s.get_average_metric()
+            if avg_metric:
+                vision_service.ensure_metric_ai_analysis(avg_metric, s.sensor_reading)
+            for ind_m in s.get_individual_photos():
+                vision_service.ensure_metric_ai_analysis(ind_m, s.sensor_reading)
             individual_photos = [m.to_dict() for m in s.get_individual_photos()]
 
             gallery_sessions.append({

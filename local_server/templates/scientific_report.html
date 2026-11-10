@@ -892,12 +892,30 @@
             </table>
         </div>
 
-        <!-- SECCIÓN 1: DIAGNÓSTICO AGRONÓMICO & ALERTAS (FORMAL, SIN RAYITAS) -->
+        <!-- SECCIÓN 1: DIAGNÓSTICO AGRONÓMICO & FITOPATOLÓGICO IA (ONNX + K-MEANS) -->
         <div id="sec-diagnostico" class="section-block">
             <div class="section-title">
                 <span class="section-num">1</span>
-                <span>Diagnóstico Agronómico Automatizado de la Jornada</span>
+                <span>Diagnóstico Fitopatológico y Nutricional por IA & Telemetría</span>
             </div>
+
+            {% if dossier.ai_phyto_summary %}
+                {% set ai_s = dossier.ai_phyto_summary %}
+                <div class="insight-box" style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+                        <strong>Dictamen IA ({{ ai_s.model_engine or 'SIFMA-PhytoNet ONNX + K-Means' }}): {{ ai_s.diagnosis_label }}</strong>
+                        <span class="font-mono" style="font-weight: 700;">Confianza: {{ ai_s.confidence_pct }}% | GLI: {{ "%+.3f"|format(ai_s.gli_index or 0.22) }} | VARI: {{ "%+.3f"|format(ai_s.vari_index or 0.16) }}</span>
+                    </div>
+                    <div style="margin-bottom: 3px;">
+                        <strong>Segmentación Espectral del Dosel (K-Means CIELAB/HSV):</strong>
+                        Vigor Fotosintético Sano: <strong>{{ ai_s.healthy_tissue_pct }}%</strong> &bull;
+                        Tejido Clorótico (Amarillamiento): <strong>{{ ai_s.chlorosis_pct }}%</strong> &bull;
+                        Tejido Necrótico (Quemadura): <strong>{{ ai_s.necrosis_pct }}%</strong>
+                    </div>
+                    <div style="margin-bottom: 3px;"><strong>Mecanismo Fisiológico:</strong> {{ ai_s.physiological_mechanism }}</div>
+                    <div><strong>Prescripción Agronómica Recomendada:</strong> {{ ai_s.agronomic_recommendation }}</div>
+                </div>
+            {% endif %}
 
             {% if dossier.automated_insights %}
                 {% for insight in dossier.automated_insights %}

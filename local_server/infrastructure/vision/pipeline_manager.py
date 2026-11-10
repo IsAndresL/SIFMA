@@ -7,9 +7,10 @@ from typing import List, Dict, Any, Optional, Tuple
 import cv2
 import numpy as np
 from domain.models import CropProfile
-from domain.interfaces.vision import ISegmentationStrategy, IBiometricCalculator
+from domain.interfaces.vision import ISegmentationStrategy, IBiometricCalculator, IPhytoAIAnalyzer
 from infrastructure.vision.strategies.exg_segmentation import ExgSegmentationStrategy
 from infrastructure.vision.biometric_calculator import BiometricCalculator
+from infrastructure.vision.phyto_ai_analyzer import get_phyto_ai_analyzer
 
 class VisionPipelineManager:
     """
@@ -17,15 +18,18 @@ class VisionPipelineManager:
     - Corrige orientación física de las cámaras (Cenital 180° / Lateral 90° derecha).
     - Aplica ROI circular automático sobre la canastilla azul (anula personas, ropa y fondo).
     - Mide altura y tallo basal con precisión milimétrica desde la base del sustrato.
+    - Ejecuta análisis espectral (GLI, VARI, ExG) + K-Means y Mapa Térmico de Clorofila.
     """
     
     def __init__(
         self, 
         segmentation_strategy: Optional[ISegmentationStrategy] = None,
-        biometric_calculator: Optional[IBiometricCalculator] = None
+        biometric_calculator: Optional[IBiometricCalculator] = None,
+        phyto_ai_analyzer: Optional[IPhytoAIAnalyzer] = None
     ):
         self.segmenter = segmentation_strategy or ExgSegmentationStrategy()
         self.calculator = biometric_calculator or BiometricCalculator()
+        self.ai_analyzer = phyto_ai_analyzer or get_phyto_ai_analyzer()
 
     @staticmethod
     def is_cenital_inverted(img: np.ndarray) -> bool:
@@ -214,7 +218,14 @@ class VisionPipelineManager:
         calib_radius = int(min(w_img, h_img) * 0.145)
         return calib_cx, calib_cy, calib_radius
 
-    def process_cenital(self, image_path: str, output_path: str, profile: CropProfile, config: Optional[Any] = None) -> Optional[Dict[str, Any]]:
+    def process_cenital(
+        self,
+        image_path: str,
+        output_path: str,
+        profile: CropProfile,
+        config: Optional[Any] = None,
+        spectral_output_path: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         img_raw = cv2.imread(image_path)
         if img_raw is None:
@@ -273,6 +284,26 @@ class VisionPipelineManager:
         
         # 4. Cálculo de Biometría Foliar
         metrics = self.calculator.calculate_cenital(img, mask, contours, profile)
+
+        # 4.1 Análisis Espectral (GLI, VARI, ExG) + K-Means y Mapa Térmico de Clorofila
+        if spectral_output_path is None:
+            out_dir = os.path.dirname(output_path)
+            out_base = os.path.basename(output_path)
+            if out_base.startswith("proc_"):
+                spec_base = out_base.replace("proc_", "spectral_", 1)
+            else:
+                spec_base = f"spectral_{out_base}"
+            spectral_output_path = os.path.join(out_dir, spec_base)
+
+        spectral_metrics = self.ai_analyzer.analyze_canopy_spectrum_and_tissues(
+            image_bgr=img,
+            plant_mask=mask,
+            roi_circle=(cx, cy, radius),
+            spectral_output_path=spectral_output_path
+        )
+        metrics.update(spectral_metrics)
+        metrics["spectral_output_path"] = spectral_output_path
+        metrics["health_index"] = round(spectral_metrics.get("healthy_tissue_pct", metrics["health_index"]), 2)
         
         # 5. Generación de Overlay de visualización
         overlay = img.copy()
@@ -298,7 +329,7 @@ class VisionPipelineManager:
                 cv2.drawContours(overlay, [hull], -1, (0, 0, 255), 2)
             
         metrics["fruits_count"] = 0
-        metrics["spots_count"] = 0
+        metrics["spots_count"] = int(round(metrics.get("necrosis_pct", 0.0)))
         
         # Superponer leyenda de métricas biométricas
         cv2.putText(overlay, f"Area Foliar: {metrics['area_cm2']:.1f} cm2", (20, 40), 
@@ -399,7 +430,15 @@ class VisionPipelineManager:
             "spots_count": 0,
             "fruits_count": 0,
             "plant_height_cm": 0.0,
-            "stem_diameter_mm": 0.0
+            "stem_diameter_mm": 0.0,
+            "healthy_tissue_pct": 100.0,
+            "chlorosis_pct": 0.0,
+            "necrosis_pct": 0.0,
+            "gli_index": 0.0,
+            "vari_index": 0.0,
+            "exg_index": 0.0,
+            "apical_damage_ratio": 0.0,
+            "interveinal_contrast": 0.0
         }
         
         def get_robust_mean(data_list):
@@ -415,10 +454,27 @@ class VisionPipelineManager:
             areas = [r.get("area_cm2", 0.0) for r in cenital_results]
             healths = [r.get("health_index", 100.0) for r in cenital_results]
             compacities = [r.get("compacity_index", 0.0) for r in cenital_results]
+            healthy_pcts = [r.get("healthy_tissue_pct", r.get("health_index", 100.0)) for r in cenital_results]
+            chlorosis_pcts = [r.get("chlorosis_pct", 0.0) for r in cenital_results]
+            necrosis_pcts = [r.get("necrosis_pct", 0.0) for r in cenital_results]
+            glis = [r.get("gli_index", 0.0) for r in cenital_results]
+            varis = [r.get("vari_index", 0.0) for r in cenital_results]
+            exgs = [r.get("exg_index", 0.0) for r in cenital_results]
+            apicals = [r.get("apical_damage_ratio", 0.0) for r in cenital_results]
+            interveinals = [r.get("interveinal_contrast", 0.0) for r in cenital_results]
             
             final_metrics["foliar_area_cm2"] = round(get_robust_mean(areas), 2)
             final_metrics["health_index"] = round(get_robust_mean(healths), 2)
             final_metrics["compacity_index"] = round(get_robust_mean(compacities), 3)
+            final_metrics["healthy_tissue_pct"] = round(get_robust_mean(healthy_pcts), 2)
+            final_metrics["chlorosis_pct"] = round(get_robust_mean(chlorosis_pcts), 2)
+            final_metrics["necrosis_pct"] = round(get_robust_mean(necrosis_pcts), 2)
+            final_metrics["gli_index"] = round(get_robust_mean(glis), 3)
+            final_metrics["vari_index"] = round(get_robust_mean(varis), 3)
+            final_metrics["exg_index"] = round(get_robust_mean(exgs), 3)
+            final_metrics["apical_damage_ratio"] = round(get_robust_mean(apicals), 3)
+            final_metrics["interveinal_contrast"] = round(get_robust_mean(interveinals), 3)
+            final_metrics["spots_count"] = int(round(final_metrics["necrosis_pct"]))
             
         if lateral_results:
             heights = [r.get("plant_height_cm", 0.0) for r in lateral_results]

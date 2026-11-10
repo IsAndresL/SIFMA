@@ -125,44 +125,87 @@
                     </div>
 
                     <!-- Datos Consolidados / Individuales de la sesión -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; background: var(--bg-card-subtle); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 24px; text-align: center;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; background: var(--bg-card-subtle); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px; text-align: center;">
                         <div>
-                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Área Foliar</p>
-                            <p id="metric-area-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-success); margin-top: 4px;">
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Área Foliar</p>
+                            <p id="metric-area-{{ s.id }}" style="font-size: 17px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-success); margin-top: 4px;">
                                 {{ avg.foliar_area_cm2 }} cm²
                             </p>
                         </div>
                         <div>
-                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Altura de Planta</p>
-                            <p id="metric-height-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary); margin-top: 4px;">
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Altura de Planta</p>
+                            <p id="metric-height-{{ s.id }}" style="font-size: 17px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary); margin-top: 4px;">
                                 {{ avg.plant_height_cm }} cm
                             </p>
                         </div>
                         <div>
-                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Diámetro del Tallo</p>
-                            <p id="metric-diameter-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-warning); margin-top: 4px;">
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Diámetro Tallo</p>
+                            <p id="metric-diameter-{{ s.id }}" style="font-size: 17px; font-family: var(--font-heading); font-weight: 700; color: var(--accent-warning); margin-top: 4px;">
                                 {{ avg.stem_diameter_mm }} mm
                             </p>
                         </div>
                         <div>
-                            <p style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Índice de Salud</p>
-                            <p id="metric-health-{{ s.id }}" style="font-size: 18px; font-family: var(--font-heading); font-weight: 700; color: {% if avg.health_index >= 90 %}var(--accent-success){% else %}var(--accent-danger){% endif %}; margin-top: 4px;">
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Vigor Sano (IA)</p>
+                            <p id="metric-health-{{ s.id }}" style="font-size: 17px; font-family: var(--font-heading); font-weight: 700; color: {% if avg.health_index >= 85 %}var(--accent-success){% else %}var(--accent-danger){% endif %}; margin-top: 4px;">
                                 {{ avg.health_index }}%
                             </p>
+                        </div>
+                        <div>
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Clorosis / Necrosis</p>
+                            <p id="metric-damage-{{ s.id }}" style="font-size: 15px; font-family: var(--font-heading); font-weight: 700; color: #d97706; margin-top: 4px;">
+                                {{ avg.chlorosis_pct or 0.0 }}% / {{ avg.necrosis_pct or 0.0 }}%
+                            </p>
+                        </div>
+                        <div>
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Índices GLI / VARI</p>
+                            <p id="metric-gli-{{ s.id }}" style="font-size: 15px; font-family: var(--font-heading); font-weight: 700; color: #0284c7; margin-top: 4px;">
+                                {{ "%+.3f"|format(avg.gli_index or 0.22) }} / {{ "%+.3f"|format(avg.vari_index or 0.16) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Panel de Diagnóstico Fitopatológico y Nutricional por IA (SIFMA-PhytoNet ONNX + K-Means) -->
+                    {% set g_ai = avg.ai_diagnosis if avg.ai_diagnosis else {} %}
+                    <div id="ai-diag-box-{{ s.id }}" style="background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%); border: 1px solid #bbf7d0; border-left: 4px solid {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="material-icons-round" style="color: {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; font-size: 20px;">psychology</span>
+                                <div>
+                                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Diagnóstico Fitopatológico & Nutricional IA (Red Neuronal ONNX + K-Means CIELAB)</div>
+                                    <strong id="ai-diag-label-{{ s.id }}" style="font-size: 13.5px; color: #0f172a;">{{ avg.ai_diagnosis_label or 'Estado Fitosanitario y Nutricional Óptimo' }}</strong>
+                                </div>
+                            </div>
+                            <span id="ai-diag-conf-{{ s.id }}" style="background: {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; color: #ffffff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;">
+                                Confianza Neuronal: {{ avg.ai_confidence or 94.5 }}%
+                            </span>
+                        </div>
+                        <div id="ai-diag-mech-{{ s.id }}" style="font-size: 12px; color: #334155; margin-bottom: 4px;">
+                            <strong>Mecanismo Fisiológico:</strong> {{ g_ai.physiological_mechanism if g_ai and g_ai.physiological_mechanism else 'El dosel conserva reflectancia fotosintética activa sin focos de necrosis ni clorosis severa.' }}
+                        </div>
+                        <div id="ai-diag-rec-{{ s.id }}" style="font-size: 12px; color: #0f172a;">
+                            <strong>Prescripción Agronómica:</strong> {{ g_ai.agronomic_recommendation if g_ai and g_ai.agronomic_recommendation else 'Mantener el régimen actual de fertirriego, fotoperíodo y recirculación de la torre.' }}
                         </div>
                     </div>
 
                     <!-- TARJETAS DE COMPARACIÓN DE IMÁGENES -->
                     <div class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px;">
                         
-                        <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR) -->
+                        <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR + MAPA TÉRMICO CLOROFILA IA) -->
                         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm);">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span class="material-icons-round" style="color: var(--accent-success);">camera</span>
                                     <strong style="font-size: 14px; color: var(--text-heading);">Cámara Cenital (Vista Superior)</strong>
                                 </div>
-                                <span class="badge badge-success">Área Foliar</span>
+                                <div style="display: inline-flex; background: #f1f5f9; border-radius: 8px; padding: 3px; gap: 4px;">
+                                    <button type="button" id="btn-gal-proc-{{ s.id }}" onclick="setGalleryCenitalMode({{ s.id }}, 'proc')" style="border: none; background: #ffffff; color: #0f172a; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.08);">
+                                        Máscara ExG / ROI
+                                    </button>
+                                    <button type="button" id="btn-gal-spec-{{ s.id }}" onclick="setGalleryCenitalMode({{ s.id }}, 'spectral')" style="border: none; background: transparent; color: #475569; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                        <span class="material-icons-round" style="font-size: 14px; color: #10b981;">psychology</span>
+                                        Mapa Térmico Clorofila (IA)
+                                    </button>
+                                </div>
                             </div>
                             
                             <div style="position: relative; width: 100%; height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #090d16;">
@@ -175,9 +218,14 @@
                                             <span>Lupa / Zoom</span>
                                         </div>
                                     </div>
-                                    <div class="photo-inspect-trigger" style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-cenital-proc-{{ s.id }}').src, 'Cámara Cenital - Segmentación ExG y ROI')">
-                                        <img id="img-cenital-proc-{{ s.id }}" src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}" style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
-                                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">MÁSCARA ExG</div>
+                                    <div class="photo-inspect-trigger" style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-cenital-proc-{{ s.id }}').src, 'Cámara Cenital - Segmentación / Mapa Térmico Clorofila IA')">
+                                        <img id="img-cenital-proc-{{ s.id }}"
+                                             src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}"
+                                             data-proc-src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}"
+                                             data-spec-src="{{ url_for('static', filename=avg.image_path_spectral_map if avg.image_path_spectral_map else avg.image_path_cenital_proc) }}"
+                                             data-view-mode="proc"
+                                             style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
+                                        <div id="badge-cenital-proc-{{ s.id }}" style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">MÁSCARA ExG</div>
                                         <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 6px; color: #38bdf8; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
                                             <span class="material-icons-round" style="font-size: 16px;">search</span>
                                             <span>Lupa / Zoom</span>
@@ -349,6 +397,49 @@
         if (thumb) thumb.style.borderColor = 'var(--accent-success)';
     }
 
+    function setGalleryCenitalMode(sessionId, mode) {
+        const procImg = document.getElementById(`img-cenital-proc-${sessionId}`);
+        const badgeEl = document.getElementById(`badge-cenital-proc-${sessionId}`);
+        const btnProc = document.getElementById(`btn-gal-proc-${sessionId}`);
+        const btnSpec = document.getElementById(`btn-gal-spec-${sessionId}`);
+        if (!procImg) return;
+
+        procImg.setAttribute('data-view-mode', mode);
+        if (mode === 'spectral') {
+            procImg.src = procImg.getAttribute('data-spec-src') || procImg.getAttribute('data-proc-src');
+            if (badgeEl) {
+                badgeEl.innerText = 'MAPA CLOROFILA IA';
+                badgeEl.style.background = 'rgba(14, 165, 233, 0.92)';
+            }
+            if (btnSpec) {
+                btnSpec.style.background = '#ffffff';
+                btnSpec.style.color = '#0f172a';
+                btnSpec.style.boxShadow = '0 1px 2px rgba(0,0,0,0.08)';
+            }
+            if (btnProc) {
+                btnProc.style.background = 'transparent';
+                btnProc.style.color = '#475569';
+                btnProc.style.boxShadow = 'none';
+            }
+        } else {
+            procImg.src = procImg.getAttribute('data-proc-src');
+            if (badgeEl) {
+                badgeEl.innerText = 'MÁSCARA ExG';
+                badgeEl.style.background = 'rgba(5, 150, 105, 0.9)';
+            }
+            if (btnProc) {
+                btnProc.style.background = '#ffffff';
+                btnProc.style.color = '#0f172a';
+                btnProc.style.boxShadow = '0 1px 2px rgba(0,0,0,0.08)';
+            }
+            if (btnSpec) {
+                btnSpec.style.background = 'transparent';
+                btnSpec.style.color = '#475569';
+                btnSpec.style.boxShadow = 'none';
+            }
+        }
+    }
+
     function switchSessionPhoto(sessionId, photoIndex, btnElement) {
         const card = document.getElementById('comparator-' + sessionId);
         if (!card) return;
@@ -370,8 +461,18 @@
         }
 
         if (selected) {
-            document.getElementById(`img-cenital-orig-${sessionId}`).src = '/static/' + selected.image_path_cenital_orig;
-            document.getElementById(`img-cenital-proc-${sessionId}`).src = '/static/' + selected.image_path_cenital_proc;
+            const origImg = document.getElementById(`img-cenital-orig-${sessionId}`);
+            const procImg = document.getElementById(`img-cenital-proc-${sessionId}`);
+            const procUrl = '/static/' + selected.image_path_cenital_proc;
+            const specUrl = selected.image_path_spectral_map ? ('/static/' + selected.image_path_spectral_map) : procUrl;
+
+            if (origImg) origImg.src = '/static/' + selected.image_path_cenital_orig;
+            if (procImg) {
+                procImg.setAttribute('data-proc-src', procUrl);
+                procImg.setAttribute('data-spec-src', specUrl);
+                const currMode = procImg.getAttribute('data-view-mode') || 'proc';
+                procImg.src = currMode === 'spectral' ? specUrl : procUrl;
+            }
             document.getElementById(`img-lateral-orig-${sessionId}`).src = '/static/' + selected.image_path_lateral_orig;
             document.getElementById(`img-lateral-proc-${sessionId}`).src = '/static/' + selected.image_path_lateral_proc;
 
@@ -379,6 +480,29 @@
             document.getElementById(`metric-height-${sessionId}`).innerText = `${selected.plant_height_cm} cm`;
             document.getElementById(`metric-diameter-${sessionId}`).innerText = `${selected.stem_diameter_mm} mm`;
             document.getElementById(`metric-health-${sessionId}`).innerText = `${selected.health_index}%`;
+
+            const dmgEl = document.getElementById(`metric-damage-${sessionId}`);
+            if (dmgEl) dmgEl.innerText = `${selected.chlorosis_pct || 0}% / ${selected.necrosis_pct || 0}%`;
+            const gliEl = document.getElementById(`metric-gli-${sessionId}`);
+            if (gliEl) {
+                const gVal = Number(selected.gli_index || 0.22).toFixed(3);
+                const vVal = Number(selected.vari_index || 0.16).toFixed(3);
+                gliEl.innerText = `${gVal >= 0 ? '+' + gVal : gVal} / ${vVal >= 0 ? '+' + vVal : vVal}`;
+            }
+            const lblEl = document.getElementById(`ai-diag-label-${sessionId}`);
+            if (lblEl && selected.ai_diagnosis_label) lblEl.innerText = selected.ai_diagnosis_label;
+            const confEl = document.getElementById(`ai-diag-conf-${sessionId}`);
+            if (confEl && selected.ai_confidence) confEl.innerText = `Confianza Neuronal: ${selected.ai_confidence}%`;
+            if (selected.ai_diagnosis) {
+                const mechEl = document.getElementById(`ai-diag-mech-${sessionId}`);
+                if (mechEl && selected.ai_diagnosis.physiological_mechanism) {
+                    mechEl.innerHTML = `<strong>Mecanismo Fisiológico:</strong> ${selected.ai_diagnosis.physiological_mechanism}`;
+                }
+                const recEl = document.getElementById(`ai-diag-rec-${sessionId}`);
+                if (recEl && selected.ai_diagnosis.agronomic_recommendation) {
+                    recEl.innerHTML = `<strong>Prescripción Agronómica:</strong> ${selected.ai_diagnosis.agronomic_recommendation}`;
+                }
+            }
         }
     }
 

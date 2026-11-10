@@ -21,3 +21,18 @@ class IVisionPipeline(Protocol):
     def process_cenital(self, image_path: str, output_path: str, profile: CropProfile, config: Optional[Any] = None) -> Optional[Dict[str, Any]]: ...
     def process_lateral(self, image_path: str, output_path: str, profile: CropProfile, config: Optional[Any] = None) -> Optional[Dict[str, Any]]: ...
     def filter_and_average(self, cenital_results: List[Dict[str, Any]], lateral_results: List[Dict[str, Any]]) -> Dict[str, Any]: ...
+
+class IPhytoAIAnalyzer(Protocol):
+    """Contrato para el motor híbrido de IA Fitopatológica y Visión Espectral (ONNX + K-Means)."""
+    def analyze_canopy_spectrum_and_tissues(
+        self,
+        image_bgr: np.ndarray,
+        plant_mask: np.ndarray,
+        roi_circle: Optional[ Any ] = None,
+        spectral_output_path: Optional[str] = None
+    ) -> Dict[str, Any]: ...
+    def infer_multimodal_diagnosis(
+        self,
+        spectral_metrics: Dict[str, Any],
+        sensor_data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]: ...
