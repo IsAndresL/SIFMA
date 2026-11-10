@@ -892,41 +892,47 @@
             </table>
         </div>
 
-        <!-- SECCIÓN 1: DIAGNÓSTICO AGRONÓMICO & FITOPATOLÓGICO IA (ONNX + K-MEANS) -->
+        <!-- SECCIÓN 1: DIAGNÓSTICO DEL CULTIVO Y CONDICIONES AMBIENTALES -->
         <div id="sec-diagnostico" class="section-block">
             <div class="section-title">
                 <span class="section-num">1</span>
-                <span>Diagnóstico Fitopatológico y Nutricional por IA & Telemetría</span>
+                <span>Diagnóstico del Cultivo y Condiciones de la Jornada</span>
             </div>
 
-            {% if dossier.ai_phyto_summary %}
-                {% set ai_s = dossier.ai_phyto_summary %}
-                <div class="insight-box" style="margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
-                        <strong>Dictamen IA ({{ ai_s.model_engine or 'SIFMA-PhytoNet ONNX + K-Means' }}): {{ ai_s.diagnosis_label }}</strong>
-                        <span class="font-mono" style="font-weight: 700;">Confianza: {{ ai_s.confidence_pct }}% | GLI: {{ "%+.3f"|format(ai_s.gli_index or 0.22) }} | VARI: {{ "%+.3f"|format(ai_s.vari_index or 0.16) }}</span>
-                    </div>
-                    <div style="margin-bottom: 3px;">
-                        <strong>Segmentación Espectral del Dosel (K-Means CIELAB/HSV):</strong>
-                        Vigor Fotosintético Sano: <strong>{{ ai_s.healthy_tissue_pct }}%</strong> &bull;
-                        Tejido Clorótico (Amarillamiento): <strong>{{ ai_s.chlorosis_pct }}%</strong> &bull;
-                        Tejido Necrótico (Quemadura): <strong>{{ ai_s.necrosis_pct }}%</strong>
-                    </div>
-                    <div style="margin-bottom: 3px;"><strong>Mecanismo Fisiológico:</strong> {{ ai_s.physiological_mechanism }}</div>
-                    <div><strong>Prescripción Agronómica Recomendada:</strong> {{ ai_s.agronomic_recommendation }}</div>
+            {% if not dossier.has_data %}
+                <div class="insight-box" style="color: var(--text-muted);">
+                    <strong>Sin registros en esta fecha ({{ dossier.target_date }}):</strong> No se registraron capturas fotográficas ni lecturas de sensores durante esta jornada, por lo que no se emite diagnóstico para este día.
                 </div>
-            {% endif %}
-
-            {% if dossier.automated_insights %}
-                {% for insight in dossier.automated_insights %}
-                    <div class="insight-box">
-                        <strong>{{ insight.title }}:</strong> {{ insight.detail }}
-                    </div>
-                {% endfor %}
             {% else %}
-                <div class="insight-box">
-                    <strong>Condiciones Normales:</strong> Los parámetros ambientales y biométricos se mantuvieron estables dentro de los rangos fisiológicos previstos para la jornada.
-                </div>
+                {% if dossier.ai_phyto_summary %}
+                    {% set ai_s = dossier.ai_phyto_summary %}
+                    <div class="insight-box" style="margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+                            <strong>Estado del Cultivo: {{ ai_s.diagnosis_label }}</strong>
+                            <span class="font-mono" style="font-weight: 700;">Confianza: {{ ai_s.confidence_pct }}%</span>
+                        </div>
+                        <div style="margin-bottom: 3px;">
+                            <strong>Estado de las Hojas:</strong>
+                            Tejido Sano: <strong>{{ ai_s.healthy_tissue_pct }}%</strong> &bull;
+                            Amarillamiento: <strong>{{ ai_s.chlorosis_pct }}%</strong> &bull;
+                            Quemadura en Hojas: <strong>{{ ai_s.necrosis_pct }}%</strong>
+                        </div>
+                        <div style="margin-bottom: 3px;"><strong>Observación:</strong> {{ ai_s.physiological_mechanism }}</div>
+                        <div><strong>Recomendación:</strong> {{ ai_s.agronomic_recommendation }}</div>
+                    </div>
+                {% endif %}
+
+                {% if dossier.automated_insights %}
+                    {% for insight in dossier.automated_insights %}
+                        <div class="insight-box">
+                            <strong>{{ insight.title }}:</strong> {{ insight.detail }}
+                        </div>
+                    {% endfor %}
+                {% elif not dossier.ai_phyto_summary %}
+                    <div class="insight-box">
+                        <strong>Condiciones Estables:</strong> Los parámetros ambientales registrados se mantuvieron dentro de los rangos normales durante la jornada.
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
 

@@ -145,52 +145,46 @@
                             </p>
                         </div>
                         <div>
-                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Vigor Sano (IA)</p>
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Tejido Sano</p>
                             <p id="metric-health-{{ s.id }}" style="font-size: 17px; font-family: var(--font-heading); font-weight: 700; color: {% if avg.health_index >= 85 %}var(--accent-success){% else %}var(--accent-danger){% endif %}; margin-top: 4px;">
                                 {{ avg.health_index }}%
                             </p>
                         </div>
                         <div>
-                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Clorosis / Necrosis</p>
+                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Amarillamiento / Quemadura</p>
                             <p id="metric-damage-{{ s.id }}" style="font-size: 15px; font-family: var(--font-heading); font-weight: 700; color: #d97706; margin-top: 4px;">
                                 {{ avg.chlorosis_pct or 0.0 }}% / {{ avg.necrosis_pct or 0.0 }}%
                             </p>
                         </div>
-                        <div>
-                            <p style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Índices GLI / VARI</p>
-                            <p id="metric-gli-{{ s.id }}" style="font-size: 15px; font-family: var(--font-heading); font-weight: 700; color: #0284c7; margin-top: 4px;">
-                                {{ "%+.3f"|format(avg.gli_index or 0.22) }} / {{ "%+.3f"|format(avg.vari_index or 0.16) }}
-                            </p>
-                        </div>
                     </div>
 
-                    <!-- Panel de Diagnóstico Fitopatológico y Nutricional por IA (SIFMA-PhytoNet ONNX + K-Means) -->
+                    <!-- Panel de Diagnóstico del Cultivo -->
                     {% set g_ai = avg.ai_diagnosis if avg.ai_diagnosis else {} %}
                     <div id="ai-diag-box-{{ s.id }}" style="background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%); border: 1px solid #bbf7d0; border-left: 4px solid {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span class="material-icons-round" style="color: {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; font-size: 20px;">psychology</span>
+                                <span class="material-icons-round" style="color: {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; font-size: 20px;">health_and_safety</span>
                                 <div>
-                                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Diagnóstico Fitopatológico & Nutricional IA (Red Neuronal ONNX + K-Means CIELAB)</div>
+                                    <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Diagnóstico del Cultivo</div>
                                     <strong id="ai-diag-label-{{ s.id }}" style="font-size: 13.5px; color: #0f172a;">{{ avg.ai_diagnosis_label or 'Estado Fitosanitario y Nutricional Óptimo' }}</strong>
                                 </div>
                             </div>
                             <span id="ai-diag-conf-{{ s.id }}" style="background: {{ g_ai.badge_color if g_ai and g_ai.badge_color else '#10b981' }}; color: #ffffff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;">
-                                Confianza Neuronal: {{ avg.ai_confidence or 94.5 }}%
+                                Confianza: {{ avg.ai_confidence or 94.5 }}%
                             </span>
                         </div>
                         <div id="ai-diag-mech-{{ s.id }}" style="font-size: 12px; color: #334155; margin-bottom: 4px;">
-                            <strong>Mecanismo Fisiológico:</strong> {{ g_ai.physiological_mechanism if g_ai and g_ai.physiological_mechanism else 'El dosel conserva reflectancia fotosintética activa sin focos de necrosis ni clorosis severa.' }}
+                            <strong>Observación:</strong> {{ g_ai.physiological_mechanism if g_ai and g_ai.physiological_mechanism else 'La planta presenta follaje verde y sano sin señales de quemaduras ni amarillamiento.' }}
                         </div>
                         <div id="ai-diag-rec-{{ s.id }}" style="font-size: 12px; color: #0f172a;">
-                            <strong>Prescripción Agronómica:</strong> {{ g_ai.agronomic_recommendation if g_ai and g_ai.agronomic_recommendation else 'Mantener el régimen actual de fertirriego, fotoperíodo y recirculación de la torre.' }}
+                            <strong>Recomendación:</strong> {{ g_ai.agronomic_recommendation if g_ai and g_ai.agronomic_recommendation else 'Mantener las condiciones actuales de riego, nutrientes e iluminación en la torre.' }}
                         </div>
                     </div>
 
                     <!-- TARJETAS DE COMPARACIÓN DE IMÁGENES -->
                     <div class="analytics-grid-2x2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px;">
                         
-                        <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR + MAPA TÉRMICO CLOROFILA IA) -->
+                        <!-- COMPARADOR 1: CÁMARA CENITAL (VISTA SUPERIOR + MAPA DE CLOROFILA) -->
                         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm);">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -199,11 +193,11 @@
                                 </div>
                                 <div style="display: inline-flex; background: #f1f5f9; border-radius: 8px; padding: 3px; gap: 4px;">
                                     <button type="button" id="btn-gal-proc-{{ s.id }}" onclick="setGalleryCenitalMode({{ s.id }}, 'proc')" style="border: none; background: #ffffff; color: #0f172a; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.08);">
-                                        Máscara ExG / ROI
+                                        Segmentación
                                     </button>
                                     <button type="button" id="btn-gal-spec-{{ s.id }}" onclick="setGalleryCenitalMode({{ s.id }}, 'spectral')" style="border: none; background: transparent; color: #475569; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                                        <span class="material-icons-round" style="font-size: 14px; color: #10b981;">psychology</span>
-                                        Mapa Térmico Clorofila (IA)
+                                        <span class="material-icons-round" style="font-size: 14px; color: #10b981;">eco</span>
+                                        Mapa de Clorofila
                                     </button>
                                 </div>
                             </div>
@@ -218,14 +212,14 @@
                                             <span>Lupa / Zoom</span>
                                         </div>
                                     </div>
-                                    <div class="photo-inspect-trigger" style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-cenital-proc-{{ s.id }}').src, 'Cámara Cenital - Segmentación / Mapa Térmico Clorofila IA')">
+                                    <div class="photo-inspect-trigger" style="position: relative; display: flex; align-items: center; justify-content: center; background: #090d16; cursor: zoom-in;" onclick="openImageLightbox(document.getElementById('img-cenital-proc-{{ s.id }}').src, 'Cámara Cenital - Segmentación y Mapa de Clorofila')">
                                         <img id="img-cenital-proc-{{ s.id }}"
                                              src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}"
                                              data-proc-src="{{ url_for('static', filename=avg.image_path_cenital_proc) }}"
                                              data-spec-src="{{ url_for('static', filename=avg.image_path_spectral_map if avg.image_path_spectral_map else avg.image_path_cenital_proc) }}"
                                              data-view-mode="proc"
                                              style="width: 100%; height: 100%; object-fit: contain; transition: transform 0.2s;">
-                                        <div id="badge-cenital-proc-{{ s.id }}" style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">MÁSCARA ExG</div>
+                                        <div id="badge-cenital-proc-{{ s.id }}" style="position: absolute; bottom: 8px; right: 8px; background: rgba(5,150,105,0.9); padding: 3px 8px; border-radius: 4px; font-size: 10.5px; color: #fff; font-weight: 700; letter-spacing: 0.5px;">SEGMENTACIÓN</div>
                                         <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 5px 8px; border-radius: 6px; color: #38bdf8; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;">
                                             <span class="material-icons-round" style="font-size: 16px;">search</span>
                                             <span>Lupa / Zoom</span>
@@ -408,7 +402,7 @@
         if (mode === 'spectral') {
             procImg.src = procImg.getAttribute('data-spec-src') || procImg.getAttribute('data-proc-src');
             if (badgeEl) {
-                badgeEl.innerText = 'MAPA CLOROFILA IA';
+                badgeEl.innerText = 'MAPA DE CLOROFILA';
                 badgeEl.style.background = 'rgba(14, 165, 233, 0.92)';
             }
             if (btnSpec) {
@@ -424,7 +418,7 @@
         } else {
             procImg.src = procImg.getAttribute('data-proc-src');
             if (badgeEl) {
-                badgeEl.innerText = 'MÁSCARA ExG';
+                badgeEl.innerText = 'SEGMENTACIÓN';
                 badgeEl.style.background = 'rgba(5, 150, 105, 0.9)';
             }
             if (btnProc) {
@@ -483,24 +477,18 @@
 
             const dmgEl = document.getElementById(`metric-damage-${sessionId}`);
             if (dmgEl) dmgEl.innerText = `${selected.chlorosis_pct || 0}% / ${selected.necrosis_pct || 0}%`;
-            const gliEl = document.getElementById(`metric-gli-${sessionId}`);
-            if (gliEl) {
-                const gVal = Number(selected.gli_index || 0.22).toFixed(3);
-                const vVal = Number(selected.vari_index || 0.16).toFixed(3);
-                gliEl.innerText = `${gVal >= 0 ? '+' + gVal : gVal} / ${vVal >= 0 ? '+' + vVal : vVal}`;
-            }
             const lblEl = document.getElementById(`ai-diag-label-${sessionId}`);
             if (lblEl && selected.ai_diagnosis_label) lblEl.innerText = selected.ai_diagnosis_label;
             const confEl = document.getElementById(`ai-diag-conf-${sessionId}`);
-            if (confEl && selected.ai_confidence) confEl.innerText = `Confianza Neuronal: ${selected.ai_confidence}%`;
+            if (confEl && selected.ai_confidence) confEl.innerText = `Confianza: ${selected.ai_confidence}%`;
             if (selected.ai_diagnosis) {
                 const mechEl = document.getElementById(`ai-diag-mech-${sessionId}`);
                 if (mechEl && selected.ai_diagnosis.physiological_mechanism) {
-                    mechEl.innerHTML = `<strong>Mecanismo Fisiológico:</strong> ${selected.ai_diagnosis.physiological_mechanism}`;
+                    mechEl.innerHTML = `<strong>Observación:</strong> ${selected.ai_diagnosis.physiological_mechanism}`;
                 }
                 const recEl = document.getElementById(`ai-diag-rec-${sessionId}`);
                 if (recEl && selected.ai_diagnosis.agronomic_recommendation) {
-                    recEl.innerHTML = `<strong>Prescripción Agronómica:</strong> ${selected.ai_diagnosis.agronomic_recommendation}`;
+                    recEl.innerHTML = `<strong>Recomendación:</strong> ${selected.ai_diagnosis.agronomic_recommendation}`;
                 }
             }
         }

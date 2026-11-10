@@ -610,9 +610,15 @@ class VisionApplicationService:
                 except Exception:
                     pass
 
-        # Si aún no tiene diagnóstico JSON o índices espectrales inicializados, inferirlos
+        # Si aún no tiene diagnóstico JSON o índices espectrales inicializados, o si tiene textos técnicos antiguos, inferirlos
         diag_dict = metric.get_ai_diagnosis_dict()
-        if not diag_dict or not metric.ai_diagnosis_label:
+        has_legacy_jargon = bool(
+            diag_dict and (
+                "ONNX" in str(diag_dict.get("model_engine", ""))
+                or "K-Means" in str(diag_dict.get("physiological_mechanism", ""))
+            )
+        )
+        if not diag_dict or not metric.ai_diagnosis_label or has_legacy_jargon:
             h_pct = float(metric.healthy_tissue_pct if metric.healthy_tissue_pct is not None else (metric.health_index or 100.0))
             c_pct = float(metric.chlorosis_pct if metric.chlorosis_pct is not None else max(0.0, (100.0 - h_pct) * 0.72))
             n_pct = float(metric.necrosis_pct if metric.necrosis_pct is not None else max(0.0, 100.0 - h_pct - c_pct))

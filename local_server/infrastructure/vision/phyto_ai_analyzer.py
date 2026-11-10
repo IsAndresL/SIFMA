@@ -355,7 +355,7 @@ class PhytoAIAnalyzer:
 
             cv2.putText(
                 canvas,
-                f"MAPA TERMICO CLOROFILA (IA) | GLI: {gli_val:+.3f} | VARI: {vari_val:+.3f}",
+                f"MAPA DE CLOROFILA | GLI: {gli_val:+.3f} | VARI: {vari_val:+.3f}",
                 (18, int(banner_h * 0.42)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 font_scale_title,
@@ -365,7 +365,7 @@ class PhytoAIAnalyzer:
             )
             cv2.putText(
                 canvas,
-                f"Vigor Sano: {healthy:.1f}%  |  Clorosis: {chlorosis:.1f}%  |  Necrosis: {necrosis:.1f}%",
+                f"Tejido Sano: {healthy:.1f}%  |  Amarillamiento: {chlorosis:.1f}%  |  Quemadura: {necrosis:.1f}%",
                 (18, int(banner_h * 0.82)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 font_scale_sub,
@@ -565,7 +565,7 @@ class PhytoAIAnalyzer:
             "class_probabilities": class_distribution,
             "physiological_mechanism": mechanism,
             "agronomic_recommendation": recommendation,
-            "model_engine": "SIFMA-PhytoNet v1.0 (ONNX DNN + K-Means CIELAB/HSV)",
+            "model_engine": "Análisis Fitosanitario SIFMA",
             "healthy_tissue_pct": round(healthy_pct, 1),
             "chlorosis_pct": round(chlorosis_pct, 1),
             "necrosis_pct": round(necrosis_pct, 1),
@@ -590,67 +590,63 @@ class PhytoAIAnalyzer:
         water_temp: float,
         has_telemetry: bool
     ) -> Tuple[str, str]:
-        """Genera la explicación fisiológica y prescripción correctiva basada en la evidencia multimodal."""
+        """Genera la explicación fisiológica y prescripción correctiva en lenguaje claro y directo."""
         if code == "FE_LOCKOUT":
             mech = (
-                f"El clustering K-Means detecta {chlorosis_pct:.1f}% de tejido clorótico con disminución del índice "
-                f"espectral de clorofila (GLI = {gli:+.3f}). "
-                + (f"Al cruzar con la telemetría de solución (pH = {ph:.2f}), se confirma precipitación química de Hierro (Fe²⁺) y Manganeso."
-                   if has_telemetry else "El patrón cromático intervenal en espacio CIELAB sugiere bloqueo de absorción de Hierro/micronutrientes.")
+                f"Se observa un {chlorosis_pct:.1f}% de amarillamiento en las hojas con reducción de clorofila. "
+                + (f"El nivel actual de pH en el agua ({ph:.2f}) dificulta que la planta absorba hierro y otros micronutrientes."
+                   if has_telemetry else "El patrón de amarillamiento en las hojas indica bloqueo en la absorción de hierro y micronutrientes.")
             )
             rec = (
-                "Reducir gradualmente el pH de la solución nutritiva al rango óptimo (5.6 - 6.2) aplicando ácido fosfórico o nítrico diluido, "
-                "y verificar quelatos de hierro (Fe-EDTA / Fe-DTPA)."
+                "Ajustar gradualmente el pH de la solución nutritiva al rango ideal (5.6 - 6.2) "
+                "y verificar la disponibilidad de hierro en la mezcla."
             )
         elif code == "N_DEFICIENCY":
             mech = (
-                f"Se cuantifica {chlorosis_pct:.1f}% de amarillamiento foliar uniforme con caída en reflectancia fotosintética "
-                f"(GLI = {gli:+.3f}, VARI = {vari:+.3f}). "
-                + (f"La baja conductividad eléctrica registrada ({ec:.0f} µS/cm) indica agotamiento de Nitrógeno (NO₃⁻/NH₄⁺) y magnesio estructural."
-                   if has_telemetry else "La pérdida homogénea de saturación clorofílica sugiere déficit de Nitrógeno móvil en la solución.")
+                f"Se detecta un {chlorosis_pct:.1f}% de amarillamiento generalizado y pérdida de color verde en el follaje. "
+                + (f"La baja conductividad eléctrica registrada ({ec:.0f} µS/cm) indica que la solución tiene pocos nutrientes disponibles, especialmente nitrógeno."
+                   if has_telemetry else "La pérdida uniforme de color verde en las hojas sugiere falta de nitrógeno en el cultivo.")
             )
             rec = (
-                "Incrementar la dosificación de solución nutritiva base A+B hasta alcanzar una Conductividad Eléctrica (EC) "
-                "entre 1400 y 1900 µS/cm, manteniendo relación balanceada Nitrato/Amonio."
+                "Agregar solución nutritiva hasta alcanzar una Conductividad Eléctrica (EC) "
+                "entre 1400 y 1900 µS/cm."
             )
         elif code == "CA_TIPBURN":
             mech = (
-                f"Se identifica {necrosis_pct:.1f}% de tejido necrótico focalizado en bordes y ápices foliares. "
-                + (f"Las condiciones ambientales ({temp:.1f} °C, {hum:.0f}% HR) alteran el flujo másico xilemático de Calcio (Ca²⁺) hacia las hojas jóvenes."
-                   if has_telemetry else "La localización periférica del daño en el mapa de distancia euclidiana es característica de quemadura apical (Tip-Burn) por déficit de transporte de Calcio.")
+                f"Se identifica un {necrosis_pct:.1f}% de quemadura en las puntas y bordes de las hojas. "
+                + (f"La temperatura ({temp:.1f} °C) y la humedad ({hum:.0f}% HR) dificultan el transporte de calcio hacia las hojas nuevas."
+                   if has_telemetry else "El daño localizado en los bordes y puntas de las hojas es característico de falta de transporte de calcio o calor excesivo.")
             )
             rec = (
-                "Mejorar la ventilación sobre el dosel para favorecer la transpiración foliar, verificar el aporte de Nitrato de Calcio "
-                "y evitar picos térmicos diurnos superiores a 28 °C."
+                "Mejorar la ventilación alrededor de la torre, revisar el aporte de calcio en la solución "
+                "y evitar temperaturas superiores a 28 °C."
             )
         elif code == "SALINE_TOXICITY":
             mech = (
-                f"La segmentación espectral revela {necrosis_pct:.1f}% de necrosis marginal y {chlorosis_pct:.1f}% de clorosis "
-                f"(VARI = {vari:+.3f}). "
-                + (f"La alta conductividad eléctrica ({ec:.0f} µS/cm) genera potencial osmótico negativo que deshidrata los bordes foliares."
-                   if has_telemetry else "La combinación de pardeamiento marginal y caída del índice VARI indica estrés osmótico por exceso de sales.")
+                f"Las hojas presentan un {necrosis_pct:.1f}% de bordes quemados y {chlorosis_pct:.1f}% de amarillamiento. "
+                + (f"La alta conductividad eléctrica ({ec:.0f} µS/cm) indica exceso de sales minerales que deshidratan la planta."
+                   if has_telemetry else "La combinación de bordes secos y pérdida de vigor indica estrés por exceso de sales en el agua.")
             )
             rec = (
-                "Realizar dilución inmediata del reservorio con agua osmotizada/filtrada hasta reducir la EC por debajo de 2000 µS/cm "
-                "y efectuar un ciclo de lavado de raíces."
+                "Diluir el agua del tanque agregando agua limpia hasta bajar la conductividad (EC) por debajo de 2000 µS/cm."
             )
         elif code == "ROOT_HYPOXIA":
             mech = (
-                f"Disminución de vigor foliar ({healthy_pct:.1f}% tejido sano, GLI = {gli:+.3f}) asociada a estrés en la zona radical. "
-                + (f"El oxígeno disuelto ({do:.2f} mg/L) o la temperatura del agua ({water_temp:.1f} °C) limitan la respiración aeróbica de las raíces."
-                   if has_telemetry else "La pérdida de turgencia y reflectancia verde sugiere limitación de oxigenación en el sistema radicular.")
+                f"Se observa pérdida de vigor en el follaje ({healthy_pct:.1f}% de tejido sano) asociada a estrés en la raíz. "
+                + (f"El bajo oxígeno disuelto ({do:.2f} mg/L) o la temperatura del agua ({water_temp:.1f} °C) reducen la oxigenación de las raíces."
+                   if has_telemetry else "La caída en el vigor de las hojas sugiere falta de oxigenación o temperatura elevada en la zona de las raíces.")
             )
             rec = (
-                "Verificar los ciclos de recirculación de la bomba, incrementar la aireación por efecto Venturi en el reservorio "
-                "y mantener la solución nutritiva por debajo de 23 °C."
+                "Verificar el funcionamiento de la bomba de recirculación, mejorar la oxigenación del tanque "
+                "y mantener el agua fresca (idealmente por debajo de 23 °C)."
             )
         else:
             mech = (
-                f"El follaje presenta un {healthy_pct:.1f}% de tejido fotosintético activo con alta densidad clorofílica "
-                f"(GLI = {gli:+.3f}, VARI = {vari:+.3f}) y ausencia de necrosis significativa ({necrosis_pct:.1f}%)."
+                f"La planta presenta un {healthy_pct:.1f}% de follaje verde y sano, con buena concentración de clorofila "
+                f"y sin señales de quemaduras ({necrosis_pct:.1f}%) ni amarillamiento relevante."
             )
             rec = (
-                "Mantener el régimen actual de fertirriego, fotoperíodo y recirculación hidropónica/aeropónica de la torre."
+                "Mantener las condiciones actuales de riego, nutrientes e iluminación en la torre."
             )
 
         return mech, rec

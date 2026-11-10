@@ -325,8 +325,8 @@
                                 <button type="button" id="btn-dash-mode-proc" onclick="switchDashboardCenitalView('proc')" style="border: none; background: #ffffff; color: #0f172a; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
                                     ROI
                                 </button>
-                                <button type="button" id="btn-dash-mode-spec" onclick="switchDashboardCenitalView('spectral')" style="border: none; background: transparent; color: #64748b; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Ver Mapa Térmico Espectral de Clorofila (GLI / K-Means)">
-                                    <span class="material-icons-round" style="font-size: 11px; color: #10b981;">psychology</span> Clorofila IA
+                                <button type="button" id="btn-dash-mode-spec" onclick="switchDashboardCenitalView('spectral')" style="border: none; background: transparent; color: #64748b; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Ver Mapa de Clorofila de la Hoja">
+                                    <span class="material-icons-round" style="font-size: 11px; color: #10b981;">eco</span> Clorofila
                                 </button>
                             </div>
                         </div>
@@ -355,25 +355,27 @@
                     </div>
                 </div>
 
-                <!-- Panel Compacto de Diagnóstico Fitopatológico y Nutricional IA (ONNX + K-Means) -->
+                <!-- Panel Compacto de Diagnóstico del Cultivo -->
                 {% set ai = daily.latest_capture.ai_diagnosis %}
-                <div style="margin: 0 16px 10px 16px; padding: 9px 12px; background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%); border: 1px solid #bbf7d0; border-left: 4px solid {{ ai.badge_color if ai and ai.badge_color else '#10b981' }}; border-radius: 8px;">
+                {% if ai %}
+                <div style="margin: 0 16px 10px 16px; padding: 9px 12px; background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%); border: 1px solid #bbf7d0; border-left: 4px solid {{ ai.badge_color if ai.badge_color else '#10b981' }}; border-radius: 8px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <span class="material-icons-round" style="font-size: 16px; color: {{ ai.badge_color if ai and ai.badge_color else '#10b981' }};">psychology</span>
-                            <span style="font-size: 11.5px; font-weight: 800; color: #0f172a;">{{ ai.diagnosis_label if ai else 'Estado Fitosanitario y Nutricional Óptimo' }}</span>
+                            <span class="material-icons-round" style="font-size: 16px; color: {{ ai.badge_color if ai.badge_color else '#10b981' }};">health_and_safety</span>
+                            <span style="font-size: 11.5px; font-weight: 800; color: #0f172a;">{{ ai.diagnosis_label }}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700;">
-                            <span style="background: rgba(15, 23, 42, 0.07); color: #334155; padding: 2px 6px; border-radius: 4px;">GLI: {{ "%+.3f"|format(daily.latest_capture.gli_index) }}</span>
-                            <span style="background: rgba(15, 23, 42, 0.07); color: #334155; padding: 2px 6px; border-radius: 4px;">Clorosis: {{ daily.latest_capture.chlorosis_pct }}%</span>
-                            <span style="background: rgba(15, 23, 42, 0.07); color: #334155; padding: 2px 6px; border-radius: 4px;">Necrosis: {{ daily.latest_capture.necrosis_pct }}%</span>
-                            <span style="background: {{ ai.badge_color if ai and ai.badge_color else '#10b981' }}; color: #fff; padding: 2px 7px; border-radius: 999px;">{{ ai.confidence_pct if ai else 94.5 }}% IA ONNX</span>
+                            <span style="background: rgba(15, 23, 42, 0.07); color: #334155; padding: 2px 6px; border-radius: 4px;">Sano: {{ daily.latest_capture.healthy_tissue_pct }}%</span>
+                            <span style="background: rgba(15, 23, 42, 0.07); color: #334155; padding: 2px 6px; border-radius: 4px;">Amarillamiento: {{ daily.latest_capture.chlorosis_pct }}%</span>
+                            <span style="background: rgba(15, 23, 42, 0.07); color: #334155; padding: 2px 6px; border-radius: 4px;">Quemadura: {{ daily.latest_capture.necrosis_pct }}%</span>
+                            <span style="background: {{ ai.badge_color if ai.badge_color else '#10b981' }}; color: #fff; padding: 2px 7px; border-radius: 999px;">{{ ai.confidence_pct }}% Confianza</span>
                         </div>
                     </div>
                     <div style="font-size: 11px; color: #334155; line-height: 1.35;">
-                        <strong>Prescripción IA:</strong> {{ ai.agronomic_recommendation if ai else 'Mantener régimen actual de fertirriego y recirculación.' }}
+                        <strong>Recomendación:</strong> {{ ai.agronomic_recommendation }}
                     </div>
                 </div>
+                {% endif %}
                 {% else %}
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 220px; color: var(--text-muted); text-align: center; padding: 20px;">
                     <span class="material-icons-round" style="font-size: 40px; color: #cbd5e1; margin-bottom: 8px;">hide_image</span>
@@ -798,7 +800,7 @@
         );
     }
 
-    // Conmutador entre Vista Cenital ROI y Mapa Térmico de Clorofila (IA ONNX + K-Means)
+    // Conmutador entre Vista Cenital ROI y Mapa de Clorofila
     function switchDashboardCenitalView(mode) {
         const imgEl = document.getElementById('dash-cenital-img');
         const titleEl = document.getElementById('dash-cenital-title');
@@ -808,7 +810,7 @@
 
         if (mode === 'spectral') {
             imgEl.src = imgEl.getAttribute('data-spec-src') || imgEl.getAttribute('data-proc-src');
-            if (titleEl) titleEl.innerText = 'Mapa Clorofila (IA)';
+            if (titleEl) titleEl.innerText = 'Mapa de Clorofila';
             if (btnSpec) {
                 btnSpec.style.background = '#ffffff';
                 btnSpec.style.color = '#0f172a';

@@ -312,7 +312,7 @@ class AnalyticsApplicationService:
 
         current_motor_state = int(motor_states[-1]) if motor_states else 0
 
-        # Última toma de fenotipado para visualización directa en Dashboard + Diagnóstico IA ONNX
+        # Última toma de fenotipado para visualización directa en Dashboard + Diagnóstico Fitosanitario
         default_ai_diag = {
             "diagnosis_code": "OPTIMAL",
             "diagnosis_label": "Estado Fitosanitario y Nutricional Óptimo",
@@ -320,9 +320,9 @@ class AnalyticsApplicationService:
             "severity": "optimal",
             "badge_color": "#10b981",
             "confidence_pct": 94.5,
-            "physiological_mechanism": "Sin anomalías espectrales ni estrés homeostático detectado en el dosel.",
-            "agronomic_recommendation": "Mantener el régimen actual de fertirriego, fotoperíodo y recirculación de la torre.",
-            "model_engine": "SIFMA-PhytoNet v1.0 (ONNX DNN + K-Means CIELAB/HSV)",
+            "physiological_mechanism": "La planta presenta follaje verde y sano sin señales de quemaduras ni amarillamiento.",
+            "agronomic_recommendation": "Mantener las condiciones actuales de riego, nutrientes e iluminación en la torre.",
+            "model_engine": "Análisis Fitosanitario SIFMA",
             "healthy_tissue_pct": 100.0,
             "chlorosis_pct": 0.0,
             "necrosis_pct": 0.0,
@@ -343,13 +343,13 @@ class AnalyticsApplicationService:
             "plant_height_cm": 0.0,
             "stem_diameter_mm": 0.0,
             "health_index": 0.0,
-            "healthy_tissue_pct": 100.0,
+            "healthy_tissue_pct": 0.0,
             "chlorosis_pct": 0.0,
             "necrosis_pct": 0.0,
             "gli_index": 0.0,
             "vari_index": 0.0,
             "exg_index": 0.0,
-            "ai_diagnosis": default_ai_diag
+            "ai_diagnosis": None
         }
         if sessions:
             last_s = sessions[-1]
@@ -1628,21 +1628,7 @@ class AnalyticsApplicationService:
 
         detailed_sessions_list = []
         photo_comparisons = []
-        last_ai_diag = {
-            "diagnosis_label": "Estado Fitosanitario y Nutricional Óptimo",
-            "short_label": "Vigor Fotosintético Óptimo",
-            "severity": "optimal",
-            "confidence_pct": 94.5,
-            "physiological_mechanism": "El dosel conserva reflectancia fotosintética activa sin focos de necrosis ni clorosis severa.",
-            "agronomic_recommendation": "Mantener régimen actual de fertirriego y recirculación.",
-            "model_engine": "SIFMA-PhytoNet v1.0 (ONNX DNN + K-Means CIELAB/HSV)",
-            "healthy_tissue_pct": 100.0,
-            "chlorosis_pct": 0.0,
-            "necrosis_pct": 0.0,
-            "gli_index": 0.250,
-            "vari_index": 0.180,
-            "exg_index": 0.320
-        }
+        last_ai_diag = None
 
         for s in sessions:
             avg_m = s.get_average_metric()
@@ -1857,5 +1843,7 @@ class AnalyticsApplicationService:
             "ai_phyto_summary": last_ai_diag,
             "chart_series": chart_series,
             "has_data": (len(sessions) > 0 or len(readings) > 0),
+            "has_sessions": len(sessions) > 0,
+            "has_readings": len(readings) > 0,
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
