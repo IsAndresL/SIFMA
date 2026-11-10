@@ -16,7 +16,8 @@ from application.services import (
     WeatherService,
     AuditService,
     UpdateService,
-    ReportArchiveService
+    ReportArchiveService,
+    BackupService
 )
 from infrastructure.database.repositories import (
     SensorRepository, 
@@ -630,6 +631,8 @@ def configuration_panel():
             if latest_cenital_img and latest_lateral_img:
                 break
 
+    backup_summary = BackupService.get_backup_summary()
+
     return render_template('config.html', 
                            config=config, 
                            profiles=profiles, 
@@ -637,7 +640,8 @@ def configuration_panel():
                            plant_profiles_map=plant_profiles_map,
                            latest_cenital_img=latest_cenital_img,
                            latest_lateral_img=latest_lateral_img,
-                           active_plant_id=active_plant_id)
+                           active_plant_id=active_plant_id,
+                           backup_summary=backup_summary)
 
 @dashboard_bp.route('/users')
 @role_required('admin')

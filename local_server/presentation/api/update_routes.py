@@ -5,8 +5,8 @@
 import os
 import subprocess
 import sys
-from flask import jsonify, request, session
-from application.services import AuditService, UpdateService
+from flask import jsonify, request, session, send_file, after_this_request
+from application.services import AuditService, UpdateService, BackupService
 from core.config import config
 from . import api_bp
 
@@ -98,4 +98,70 @@ def open_protected_data_folder():
         )
     except Exception as e:
         return jsonify({"status": "error", "message": f"No se pudo abrir la carpeta: {e}"}), 500
+
+
+@api_bp.route("/api/system/backup/export", methods=["GET"])
+def export_full_system_backup():
+    """Genera y descarga un paquete .sifma-backup.zip con toda la base de datos SQLite, fotos y reportes PDF."""
+    if not session.get("logged_in"):
+        return jsonify({"status": "error", "message": "No autorizado."}), 401
+
+    try:
+        zip_path, download_name = BackupService.create_full_backup_zip()
+        temp_dir = os.path.dirname(zip_path)
+
+        @after_this_request
+        def _cleanup_temp_backup(response):
+            try:
+                import shutil
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            except Exception:
+                pass
+            return response
+
+        audit_service.log(
+            action="EXPORT_BACKUP",
+            module="SISTEMA",
+            description=f"Exportó respaldo completo de base de datos y archivos locales ({download_name}).",
+            level="info",
+            action_display="Exportación de Respaldo Completo",
+        )
+        return send_file(
+            zip_path,
+            mimetype="application/zip",
+            as_attachment=True,
+            download_name=download_name,
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error al generar respaldo: {e}"}), 500
+
+
+@api_bp.route("/api/system/backup/restore", methods=["POST"])
+def restore_full_system_backup():
+    """Restaura un respaldo completo (.sifma-backup.zip / .zip) en este PC."""
+    if not session.get("logged_in"):
+        return jsonify({"status": "error", "message": "No autorizado."}), 401
+
+    if "file" not in request.files:
+        return jsonify({"status": "error", "message": "No se seleccionó ningún archivo de respaldo (.zip)."}), 400
+
+    uploaded = request.files["file"]
+    if not uploaded or not uploaded.filename:
+        return jsonify({"status": "error", "message": "Archivo inválido."}), 400
+
+    try:
+        result = BackupService.restore_full_backup_zip(uploaded)
+        audit_service.log(
+            action="RESTORE_BACKUP",
+            module="SISTEMA",
+            description=f"Restauró respaldo completo desde '{uploaded.filename}' ({result.get('restored_files', 0)} archivos).",
+            level="warning",
+            action_display="Restauración de Respaldo Completo",
+        )
+        return jsonify(result)
+    except ValueError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error al restaurar respaldo: {e}"}), 500
+
 

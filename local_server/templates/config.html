@@ -586,6 +586,74 @@
     </form>
 </div>
 
+<!-- CARD 4: RESPALDO Y RESTAURACIÓN COMPLETA EN 1 CLIC (MIGRACIÓN ENTRE PCs) -->
+<div class="widget-card" style="max-width: 960px; margin: 0 auto 30px auto;">
+    <div class="widget-header">
+        <div class="widget-header-title" style="display: flex; align-items: center; gap: 12px;">
+            <div class="kpi-icon-badge emerald" style="width: 38px; height: 38px;">
+                <span class="material-icons-round" style="font-size: 22px;">backup</span>
+            </div>
+            <div>
+                <h3>Respaldo y Restauración Completa del Sistema</h3>
+                <p>Exporta o restaura la base de datos completa de este PC, fotografías y reportes PDF en un solo archivo portable</p>
+            </div>
+        </div>
+        {% if backup_summary %}
+        <span class="badge badge-success" style="font-size: 11.5px;">
+            BD: {{ backup_summary.db_size_kb }} KB &bull; {{ backup_summary.total_files }} archivos ({{ backup_summary.total_size_mb }} MB)
+        </span>
+        {% endif %}
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
+        <!-- Columna 1: Exportar Respaldo -->
+        <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <span class="material-icons-round" style="color: var(--accent-success); font-size: 20px;">cloud_download</span>
+                    <strong style="font-size: 13.5px; color: var(--text-heading);">Exportar Base de Datos y Archivos (.zip)</strong>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                    Genera un paquete <code>.sifma-backup.zip</code> con la base de datos SQLite (<code>sifma.db</code>), los lotes fotográficos originales y segmentados, lecturas de sensores y los reportes PDF guardados en este equipo.
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="fetch('/api/system/open_data_folder', {method: 'POST'})" style="font-size: 11.5px;">
+                    <span class="material-icons-round" style="font-size: 15px;">folder_open</span>
+                    <span>Ver Carpeta Local</span>
+                </button>
+                <a href="/api/system/backup/export" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;">
+                    <span class="material-icons-round" style="font-size: 17px;">download</span>
+                    <span>Exportar Respaldo Completo</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Columna 2: Restaurar Respaldo -->
+        <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <span class="material-icons-round" style="color: #2563eb; font-size: 20px;">settings_backup_restore</span>
+                    <strong style="font-size: 13.5px; color: var(--text-heading);">Restaurar Respaldo desde otro PC</strong>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                    Selecciona un archivo <code>.sifma-backup.zip</code> exportado previamente para cargar toda la base de datos, calibraciones, fotografías y reportes PDF en este computador.
+                </p>
+            </div>
+            <div>
+                <input type="file" id="restore-backup-file-input" accept=".zip" style="display: none;" onchange="handleRestoreFullBackup(this)">
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="button" id="btn-restore-backup" class="btn btn-outline" onclick="document.getElementById('restore-backup-file-input').click()" style="border-color: #2563eb; color: #2563eb; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round" style="font-size: 17px;">upload_file</span>
+                        <span>Seleccionar y Restaurar Respaldo (.zip)</span>
+                    </button>
+                </div>
+                <div id="backup-restore-status-box" style="display: none; margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -623,6 +691,69 @@
     
     function onProfileSelectChange(cropType) {
         window.location.href = "{{ url_for('dashboard.configuration_panel') }}?crop_type=" + cropType;
+    }
+
+    async function handleRestoreFullBackup(inputEl) {
+        const file = inputEl.files && inputEl.files[0];
+        if (!file) return;
+
+        if (!confirm(`¿Estás seguro de restaurar el respaldo "${file.name}" en este equipo?\n\nEsto reemplazará la base de datos local actual con la del respaldo e importará todas sus fotografías y reportes PDF.`)) {
+            inputEl.value = '';
+            return;
+        }
+
+        const btn = document.getElementById('btn-restore-backup');
+        const statusBox = document.getElementById('backup-restore-status-box');
+        const origHtml = btn ? btn.innerHTML : '';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-icons-round spinner">sync</span> <span>Restaurando base de datos y archivos...</span>';
+        }
+        if (statusBox) {
+            statusBox.style.display = 'none';
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const resp = await fetch('/api/system/backup/restore', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+
+            if (statusBox) {
+                statusBox.style.display = 'block';
+                if (resp.ok && data.status === 'success') {
+                    statusBox.style.background = 'rgba(16, 185, 129, 0.12)';
+                    statusBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    statusBox.style.color = '#065f46';
+                    statusBox.innerHTML = `<span class="material-icons-round" style="vertical-align: middle; font-size: 16px; margin-right: 4px;">check_circle</span> ${data.message} Recargando...`;
+                    setTimeout(() => { window.location.reload(); }, 1800);
+                } else {
+                    statusBox.style.background = 'rgba(239, 68, 68, 0.12)';
+                    statusBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    statusBox.style.color = '#991b1b';
+                    statusBox.innerHTML = `<span class="material-icons-round" style="vertical-align: middle; font-size: 16px; margin-right: 4px;">error</span> ${data.message || 'No se pudo restaurar el respaldo.'}`;
+                }
+            }
+        } catch (err) {
+            if (statusBox) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = 'rgba(239, 68, 68, 0.12)';
+                statusBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                statusBox.style.color = '#991b1b';
+                statusBox.innerHTML = `<span class="material-icons-round" style="vertical-align: middle; font-size: 16px; margin-right: 4px;">error</span> Error de red: ${err.message}`;
+            }
+        } finally {
+            inputEl.value = '';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
     }
 
     async function syncTowerTelemetry() {
